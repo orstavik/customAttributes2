@@ -38,7 +38,7 @@ function deprecate(name) {
     composedPathOG.call(e)[0].dispatchEvent(e);
   }
 
-  EventTarget_proto.addEventListener = function (type, cb, ...args) {
+  EventTarget_proto.addEventListener = function (type, cb, ...args) {     //once, passive => syntactic solution?
     const cbName = customEventFilters.defineAnonymous(cb);
     this.setAttribute(type + ":" + cbName);
   };
@@ -47,11 +47,21 @@ function deprecate(name) {
     this.removeAttribute(type + ":" + cbName);
   };
 
+  let eventLoop = [];
   EventTarget_proto.dispatchEvent = function dispatchEvent(event) {
-    for (let t = this; t; t = t.assignedSlot || t.parentNode instanceof HTMLElement ? t.parentNode : t.parentNode?.host)
-      for (let attr of t.attributes)
-        if (attr.name.startsWith(event.type + ":"))
-          customEventFilters.getFilterFunction(attr.name.substring(event.type.length + 1))?.call(attr, event);
+    eventLoop.push({target: this, event});
+    if (eventLoop.length > 1)
+      return;
+    while (eventLoop.length) {
+      const {target, event} = eventLoop.shift();
+      for (let t = target; t; t = t.assignedSlot || t.parentNode instanceof HTMLElement ? t.parentNode : t.parentNode?.host)
+        for (let attr of t.attributes)
+          if (attr.name.startsWith(event.type + ":"))
+            customEventFilters.getFilterFunction(attr.name.substring(event.type.length + 1))?.call(attr, event);
+      //1. if the custom attribute ends with a ":" then it is either a default action, or a sync action?
+      //2. once? How to mark once event listeners? should we add them as ":" at the beginning?
+      //3. passive? This should probably be a special first filter ":passive". This will add a special event listener with the passive argument set to true on the target node. This would also need to be cleaned up.
+    }
   }
 
   function getNativeEventName(at) {
