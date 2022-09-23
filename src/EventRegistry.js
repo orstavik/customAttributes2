@@ -1,3 +1,30 @@
+function nativeRerouteListener(e) {
+  // e.preventDefault(); // if dispatchEvent propagates sync, native defaultActions can still be used.
+  e.stopImmediatePropagation();
+  e.composedPath()[0].dispatchEvent(e);
+}
+
+function makeNativeEventAttribute(name) {
+  const Class = class NativeEventAttribute extends Attr {
+    upgrade() {
+      this.ownerElement.addEventListener(name, nativeRerouteListener);
+    }
+
+    destructor() {
+      for (let o of this.ownerElement.attributes)
+        if (name === o.constructor.prefix && o !== this)
+          return;
+      this.ownerElement.removeEventListener(name, nativeRerouteListener);
+    }
+
+    get suffix() {
+      return "";
+    }
+  };
+  Class.prefix = name;
+  return Class;
+}
+
 class EventRegistry {
 
   //todo if we have two ::, then the thing after the double colon is marked as a defaultAction. That makes sense
@@ -51,16 +78,20 @@ class EventRegistry {
   }
 
   find(name) {
+    if (this[name])
+      return this[name];
+    if (("on" + name) in HTMLElement.prototype)
+      return this[name] = makeNativeEventAttribute.call(this, name); //todo make this into a different register.
     for (let def in this)
       if (name.startsWith(def))
         return this[def];
   }
 
-  upgrade(at, name) {
-    const Definition = this.find(name);
+  upgrade(at) {
+    const Definition = this.find(at.event);
     Definition ?
       this.#upgradeAttribute(at, Definition) :
-      this.#addUnknownEvents(name, at);        //todo dict pointing to a weak array
+      (this.#unknownEvents[at.event] ??= []).push(at);        //todo dict pointing to a weak array
   }
 
   #upgradeAttribute(at, Definition) {
@@ -84,10 +115,6 @@ class EventRegistry {
     for (let oldPrefix in this)
       if (newPrefix.startsWith(oldPrefix) || oldPrefix.startsWith(newPrefix))
         return oldPrefix;
-  }
-
-  #addUnknownEvents(event, at) {
-    (this.#unknownEvents[event] ??= []).push(at);
   }
 
   #upgradeUnknownEvents(prefix, Definition) {

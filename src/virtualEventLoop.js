@@ -38,14 +38,12 @@ function deprecate(name) {
     composedPathOG.call(e)[0].dispatchEvent(e);
   }
 
-  EventTarget_proto.addEventListener = function (type, cb, ...args) {     //once, passive => syntactic solution?
-    const cbName = customEventFilters.defineAnonymous(cb);
-    this.setAttribute(type + ":" + cbName);
-  };
-  EventTarget_proto.removeEventListener = function (type, cb, ...args) {
-    const cbName = customEventFilters.defineAnonymous(cb);
-    this.removeAttribute(type + ":" + cbName);
-  };
+  // EventTarget_proto.addEventListener = function (type, cb, ...args) {     //once, passive => syntactic solution?
+  //   this.setAttribute(type + ":" + customEventFilters.defineAnonymous(cb));
+  // };
+  // EventTarget_proto.removeEventListener = function (type, cb, ...args) {
+  //   this.removeAttribute(type + ":" + customEventFilters.defineAnonymous(cb));
+  // };
 
   let eventLoop = [];
   EventTarget_proto.dispatchEvent = function dispatchEvent(event) {
@@ -78,31 +76,9 @@ function deprecate(name) {
     if (!res)
       return;
     Object.assign(at, res);
-    if (at.isNativeEvent) {
-      nativeEventUpgrade(at, res);
-    } else
-      customEvents.upgrade(at, at.event);
+    customEvents.upgrade(at);
   }
 
-  // class NativeCustomAttribute extends Attr {
-  //   upgrade() {
-  //     addEventListenerOG.call(this.ownerElement, this.prefix, nativeRerouteListener);
-  //   }
-  //   get prefix(){
-  //     return this.name.split(":")[0 or 1];
-  //   }
-
-  //   destructor() {
-  //     for (let o of this.ownerElement.attributes)
-  //       if (this.prefix === o.prefix && o !== this)
-  //         return;
-  //     removeEventListenerOG.call(this.ownerElement, this.prefix, nativeRerouteListener);
-  //   }
-  //
-  //   static make(event) {
-  //     return ("on" + event) in HTMLElement.prototype && this;
-  //   }
-  // }
 
   function removeAttribute(at) {
     if (at.isNativeEvent && ![...at.ownerElement.attributes].find(o => o !== at && o.isNativeEvent && at.prefix === o.prefix))
