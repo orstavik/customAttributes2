@@ -40,8 +40,8 @@ class EventRegistry {
   #upgradeAttribute(at, suffix, Definition, name) {
     at.suffix = name.substring(Definition.prefix.length);
     at.filterFunction = at.name.substring(name.length + 1);
+    Object.setPrototypeOf(at, Definition.prototype);
     try {
-      Object.setPrototypeOf(at, Definition.prototype);
       at.upgrade?.();
       at.changeCallback?.();
     } catch (error) {
