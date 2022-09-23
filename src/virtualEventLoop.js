@@ -58,6 +58,7 @@ function deprecate(name) {
         for (let attr of t.attributes)
           if (attr.name.startsWith(event.type + ":"))
             customEventFilters.getFilterFunction(attr.name.substring(event.type.length + 1))?.call(attr, event);
+      //todo call the filter functions from the customEventFilter!
       //1. if the custom attribute ends with a ":" then it is either a default action, or a sync action?
       //2. once? How to mark once event listeners? should we add them as ":" at the beginning?
       //3. passive? This should probably be a special first filter ":passive". This will add a special event listener with the passive argument set to true on the target node. This would also need to be cleaned up.
@@ -70,19 +71,29 @@ function deprecate(name) {
     return parts.length > 1 && isNativeProperty && parts[0];
   }
 
+  //todo 1. we need to ensure that the native event names are not in conflict with the given definitions.
+  //todo 2. maybe move this inside the customEvents.upgrade method too??
+  function getEventName(at) {
+    const parts = at.name.split(":");
+    if (parts.length < 2)
+      return;
+    if (parts.length === 2 && parts[0] === "")
+      return parts[1];
+    return parts[0];
+  }
+
   function newAttribute(at) {
     const event = getNativeEventName(at);
     event && addEventListenerOG.call(at.ownerElement, event, nativeRerouteListener);
-  }
-
-  function updateAttribute(at, oldValue) {
-    at.onChangeCallback?.(oldValue);
+    const name = getEventName(at);
+    customEvents.upgrade(at, name);
   }
 
   function removeAttribute(at) {
     const event = getNativeEventName(at);
     if (event && ![...at.ownerElement.attributes].find(o => o !== at && o.name.startsWith(event + ":")))
       removeEventListenerOG.call(at.ownerElement, event, nativeRerouteListener);
+    at.destructor?.();
   }
 
   Element_proto.setAttribute = function (name, value) {
@@ -90,14 +101,14 @@ function deprecate(name) {
       const at = getAttrNodeOG.call(this, name);
       const oldValue = at.value;
       at.value = value;
-      updateAttribute(at, oldValue);
+      at.changeCallback?.(oldValue);
     } else {
       const at = documentCreateAttributeOG.call(document, name);
       if (value !== undefined)
         at.value = value;
       setAttributeNodeOG.call(this, at);
       newAttribute(at);
-      updateAttribute(at);
+      at.changeCallback?.(undefined);
     }
   };
 

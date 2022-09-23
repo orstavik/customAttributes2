@@ -1,0 +1,33 @@
+<script src="https://cdn.jsdelivr.net/gh/orstavik/parse@v1.0.2/parse.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
+<script src="../src/EventRegistry.js"></script>
+<script src="../src/EventFilterRegistry.js"></script>
+<script src="../src/virtualEventLoop.js"></script>
+
+
+<h1 timeout2000:log:bob>hello click:log:sunshine</h1>
+<script>
+  customEventFilters.define("log", e=> console.log(e.type));
+  customEventFilters.define("bob", e=> console.log("bob"));
+  customEvents.define("timeout", class MyClick extends Attr {
+    upgrade() {
+      console.log(this);
+      console.log(this.constructor.prefix);
+      console.log(this.suffix);
+      console.log(this.filterFunction);
+      console.log(this.ownerElement);
+      setTimeout(() => {
+        this.value = "called";
+        customEventFilters.getFilterFunction(this.filterFunction)?.call(this, new Event(this.constructor.prefix));
+        this.value = "done";
+        //this.ownerElement.removeAttribute(this.name); //todo this should be some kind of syntactic structure I think
+      }, this.constructor.suffix);
+    }
+    changeCallback(oldValue){
+      console.log(oldValue, this.value);
+    }
+    destructor(){
+      console.log("destructing", this);
+    }
+  });
+</script>

@@ -22,7 +22,32 @@ class EventRegistry {
   find(name) {
     for (let def in this)
       if (name.startsWith(def))
-        return {prefix: def, Definition: this[def], suffix: name.substring(def.length)};
+        return {Definition: this[def], suffix: name.substring(def.length)};
+  }
+
+  upgrade(at, name){
+    const def = this.find(name) ||{};
+    if(!def.Definition)
+      return this.addUnknownEvents(name, at); //todo dict pointing to a weak array
+    this.#upgradeAttribute(at, def.suffix, def.Definition, name);
+  }
+
+  #upgradeAttribute(at, suffix, Definition, name) {
+    at.suffix = name.substring(Definition.prefix.length);
+    at.filterFunction = at.name.substring(name.length + 1);
+    try {
+      Object.setPrototypeOf(at, Definition.prototype);
+      at.upgrade?.();
+      at.changeCallback?.();
+    } catch (error) {
+      at.ownerElement.dispatchEvent(new ErrorEvent("error", {
+        error,
+        bubbles: true,
+        composed: true,
+        cancelable: true
+      }));
+      //any error that occurs during upgrade must be queued in the event loop.
+    }
   }
 
   prefixOverlaps(newPrefix) {
@@ -31,19 +56,16 @@ class EventRegistry {
         return oldPrefix;
   }
 
-  addUnknownEvents(event, {target, filterFunction, customAttribute, args}) {
-    (this.#unknownEvents[event] ??= []).push({target, filterFunction, customAttribute, args});
+  addUnknownEvents(event, at) {
+    (this.#unknownEvents[event] ??= []).push(at);
   }
 
   upgradeUnknownEvents(prefix, Definition) {
     for (let event in this.#unknownEvents) {
       if (event.startsWith(prefix)) {
-        for (let {target, filterFunction, customAttribute, args} of this.#unknownEvents[event]) {
-          target.removeEventListener(event, filterFunction, ...args);
-          //todo surround in try/catch
-          //todo dispatch async error.
-          Definition.addedToTargetCallback(event, filterFunction, customAttribute, target);
-          //Definition.upgradeOnTarget(); todo
+        for (let at of this.#unknownEvents[event]) {
+          const name = at.name.split(":")[0];//todo this is naive, we need to check for ":"
+          this.#upgradeAttribute(at, name.substring(Definition.prefix.length), Definition, name);
         }
       }
     }
