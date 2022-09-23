@@ -82,17 +82,43 @@ function deprecate(name) {
     return parts[0];
   }
 
+  //todo syntax: ":timeout50:log:bob"  "click:log:bob"  "click:log:open:"
+  //todo what do we need? once? filter as default defaultAction? last filter as defaultAction?
+
+  //todo if we have two ::, then the thing after the double colon is marked as a defaultAction. That makes sense
+  //todo if we have a : infront of the attribute, then it is a once
+  //step 1, see if the
+
   function newAttribute(at) {
-    const event = getNativeEventName(at);
-    event && addEventListenerOG.call(at.ownerElement, event, nativeRerouteListener);
-    const name = getEventName(at);
-    customEvents.upgrade(at, name, !!event);
+    let text = at.name;
+    if (at.name.indexOf(":") === -1)
+      return;
+    if (text.endsWith(":")) {
+      text = text.substring(0, -1);
+      at.endColon = true;
+    }
+    if (text.startsWith(":")) {
+      text = text.substring(1);
+      at.once = true;
+    }
+    [text, defaultAction, error] = text.split("::");
+    if (error)
+      throw "cannot have two sets of '::' in a custom attribute.";
+    if (defaultAction)
+      at.defaultAction = defaultAction;
+    const [event, ...filter] = text.split(":");
+    at.filterFunction = filter.join(":") || undefined;
+    at.isNativeEvent = ("on" + event) in HTMLElement.prototype;
+    if (at.isNativeEvent) {
+      at.prefix = event;                               //so, this could maybe be done as a special customAttribute class definition?
+      addEventListenerOG.call(at.ownerElement, event, nativeRerouteListener);
+    }
+    customEvents.upgrade(at, event, at.isNativeEvent);
   }
 
   function removeAttribute(at) {
-    const event = getNativeEventName(at);
-    if (event && ![...at.ownerElement.attributes].find(o => o !== at && o.name.startsWith(event + ":")))
-      removeEventListenerOG.call(at.ownerElement, event, nativeRerouteListener);
+    if (at.isNativeEvent && ![...at.ownerElement.attributes].find(o => o !== at && o.isNativeEvent && at.prefix === o.prefix))
+      removeEventListenerOG.call(at.ownerElement, at.prefix, nativeRerouteListener);
     at.destructor?.();
   }
 

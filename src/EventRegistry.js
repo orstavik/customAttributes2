@@ -30,7 +30,7 @@ class EventRegistry {
       at.suffix = "";
       at.filterFunction = at.name.substring(name.length + 1);
     } else {
-      const def = this.find(name) || {};
+      const def = this.find(name) || {}; //todo simplify
       if (!def.Definition)
         return this.addUnknownEvents(name, at); //todo dict pointing to a weak array
       this.#upgradeAttribute(at, def.suffix, def.Definition, name);
@@ -69,7 +69,7 @@ class EventRegistry {
     for (let event in this.#unknownEvents) {
       if (event.startsWith(prefix)) {
         for (let at of this.#unknownEvents[event]) {
-          const name = at.name.split(":")[0];//todo this is naive, we need to check for ":"
+          const name = at.name.split(":")[0];    //todo this is naive, we need to check for ":"
           this.#upgradeAttribute(at, name.substring(Definition.prefix.length), Definition, name);
         }
       }
