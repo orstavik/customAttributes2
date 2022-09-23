@@ -18,7 +18,7 @@
       console.log(this.ownerElement);
       setTimeout(() => {
         this.value = "called";
-        customEventFilters.getFilterFunction(this.filterFunction)?.call(this, new Event(this.constructor.prefix));
+        customEventFilters.callFilter(this, new Event(this.constructor.prefix));
         this.value = "done";
         //this.ownerElement.removeAttribute(this.name); //todo this should be some kind of syntactic structure I think
       }, this.constructor.suffix);

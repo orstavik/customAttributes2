@@ -56,8 +56,8 @@ function deprecate(name) {
       const {target, event} = eventLoop.shift();
       for (let t = target; t; t = t.assignedSlot || t.parentNode instanceof HTMLElement ? t.parentNode : t.parentNode?.host)
         for (let attr of t.attributes)
-          if (attr.name.startsWith(event.type + ":"))
-            customEventFilters.getFilterFunction(attr.name.substring(event.type.length + 1))?.call(attr, event);
+          if (attr.name.startsWith(event.type + ":"))       //todo if we use the :prefix:filter, then this will be skipped.
+            customEventFilters.callFilter(attr, event);
       //todo call the filter functions from the customEventFilter!
       //1. if the custom attribute ends with a ":" then it is either a default action, or a sync action?
       //2. once? How to mark once event listeners? should we add them as ":" at the beginning?
@@ -86,7 +86,7 @@ function deprecate(name) {
     const event = getNativeEventName(at);
     event && addEventListenerOG.call(at.ownerElement, event, nativeRerouteListener);
     const name = getEventName(at);
-    customEvents.upgrade(at, name);
+    customEvents.upgrade(at, name, !!event);
   }
 
   function removeAttribute(at) {

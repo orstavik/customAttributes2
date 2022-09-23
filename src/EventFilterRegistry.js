@@ -84,5 +84,9 @@ class EventFilterRegistry {
   getFilterFunction(key, filters = key.split(":")) {
     return filters.length === 1 ? this.findAndBind(filters[0]) : this.chain(filters, key);
   }
+
+  callFilter(at, event){
+    this.getFilterFunction(at.filterFunction)?.call(at, event);
+  }
 }
 window.customEventFilters = new EventFilterRegistry();
