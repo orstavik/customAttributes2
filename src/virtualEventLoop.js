@@ -51,11 +51,13 @@ function deprecate(name) {
     if (eventLoop.length > 1)
       return;
     while (eventLoop.length) {
-      const {target, event} = eventLoop.shift();
-      for (let t = target; t; t = t.assignedSlot || t.parentNode instanceof HTMLElement ? t.parentNode : t.parentNode?.host)
+      const {target, event} = eventLoop[0];
+      for (let t = target; t; t = t.assignedSlot || t.parentElement || t.parentNode?.host){
         for (let attr of t.attributes)
-          if (attr.name.startsWith(event.type + ":"))       //todo if we use the :prefix:filter, then this will be skipped.
+          if (attr.event === event.type)       //todo if we use the :prefix:filter, then this will be skipped.
             customEventFilters.callFilter(attr, event);
+      }
+      eventLoop.shift();
       //todo call the filter functions from the customEventFilter!
       //1. if the custom attribute ends with a ":" then it is either a default action, or a sync action?
       //2. once? How to mark once event listeners? should we add them as ":" at the beginning?

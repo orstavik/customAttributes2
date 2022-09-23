@@ -32,7 +32,7 @@ class EventRegistry {
   parse(text) {
     let res = {};
     if (text.indexOf(":") === -1)
-      return res;
+      return;
     if (text.endsWith(":")) {
       text = text.substring(0, -1);
       res.endColon = true;
