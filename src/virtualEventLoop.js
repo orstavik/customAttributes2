@@ -38,16 +38,15 @@ function deprecate(name) {
     composedPathOG.call(e)[0].dispatchEvent(e);
   }
 
-  document.addEventListener("readystatechange", _ => { //todo hack to make it work with the parse.js script
-    EventTarget_proto.addEventListener = function (type, cb, ...args) {
-      const cbName = customEventFilters.defineAnonymous(cb);
-      this.setAttribute(type + ":" + cbName);
-    };
-    EventTarget_proto.removeEventListener = function (type, cb, ...args) {
-      const cbName = customEventFilters.defineAnonymous(cb);
-      this.removeAttribute(type + ":" + cbName);
-    };
-  });
+  EventTarget_proto.addEventListener = function (type, cb, ...args) {
+    const cbName = customEventFilters.defineAnonymous(cb);
+    this.setAttribute(type + ":" + cbName);
+  };
+  EventTarget_proto.removeEventListener = function (type, cb, ...args) {
+    const cbName = customEventFilters.defineAnonymous(cb);
+    this.removeAttribute(type + ":" + cbName);
+  };
+
   EventTarget_proto.dispatchEvent = function dispatchEvent(event) {
     for (let t = this; t; t = t.assignedSlot || t.parentNode instanceof HTMLElement ? t.parentNode : t.parentNode?.host)
       for (let attr of t.attributes)
