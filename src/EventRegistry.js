@@ -1,4 +1,35 @@
 class EventRegistry {
+
+  //todo if we have two ::, then the thing after the double colon is marked as a defaultAction. That makes sense
+  //todo if we have a : infront of the attribute, then it is a once
+  parse(text) {
+    let res = {};
+    if (text.indexOf(":") === -1)
+      return res;
+    if (text.endsWith(":")) {
+      text = text.substring(0, -1);
+      res.endColon = true;
+    }
+    if (text.startsWith(":")) {
+      text = text.substring(1);
+      res.once = true;
+    }
+    let defaultAction, error;
+    [text, defaultAction, error] = text.split("::");
+    if (error) {
+      //todo
+      console.warn("cannot have two sets of '::' in a custom attribute.");
+    }
+    if (defaultAction)
+      res.defaultAction = defaultAction;
+    const [event, ...filter] = text.split(":");
+    res.filterFunction = filter.join(":") || undefined;
+    res.event = event;
+    if (("on" + res.event) in HTMLElement.prototype)
+      res.isNativeEvent = true;
+    return res;
+  }
+
   #unknownEvents = {};
 
   define(prefix, Class) {
@@ -10,7 +41,7 @@ class EventRegistry {
     What about 'customEvents.define("${prefix}", class Something extends ${Class.name}{});'?`;
     Class.prefix = prefix;
     this[prefix] = Class;
-    this.upgradeUnknownEvents(prefix, Class);
+    this.#upgradeUnknownEvents(prefix, Class);
   }
 
   getName(Class) {
@@ -22,24 +53,18 @@ class EventRegistry {
   find(name) {
     for (let def in this)
       if (name.startsWith(def))
-        return {Definition: this[def], suffix: name.substring(def.length)};
+        return this[def];
   }
 
-  upgrade(at, name, native) {
-    if (native) {
-      at.suffix = "";
-      at.filterFunction = at.name.substring(name.length + 1);
-    } else {
-      const def = this.find(name) || {}; //todo simplify
-      if (!def.Definition)
-        return this.addUnknownEvents(name, at); //todo dict pointing to a weak array
-      this.#upgradeAttribute(at, def.suffix, def.Definition, name);
-    }
+  upgrade(at, name) {
+    const Definition = this.find(name);
+    Definition ?
+      this.#upgradeAttribute(at, Definition) :
+      this.#addUnknownEvents(name, at);        //todo dict pointing to a weak array
   }
 
-  #upgradeAttribute(at, suffix, Definition, name) {
-    at.suffix = name.substring(Definition.prefix.length);
-    at.filterFunction = at.name.substring(name.length + 1);
+  #upgradeAttribute(at, Definition) {
+    at.suffix = at.event.substring(Definition.prefix.length);
     Object.setPrototypeOf(at, Definition.prototype);
     try {
       at.upgrade?.();
@@ -61,19 +86,15 @@ class EventRegistry {
         return oldPrefix;
   }
 
-  addUnknownEvents(event, at) {
+  #addUnknownEvents(event, at) {
     (this.#unknownEvents[event] ??= []).push(at);
   }
 
-  upgradeUnknownEvents(prefix, Definition) {
-    for (let event in this.#unknownEvents) {
-      if (event.startsWith(prefix)) {
-        for (let at of this.#unknownEvents[event]) {
-          const name = at.name.split(":")[0];    //todo this is naive, we need to check for ":"
-          this.#upgradeAttribute(at, name.substring(Definition.prefix.length), Definition, name);
-        }
-      }
-    }
+  #upgradeUnknownEvents(prefix, Definition) {
+    for (let event in this.#unknownEvents)
+      if (event.startsWith(prefix))
+        for (let at of this.#unknownEvents[event])
+          this.#upgradeAttribute(at, Definition);
   }
 }
 

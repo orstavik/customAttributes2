@@ -64,57 +64,45 @@ function deprecate(name) {
       //3. passive? This should probably be a special first filter ":passive". This will add a special event listener with the passive argument set to true on the target node. This would also need to be cleaned up.
     }
   }
-
-  function getNativeEventName(at) {
-    const parts = at.name.split(":");
-    const isNativeProperty = ("on" + parts[0]) in HTMLElement.prototype;
-    return parts.length > 1 && isNativeProperty && parts[0];
-  }
-
-  //todo 1. we need to ensure that the native event names are not in conflict with the given definitions.
-  //todo 2. maybe move this inside the customEvents.upgrade method too??
-  function getEventName(at) {
-    const parts = at.name.split(":");
-    if (parts.length < 2)
-      return;
-    if (parts.length === 2 && parts[0] === "")
-      return parts[1];
-    return parts[0];
-  }
-
   //todo syntax: ":timeout50:log:bob"  "click:log:bob"  "click:log:open:"
   //todo what do we need? once? filter as default defaultAction? last filter as defaultAction?
 
-  //todo if we have two ::, then the thing after the double colon is marked as a defaultAction. That makes sense
-  //todo if we have a : infront of the attribute, then it is a once
-  //step 1, see if the
+  function nativeEventUpgrade(at, res) {      //todo .prefix doesn't work as it is a special getter/setter in the Attr class.
+    at.prefix = res.event;          // so, this could maybe be done as a special customAttribute class definition?
+    at.suffix = "";
+    addEventListenerOG.call(at.ownerElement, at.event, nativeRerouteListener);
+  }
 
   function newAttribute(at) {
-    let text = at.name;
-    if (at.name.indexOf(":") === -1)
+    const res = customEvents.parse(at.name);
+    if (!res)
       return;
-    if (text.endsWith(":")) {
-      text = text.substring(0, -1);
-      at.endColon = true;
-    }
-    if (text.startsWith(":")) {
-      text = text.substring(1);
-      at.once = true;
-    }
-    [text, defaultAction, error] = text.split("::");
-    if (error)
-      throw "cannot have two sets of '::' in a custom attribute.";
-    if (defaultAction)
-      at.defaultAction = defaultAction;
-    const [event, ...filter] = text.split(":");
-    at.filterFunction = filter.join(":") || undefined;
-    at.isNativeEvent = ("on" + event) in HTMLElement.prototype;
+    Object.assign(at, res);
     if (at.isNativeEvent) {
-      at.prefix = event;                               //so, this could maybe be done as a special customAttribute class definition?
-      addEventListenerOG.call(at.ownerElement, event, nativeRerouteListener);
-    }
-    customEvents.upgrade(at, event, at.isNativeEvent);
+      nativeEventUpgrade(at, res);
+    } else
+      customEvents.upgrade(at, at.event);
   }
+
+  // class NativeCustomAttribute extends Attr {
+  //   upgrade() {
+  //     addEventListenerOG.call(this.ownerElement, this.prefix, nativeRerouteListener);
+  //   }
+  //   get prefix(){
+  //     return this.name.split(":")[0 or 1];
+  //   }
+
+  //   destructor() {
+  //     for (let o of this.ownerElement.attributes)
+  //       if (this.prefix === o.prefix && o !== this)
+  //         return;
+  //     removeEventListenerOG.call(this.ownerElement, this.prefix, nativeRerouteListener);
+  //   }
+  //
+  //   static make(event) {
+  //     return ("on" + event) in HTMLElement.prototype && this;
+  //   }
+  // }
 
   function removeAttribute(at) {
     if (at.isNativeEvent && ![...at.ownerElement.attributes].find(o => o !== at && o.isNativeEvent && at.prefix === o.prefix))

@@ -5,7 +5,7 @@
 <script src="../src/virtualEventLoop.js"></script>
 
 
-<h1 timeout2000:log:bob>hello click:log:sunshine</h1>
+<h1 timeout500:log:bob>hello click:log:sunshine</h1>
 <script>
   customEventFilters.define("log", e=> console.log(e.type));
   customEventFilters.define("bob", e=> console.log("bob"));
@@ -17,11 +17,11 @@
       console.log(this.filterFunction);
       console.log(this.ownerElement);
       setTimeout(() => {
-        this.value = "called";
+        this.ownerElement.setAttribute(this.name,  "called");
         customEventFilters.callFilter(this, new Event(this.constructor.prefix));
-        this.value = "done";
+        this.value = "done"; //todo this will not trigger the changeCallback()?!
         //this.ownerElement.removeAttribute(this.name); //todo this should be some kind of syntactic structure I think
-      }, this.constructor.suffix);
+      }, this.suffix);
     }
     changeCallback(oldValue){
       console.log(oldValue, this.value);
