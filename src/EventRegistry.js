@@ -4,6 +4,7 @@ function nativeRerouteListener(e) {
   e.composedPath()[0].dispatchEvent(e);
 }
 
+//todo make this into two different type of native events, the bubbling/propagating ones, and the non-bubbling individual target ones.
 function makeNativeEventAttribute(name) {
   const Class = class NativeEventAttribute extends Attr {
     upgrade() {
@@ -87,11 +88,17 @@ class EventRegistry {
         return this[def];
   }
 
-  upgrade(at) {
-    const Definition = this.find(at.event);
-    Definition ?
-      this.#upgradeAttribute(at, Definition) :
-      (this.#unknownEvents[at.event] ??= []).push(at);        //todo dict pointing to a weak array
+  upgrade(...attrs) {
+    for (let at of attrs) {
+      const res = customEvents.parse(at.name);
+      if (!res)
+        return;
+      Object.assign(at, res);
+      const Definition = this.find(at.event);
+      Definition ?
+        this.#upgradeAttribute(at, Definition) :
+        (this.#unknownEvents[at.event] ??= []).push(at);        //todo dict pointing to a weak array
+    }
   }
 
   #upgradeAttribute(at, Definition) {

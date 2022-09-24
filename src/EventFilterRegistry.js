@@ -94,6 +94,8 @@ class EventFilterRegistry {
   //     at.ownerElement.removeAttribute(at.name);
   // }
 
+  //todo
+  // 3. passive? This should probably be a special first filter ":passive". This will add a special event listener with the passive argument set to true on the target node. This would also need to be cleaned up.
   callFilter(at, event){
     // if (at.defaultAction)
     //   return this.callDefaultActionAttr(at, event);
