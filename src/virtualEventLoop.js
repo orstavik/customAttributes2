@@ -54,13 +54,13 @@ function deprecate(name) {
       const {target, event} = eventLoop[0];
       for (let t = target; t; t = t.assignedSlot || t.parentElement || t.parentNode?.host){
         for (let attr of t.attributes)
-          if (attr.event === event.type)       //todo if we use the :prefix:filter, then this will be skipped.
+          if (attr.event === event.type)
             customEventFilters.callFilter(attr, event);
       }
+      //todo if the event.defaultAction, then call that function.
+      //todo if the
       eventLoop.shift();
       //todo call the filter functions from the customEventFilter!
-      //1. if the custom attribute ends with a ":" then it is either a default action, or a sync action?
-      //2. once? How to mark once event listeners? should we add them as ":" at the beginning?
       //3. passive? This should probably be a special first filter ":passive". This will add a special event listener with the passive argument set to true on the target node. This would also need to be cleaned up.
     }
   }

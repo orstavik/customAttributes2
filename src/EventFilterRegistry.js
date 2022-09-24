@@ -85,8 +85,21 @@ class EventFilterRegistry {
     return filters.length === 1 ? this.findAndBind(filters[0]) : this.chain(filters, key);
   }
 
+  // callFilterWithDefaultActionOnTheDefaultAttr(at, event){
+  //   //todo
+  //   if(event.defaultAction || event.defaultPrevented)
+  //     return;
+  //   const res = this.getFilterFunction(at.filterFunction)?.call(at, event);
+  //   if(at.once)
+  //     at.ownerElement.removeAttribute(at.name);
+  // }
+
   callFilter(at, event){
+    // if (at.defaultAction)
+    //   return this.callDefaultActionAttr(at, event);
     this.getFilterFunction(at.filterFunction)?.call(at, event);
+    if(at.once)
+      at.ownerElement.removeAttribute(at.name);
   }
 }
 window.customEventFilters = new EventFilterRegistry();
