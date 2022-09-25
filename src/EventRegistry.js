@@ -25,42 +25,61 @@ class NativeBubblingAttribute extends Attr {
   }
 
   static subclass(prefix) {
-    if (!this.bubblingEvent(prefix))
-      return;
-    const Class = class NativeBubblingAttributeImpl extends NativeBubblingAttribute {
-    };
-    Class.prefix = prefix;
-    return Class;
+    if (this.bubblingEvent(prefix))
+      return class NativeBubblingAttributeImpl extends NativeBubblingAttribute {
+        static get prefix() {
+          return prefix;
+        }
+      };
   }
 }
 
 class NativeNonBubblingAttribute extends Attr {
-
-  upgrade() {
-    window.addEventListener(this.constructor.prefix, this.reroute);
-  }
-
-  reroute(e) {
-    for (let at of customEvents.getList(this.constructor.prefix))
-      at.ownerElement.isConnected && customEventFilters.callFilter(at, e);
-    //todo if the getList is empty, then we want to remove the listener. If not, it isn't that critical.
-  }
-
-  get suffix() {
-    return "";
-  }
 
   static nonBubblingEvent(prefix) {
     return `on${prefix}` in window && !(`on${prefix}` in HTMLElement.prototype);
   }
 
   static subclass(prefix) {
-    if (!this.nonBubblingEvent(prefix))
-      return;
-    const Class = class NativeNonBubblingAttributeImpl extends NativeNonBubblingAttribute {
-    };
-    Class.prefix = prefix;
-    return Class;
+    if (this.nonBubblingEvent(prefix))
+      return class NativeNonBubblingAttributeImpl extends Attr {
+        upgrade() {
+          window.addEventListener(prefix, this.constructor.reroute);
+        }
+
+        static reroute(e) {
+          for (let at of customEvents.getList(prefix))
+            at.ownerElement.isConnected && customEventFilters.callFilter(at, e);
+          if (customEvents.getList(prefix).length === 0)
+            window.removeEventListener(prefix, this.reroute);
+        }
+
+        static get prefix() {
+          return prefix;
+        }
+
+        get suffix() {
+          return "";
+        }
+      };
+  }
+}
+
+class UnsortedWeakArray extends Array {
+  push(el) {
+    super.push(new WeakRef(el));
+  }
+
+  * [Symbol.iterator]() {
+    for (let i = 0; i < this.length; i++) {
+      let ref = this[i];
+      const res = ref.deref();
+      if (res === undefined) {
+        this[i--] = this[this.length - 1];
+        this.pop();
+      } else
+        yield res;
+    }
   }
 }
 
@@ -94,7 +113,7 @@ class EventRegistry {
     return res;
   }
 
-  #unknownEvents = {};
+  #unknownEvents = [];
   #allAttributes = {};
 
   define(prefix, Class) {
@@ -129,15 +148,15 @@ class EventRegistry {
   upgrade(...attrs) {
     for (let at of attrs) {
       const res = customEvents.parse(at.name);
+      (this.#allAttributes[res ? res.event : at.name] ??= new UnsortedWeakArray()).push(at);
       if (!res)
-        return (this.#allAttributes[at.name] ??= []).push(at); //todo dict pointing to a weakArray
-      (this.#allAttributes[at.event] ??= []).push(at);         //todo dict pointing to a weakArray
+        return this.#unknownEvents.push(at.name);
       Object.assign(at, res);
       const Definition = this.find(at.event);
       Definition ?
         this.#upgradeAttribute(at, Definition) :
-        (this.#unknownEvents[at.event] ??= []).push(at);  //todo dict pointing to a weak array
-    }                                                     //todo convert the #unknownEvents into just an array of strings, as we now have simpler structures.
+        this.#unknownEvents.push(at.event);
+    }
   }
 
   #upgradeAttribute(at, Definition) {
@@ -168,9 +187,9 @@ class EventRegistry {
   }
 
   #upgradeUnknownEvents(prefix, Definition) {
-    for (let event in this.#unknownEvents)
+    for (let event of this.#unknownEvents)
       if (event.startsWith(prefix)) {
-        for (let at of this.#unknownEvents[event])
+        for (let at of this.#allAttributes[event])
           this.#upgradeAttribute(at, Definition);
         delete this.#upgradeUnknownEvents[event];
       }
@@ -185,7 +204,7 @@ class EventRegistry {
       return;
     while (this.#eventLoop.length) {
       const {target, event} = this.#eventLoop[0];
-      if (target instanceof Element) {  //todo there is a bug from the parse.js registry so that the window.HTMLElement is given a new temporary value.
+      if (target instanceof Element) {  //todo there is a bug from the ElementObserver.js so that instanceof HTMLElement doesn't work.
         for (let t = target; t; t = t.assignedSlot || t.parentElement || t.parentNode?.host) {
           for (let attr of t.attributes)
             if (attr.event === event.type)

@@ -1,0 +1,57 @@
+<script>
+
+  class SortedWeakArray extends Array {
+    push(el) {
+      super.push(new WeakRef(el));
+    }
+
+    * [Symbol.iterator]() {
+      for (let i = 0; i < this.length; i++) {
+        let ref = this[i];
+        const res = ref.deref();
+        if ("alice" in res) {          // if (res === undefined) {
+          for (let j = i--, stop = this.length-1;j < stop;)
+            this[j] = this[++j];
+          this.pop();
+        } else
+          yield res;
+      }
+    }
+  }
+
+  class UnsortedWeakArray extends Array {
+    push(el) {
+      super.push(new WeakRef(el));
+    }
+
+    * [Symbol.iterator]() {
+      for (let i = 0; i < this.length; i++) {
+        let ref = this[i];
+        const res = ref.deref();
+        if ("alice" in res) {           // if (res === undefined) {
+          this[i--] = this[this.length - 1];
+          this.pop();
+        } else
+          yield res;
+      }
+    }
+  }
+
+  const wa = new UnsortedWeakArray();
+  wa.push({alice: "alice"});
+  wa.push({bob: "bob"});
+  wa.push({candy: "candy"});
+  for (let obj of wa)
+    console.log(obj);
+  for (let obj of wa)
+    console.log(obj);
+
+  const wa2 = new SortedWeakArray();
+  wa2.push({alice: "alice"});
+  wa2.push({bob: "bob"});
+  wa2.push({candy: "candy"});
+  for (let obj of wa2)
+    console.log(obj);
+  for (let obj of wa2)
+    console.log(obj);
+</script>
