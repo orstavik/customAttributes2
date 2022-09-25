@@ -13,7 +13,7 @@ class NativeBubblingAttribute extends Attr {
   reroute(e) {
     // e.preventDefault(); // if dispatchEvent propagates sync, native defaultActions can still be used.
     e.stopImmediatePropagation();
-    e.composedPath()[0].dispatchEvent(e);
+    customEvents.dispatch(e, e.composedPath()[0]);
   }
 
   get suffix() {
@@ -34,43 +34,35 @@ class NativeBubblingAttribute extends Attr {
   }
 }
 
-// class NativeNonBubblingAttribute extends Attr {
-//
-//   upgrade() {
-//     this.constructor.list.push(this);
-//     if (this.constructor.list.length === 1)
-//       window.addEventListener(this.constructor.prefix, this.reroute);
-//   }
-//
-//   destructor() {
-//     this.constructor.list.splice(this.constructor.list.indexOf(this), 1);
-//     if (this.constructor.list.length === 0)
-//       window.removeEventListener(this.constructor.prefix, this.reroute);
-//   }
-//
-//   reroute(e) {
-//     for (let at of this.constructor.list)
-//       customEventFilters.callFilter(at, e);
-//   }
-//
-//   get suffix() {
-//     return "";
-//   }
-//
-//   static nonBubblingEvent(prefix) {
-//     return `on${prefix}` in window && !(`on${prefix}` in HTMLElement.prototype);
-//   }
-//
-//   static subclass(prefix) {
-//     if (!this.nonBubblingEvent(prefix))
-//       return;
-//     const Class = class NativeNonBubblingAttributeImpl extends NativeNonBubblingAttribute {
-//     };
-//     Class.prefix = prefix;
-//     Class.list = [];
-//     return Class;
-//   }
-// }
+class NativeNonBubblingAttribute extends Attr {
+
+  upgrade() {
+    window.addEventListener(this.constructor.prefix, this.reroute);
+  }
+
+  reroute(e) {
+    for (let at of customEvents.getList(this.constructor.prefix))
+      at.ownerElement.isConnected && customEventFilters.callFilter(at, e);
+    //todo if the getList is empty, then we want to remove the listener. If not, it isn't that critical.
+  }
+
+  get suffix() {
+    return "";
+  }
+
+  static nonBubblingEvent(prefix) {
+    return `on${prefix}` in window && !(`on${prefix}` in HTMLElement.prototype);
+  }
+
+  static subclass(prefix) {
+    if (!this.nonBubblingEvent(prefix))
+      return;
+    const Class = class NativeNonBubblingAttributeImpl extends NativeNonBubblingAttribute {
+    };
+    Class.prefix = prefix;
+    return Class;
+  }
+}
 
 class EventRegistry {
 
@@ -103,6 +95,7 @@ class EventRegistry {
   }
 
   #unknownEvents = {};
+  #allAttributes = {};
 
   define(prefix, Class) {
     const overlapDefinition = this.prefixOverlaps(prefix);
@@ -125,7 +118,7 @@ class EventRegistry {
   find(name) {
     if (this[name])
       return this[name];
-    const native = NativeBubblingAttribute.subclass(name) /*|| NativeNonBubblingAttribute.subclass(name)*/;
+    const native = NativeBubblingAttribute.subclass(name) || NativeNonBubblingAttribute.subclass(name);
     if (native)
       return this[name] = native;
     for (let def in this)
@@ -137,13 +130,14 @@ class EventRegistry {
     for (let at of attrs) {
       const res = customEvents.parse(at.name);
       if (!res)
-        return;
+        return (this.#allAttributes[at.name] ??= []).push(at); //todo dict pointing to a weakArray
+      (this.#allAttributes[at.event] ??= []).push(at);         //todo dict pointing to a weakArray
       Object.assign(at, res);
       const Definition = this.find(at.event);
       Definition ?
         this.#upgradeAttribute(at, Definition) :
-        (this.#unknownEvents[at.event] ??= []).push(at);        //todo dict pointing to a weak array
-    }
+        (this.#unknownEvents[at.event] ??= []).push(at);  //todo dict pointing to a weak array
+    }                                                     //todo convert the #unknownEvents into just an array of strings, as we now have simpler structures.
   }
 
   #upgradeAttribute(at, Definition) {
@@ -163,6 +157,10 @@ class EventRegistry {
     }
   }
 
+  getList(name) {
+    return this.#allAttributes[name];
+  }
+
   prefixOverlaps(newPrefix) {
     for (let oldPrefix in this)
       if (newPrefix.startsWith(oldPrefix) || oldPrefix.startsWith(newPrefix))
@@ -171,9 +169,36 @@ class EventRegistry {
 
   #upgradeUnknownEvents(prefix, Definition) {
     for (let event in this.#unknownEvents)
-      if (event.startsWith(prefix))
+      if (event.startsWith(prefix)) {
         for (let at of this.#unknownEvents[event])
           this.#upgradeAttribute(at, Definition);
+        delete this.#upgradeUnknownEvents[event];
+      }
+  }
+
+  //todo this should be in an EventLoop class actually. And this class could also hold the callFilter methods.
+  #eventLoop = [];
+
+  dispatch(event, target) {
+    this.#eventLoop.push({target, event});
+    if (this.#eventLoop.length > 1)
+      return;
+    while (this.#eventLoop.length) {
+      const {target, event} = this.#eventLoop[0];
+      if (target instanceof Element) {  //todo there is a bug from the parse.js registry so that the window.HTMLElement is given a new temporary value.
+        for (let t = target; t; t = t.assignedSlot || t.parentElement || t.parentNode?.host) {
+          for (let attr of t.attributes)
+            if (attr.event === event.type)
+              customEventFilters.callFilter(attr, event);
+        }
+      } else if (target instanceof Attr) {                     //target is a single attribute, then call only that attribute.
+        customEventFilters.callFilter(target, event);
+      } else if (!target) {                                    //there is no target, then broadcast to all attributes with that name
+        for (let attr of this.#allAttributes[event.type])
+          customEventFilters.callFilter(attr, event);
+      }
+      this.#eventLoop.shift();
+    }
   }
 }
 

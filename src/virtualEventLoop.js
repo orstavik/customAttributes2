@@ -10,7 +10,7 @@ function deprecate(name) {
   }
 }
 
-(function (Element_proto, EventTarget_proto, documentCreateAttributeOG,) {
+(function (Element_proto, documentCreateAttributeOG,) {
   const removeAttrOG = Element_proto.removeAttribute;
   const getAttrNodeOG = Element_proto.getAttributeNode;
   const setAttributeNodeOG = Element_proto.setAttributeNode;
@@ -26,27 +26,12 @@ function deprecate(name) {
   Element.prototype.removeAttributeNodeNS = deprecate("Element.removeAttributeNodeNS");
   document.createAttribute = deprecate("document.createAttribute");
 
-  let eventLoop = [];
-  EventTarget_proto.dispatchEvent = function dispatchEvent(event) {
-    eventLoop.push({target: this, event});
-    if (eventLoop.length > 1)
-      return;
-    while (eventLoop.length) {
-      const {target, event} = eventLoop[0];
-      for (let t = target; t; t = t.assignedSlot || t.parentElement || t.parentNode?.host) {
-        for (let attr of t.attributes)
-          if (attr.event === event.type)
-            customEventFilters.callFilter(attr, event);
-      }
-      eventLoop.shift();
-    }
-  }
-
   Element_proto.setAttribute = function (name, value) {
     if (this.hasAttribute(name)) {
       const at = getAttrNodeOG.call(this, name);
       const oldValue = at.value;
-      at.value = value;
+      // if (oldValue !== undefined && value !== undefined) //todo uncomment this when we have the test set, it should work.
+        at.value = value;
       at.changeCallback?.(oldValue);
     } else {
       const at = documentCreateAttributeOG.call(document, name);
@@ -62,6 +47,6 @@ function deprecate(name) {
     getAttrNodeOG.call(this, name).destructor?.();
     removeAttrOG.call(this, name);
   };
-})(Element.prototype, EventTarget.prototype, document.createAttribute);
+})(Element.prototype, document.createAttribute);
 
 ElementObserver.end(el => customEvents.upgrade(...el.attributes));
