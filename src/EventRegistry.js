@@ -1,30 +1,76 @@
-function nativeRerouteListener(e) {
-  // e.preventDefault(); // if dispatchEvent propagates sync, native defaultActions can still be used.
-  e.stopImmediatePropagation();
-  e.composedPath()[0].dispatchEvent(e);
+class NativeBubblingAttribute extends Attr {
+  upgrade() {
+    this.ownerElement.addEventListener(this.constructor.prefix, this.reroute);
+  }
+
+  destructor() {
+    for (let o of this.ownerElement.attributes)
+      if (this.constructor.prefix === o.constructor.prefix && o !== this)
+        return;
+    this.ownerElement.removeEventListener(this.constructor.prefix, this.reroute);
+  }
+
+  reroute(e) {
+    // e.preventDefault(); // if dispatchEvent propagates sync, native defaultActions can still be used.
+    e.stopImmediatePropagation();
+    e.composedPath()[0].dispatchEvent(e);
+  }
+
+  get suffix() {
+    return "";
+  }
+
+  static bubblingEvent(prefix) {
+    return `on${prefix}` in HTMLElement.prototype && `on${prefix}` in window;
+  }
+
+  static subclass(prefix) {
+    if (!this.bubblingEvent(prefix))
+      return;
+    const Class = class NativeBubblingAttributeImpl extends NativeBubblingAttribute {
+    };
+    Class.prefix = prefix;
+    return Class;
+  }
 }
 
-//todo make this into two different type of native events, the bubbling/propagating ones, and the non-bubbling individual target ones.
-function makeNativeEventAttribute(name) {
-  const Class = class NativeEventAttribute extends Attr {
-    upgrade() {
-      this.ownerElement.addEventListener(name, nativeRerouteListener);
-    }
-
-    destructor() {
-      for (let o of this.ownerElement.attributes)
-        if (name === o.constructor.prefix && o !== this)
-          return;
-      this.ownerElement.removeEventListener(name, nativeRerouteListener);
-    }
-
-    get suffix() {
-      return "";
-    }
-  };
-  Class.prefix = name;
-  return Class;
-}
+// class NativeNonBubblingAttribute extends Attr {
+//
+//   upgrade() {
+//     this.constructor.list.push(this);
+//     if (this.constructor.list.length === 1)
+//       window.addEventListener(this.constructor.prefix, this.reroute);
+//   }
+//
+//   destructor() {
+//     this.constructor.list.splice(this.constructor.list.indexOf(this), 1);
+//     if (this.constructor.list.length === 0)
+//       window.removeEventListener(this.constructor.prefix, this.reroute);
+//   }
+//
+//   reroute(e) {
+//     for (let at of this.constructor.list)
+//       customEventFilters.callFilter(at, e);
+//   }
+//
+//   get suffix() {
+//     return "";
+//   }
+//
+//   static nonBubblingEvent(prefix) {
+//     return `on${prefix}` in window && !(`on${prefix}` in HTMLElement.prototype);
+//   }
+//
+//   static subclass(prefix) {
+//     if (!this.nonBubblingEvent(prefix))
+//       return;
+//     const Class = class NativeNonBubblingAttributeImpl extends NativeNonBubblingAttribute {
+//     };
+//     Class.prefix = prefix;
+//     Class.list = [];
+//     return Class;
+//   }
+// }
 
 class EventRegistry {
 
@@ -53,8 +99,6 @@ class EventRegistry {
     const [event, ...filter] = text.split(":");
     res.filterFunction = filter.join(":") || undefined;
     res.event = event;
-    if (("on" + res.event) in HTMLElement.prototype)
-      res.isNativeEvent = true;
     return res;
   }
 
@@ -81,8 +125,9 @@ class EventRegistry {
   find(name) {
     if (this[name])
       return this[name];
-    if (("on" + name) in HTMLElement.prototype)
-      return this[name] = makeNativeEventAttribute.call(this, name); //todo make this into a different register.
+    const native = NativeBubblingAttribute.subclass(name) /*|| NativeNonBubblingAttribute.subclass(name)*/;
+    if (native)
+      return this[name] = native;
     for (let def in this)
       if (name.startsWith(def))
         return this[def];
