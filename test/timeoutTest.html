@@ -5,11 +5,10 @@
 <script src="../src/virtualEventLoop.js"></script>
 
 
-//todo do :timeout500:log:bob to make it a once call?
-<h1 timeout500:log:bob>hello click:log:sunshine</h1>
+<h1 :timeout50:log:bob>hello click:log:sunshine</h1>
 <script>
-  customEventFilters.define("log", e=> console.log(e.type));
-  customEventFilters.define("bob", e=> console.log("bob"));
+  customEventFilters.define("log", e => console.log(e.type));
+  customEventFilters.define("bob", e => console.log("bob"));
   customEvents.define("timeout", class MyClick extends Attr {
     upgrade() {
       console.log(this);
@@ -18,16 +17,18 @@
       console.log(this.filterFunction);
       console.log(this.ownerElement);
       setTimeout(() => {
-        this.ownerElement.setAttribute(this.name,  "called");
+        this.ownerElement.setAttribute(this.name, "called");
         customEvents.dispatch(new Event(this.constructor.prefix), this); //here we must use the new dispatch system, as we are doing a single attr propagation.
         this.value = "done"; //todo for now only setAttribute triggers the changeCallback(), attr.value = ... does not trigger changeCallback.
         //this.ownerElement.removeAttribute(this.name); //todo this should be some kind of syntactic structure I think
       }, this.suffix);
     }
-    changeCallback(oldValue){
+
+    changeCallback(oldValue) {
       console.log(oldValue, this.value);
     }
-    destructor(){
+
+    destructor() {
       console.log("destructing", this);
     }
   });

@@ -17,7 +17,8 @@
 
 <script type="module">
   customEventFilters.define("co", function (e, suffix)  {
-    // this.ownerElement.dispatchEvent(new Event(suffix.substring(1)));  //todo in the filters, I think we wish to directly dispatch via the new event dispatch system.
+    // this.ownerElement.dispatchEvent(new Event(suffix.substring(1)));
+    // todo in the filters, I think we wish to directly dispatch via the new event dispatch system.
     customEvents.dispatch(new Event(suffix.substring(1)), this.ownerElement);
   });
   customEventFilters.define("at", function (e, suffix){

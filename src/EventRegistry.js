@@ -1,3 +1,29 @@
+//todo if we have two ::, then the thing after the double colon is marked as a defaultAction. That makes sense
+//todo if we have a : infront of the attribute, then it is a once
+//todo this parse, is it possible to make a more efficient version? One based on a super class with caching getters?
+Object.defineProperties(Attr.prototype, {
+  "once": {
+    get: function () {
+      return this.name[0] === ":";
+    }
+  }, "event": {
+    get: function () {
+      const parts = this.name.split(":");
+      return parts[0] || parts[1];
+    }
+  }, "filterFunction": {
+    get: function () {
+      const res = this.name.split("::")[0].substring(this.once + this.event.length);
+      if (res.length > 1)
+        return res.substring(1);
+    }
+  }, "defaultAction": {
+    get: function () {
+      return this.name.split("::")[1];
+    }
+  }
+});
+
 class NativeBubblingAttribute extends Attr {
   upgrade() {
     this.ownerElement.addEventListener(this.constructor.prefix, this.reroute);
@@ -84,35 +110,6 @@ class UnsortedWeakArray extends Array {
 
 class EventRegistry {
 
-  //todo if we have two ::, then the thing after the double colon is marked as a defaultAction. That makes sense
-  //todo if we have a : infront of the attribute, then it is a once
-  //todo this parse, is it possible to make a more efficient version? One based on a super class with caching getters?
-  parse(text) {
-    let res = {};
-    if (text.indexOf(":") === -1)
-      return;
-    if (text.endsWith(":")) {
-      text = text.substring(0, -1);
-      res.endColon = true;
-    }
-    if (text.startsWith(":")) {
-      text = text.substring(1);
-      res.once = true;
-    }
-    let defaultAction, error;
-    [text, defaultAction, error] = text.split("::");
-    if (error) {
-      //todo
-      console.warn("cannot have two sets of '::' in a custom attribute.");
-    }
-    if (defaultAction)
-      res.defaultAction = defaultAction;
-    const [event, ...filter] = text.split(":");
-    res.filterFunction = filter.join(":") || undefined;
-    res.event = event;
-    return res;
-  }
-
   #unknownEvents = [];
   #allAttributes = {};
 
@@ -147,11 +144,7 @@ class EventRegistry {
 
   upgrade(...attrs) {
     for (let at of attrs) {
-      const res = customEvents.parse(at.name);
-      (this.#allAttributes[res ? res.event : at.name] ??= new UnsortedWeakArray()).push(at);
-      if (!res)
-        return this.#unknownEvents.push(at.name);
-      Object.assign(at, res);
+      (this.#allAttributes[at.event] ??= new UnsortedWeakArray()).push(at);
       const Definition = this.find(at.event);
       Definition ?
         this.#upgradeAttribute(at, Definition) :

@@ -1,6 +1,4 @@
 class EventFilterRegistry {
-  #anonCount = 0;
-
   define(prefix, Function) {
     const usedFilterName = this.getName(Function);
     if (usedFilterName === prefix)
@@ -17,15 +15,6 @@ class EventFilterRegistry {
     for (let name in this)
       if (this[name] === Function)
         return name;
-  }
-
-  defineAnonymous(Function) {
-    let name = this.getName(Function);
-    if (name)
-      return name;
-    name = "anonymous" + this.#anonCount++;
-    this[name] = Function;
-    return name;
   }
 
   findPrefix(name) {

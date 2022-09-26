@@ -18,22 +18,23 @@
   <script expected>["Hello sunshine click"]</script>
 </test-html>
 <test-html test="onlineTest.html">
-  <script expected>[["online", {"filterFunction": "log", "event": "online", "suffix": ""}]]</script>
+  <script expected>[["online", {"suffix": ""}]]</script>
 </test-html>
 <test-html test="syncTest.html">
   <script expected>["click"]</script>
 </test-html>
 <test-html test="timeoutTest.html">
   <script expected>[
-    {"filterFunction": "log:bob", "event": "timeout500", "suffix": "500"},
+    {"suffix": "50"},
     "timeout",
-    "500",
+    "50",
     "log:bob",
     {},
     [null, ""],
     ["", "called"],
     "timeout",
-    "bob"
+    "bob",
+    ["destructing", {"suffix": "50"}]
   ]</script>
 </test-html>
 <test-html test="upgradeTest.html">
