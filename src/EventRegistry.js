@@ -48,9 +48,8 @@ class NativeNonBubblingAttribute extends Attr {
         }
 
         static reroute(e) {
-          for (let at of customEvents.getList(prefix))
-            at.ownerElement.isConnected && customEventFilters.callFilter(at, e);
-          if (customEvents.getList(prefix).length === 0)
+          customEvents.dispatch(e);
+          if (!customEvents.count(e.type))
             window.removeEventListener(prefix, this.reroute);
         }
 
@@ -74,7 +73,7 @@ class UnsortedWeakArray extends Array {
     for (let i = 0; i < this.length; i++) {
       let ref = this[i];
       const res = ref.deref();
-      if (res === undefined) {
+      if (res === undefined) {           //or if res.ownerElement === null, then it has been removed from the DOM.
         this[i--] = this[this.length - 1];
         this.pop();
       } else
@@ -87,6 +86,7 @@ class EventRegistry {
 
   //todo if we have two ::, then the thing after the double colon is marked as a defaultAction. That makes sense
   //todo if we have a : infront of the attribute, then it is a once
+  //todo this parse, is it possible to make a more efficient version? One based on a super class with caching getters?
   parse(text) {
     let res = {};
     if (text.indexOf(":") === -1)
@@ -176,12 +176,12 @@ class EventRegistry {
     }
   }
 
-  getList(name) {
-    return this.#allAttributes[name];
+  count(name) {
+    return this.#allAttributes[name].length;
   }
 
   prefixOverlaps(newPrefix) {
-    for (let oldPrefix in this)
+    for (let oldPrefix in this) //todo prefix in this is a bad iteration that causes bugs.
       if (newPrefix.startsWith(oldPrefix) || oldPrefix.startsWith(newPrefix))
         return oldPrefix;
   }
@@ -196,6 +196,8 @@ class EventRegistry {
   }
 
   //todo this should be in an EventLoop class actually. And this class could also hold the callFilter methods.
+  //todo 1. the event loop class will make things a little simpler.
+  //todo 2. then we need to work with the defaultAction methods in the callFilter methods.
   #eventLoop = [];
 
   dispatch(event, target) {
