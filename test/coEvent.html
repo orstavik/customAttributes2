@@ -1,0 +1,70 @@
+<script src="https://cdn.jsdelivr.net/gh/orstavik/parse@v1.0.2/parse.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
+<script src="../src/EventRegistry.js"></script>
+<script src="../src/EventFilterRegistry.js"></script>
+<script src="../src/virtualEventLoop.js"></script>
+
+
+
+
+
+<script src="https://cdn.jsdelivr.net/gh/orstavik/customEvents@0.1.4/src/customEventsSync.js"></script>
+<script src="../../src/customAttributes.js"></script>
+
+
+<style>
+    [toggle]:not([open]) > :not(h1) {
+        display: none;
+    }
+</style>
+
+<div toggle:at_open>
+    <h1 click:co_toggle>hello</h1>
+    <p>sunshine</p>
+</div>
+
+<script type="module">
+
+    function getTargets(node) {
+        const res = [node];
+        let next = node;
+        while (next = next.getRootNode()?.host)
+            res.unshift(next);
+        return res;
+    }
+
+    function coEvent(e) {
+        const relatedTarget = e.relatedTarget;
+        const clone = new e.constructor(this.value, e);
+        Object.defineProperty(clone, "relatedTarget", {
+            get() {  //todo this leaks elements out of closed shadowDoms
+                return relatedTarget;
+            }
+        });
+        Object.defineProperty(clone, "relatedTargetQueries", {
+            get() {
+                return getTargets(relatedTarget).map(el => el.tagName.toLowerCase() + (el.id ? "#" + el.id : ""));
+            }
+        });
+        return clone;
+    }
+
+    function doToggle(e) {
+        const target = e.target;
+        const value = e.value;   //is it .value property?
+        target.hasAttribute(this.value) ?
+            target.removeAttribute(this.value) :
+            target.setAttribute(this.value, "");
+    }
+
+    customEventFilters.define("co", coEvent);
+
+    customEventFilters.define("at", doToggle);
+
+    const h1 = document.querySelector("h1");
+    const p = document.querySelector("p");
+
+    console.log(getComputedStyle(p).display);
+    h1.click();
+    setTimeout(_ => console.log(getComputedStyle(p).display), 20);
+</script>
