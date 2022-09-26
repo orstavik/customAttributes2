@@ -21,6 +21,10 @@ Object.defineProperties(Attr.prototype, {
     get: function () {
       return this.name.split("::")[1];
     }
+  }, "suffix": {
+    get: function(){
+      return this.constructor === Attr ? '' : this.event.substring(this.constructor.prefix.length);
+    }
   }
 });
 
@@ -153,7 +157,7 @@ class EventRegistry {
   }
 
   #upgradeAttribute(at, Definition) {
-    at.suffix = at.event.substring(Definition.prefix.length);
+    // at.suffix = at.event.substring(Definition.prefix.length);
     Object.setPrototypeOf(at, Definition.prototype);
     try {
       at.upgrade?.();
@@ -206,7 +210,6 @@ class EventRegistry {
               customEventFilters.callFilter(attr, event);
         }
         if(event.defaultAction){
-          debugger
           customEventFilters.callDefaultAction(event.defaultAction, event);
           if(event.defaultAction.once)
             event.defaultAction.ownerElement.removeAttribute(event.defaultAction.name);

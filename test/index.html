@@ -18,14 +18,14 @@
   <script expected>["Hello sunshine click"]</script>
 </test-html>
 <test-html test="onlineTest.html">
-  <script expected>[["online", {"suffix": ""}]]</script>
+  <script expected>[["online", {}]]</script>
 </test-html>
 <test-html test="syncTest.html">
   <script expected>["click"]</script>
 </test-html>
 <test-html test="timeoutTest.html">
   <script expected>[
-    {"suffix": "50"},
+    {},
     "timeout",
     "50",
     "log:bob",
@@ -34,7 +34,7 @@
     ["", "called"],
     "timeout",
     "bob",
-    ["destructing", {"suffix": "50"}]
+    ["destructing", {}]
   ]</script>
 </test-html>
 <test-html test="upgradeTest.html">
