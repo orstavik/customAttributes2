@@ -5,31 +5,27 @@
 <script src="../src/virtualEventLoop.js"></script>
 
 
-<h1 :timeout50:log:bob>hello click:log:sunshine</h1>
+<h1 :timeout50:log:bob>hello :timeout50:log:bob</h1>
 <script>
   customEventFilters.define("log", e => console.log(e.type));
   customEventFilters.define("bob", e => console.log("bob"));
-  customEvents.define("timeout", class MyClick extends Attr {
+  customEvents.define("timeout", class TimeoutAttr extends Attr {
     upgrade() {
-      console.log(this);
-      console.log(this.constructor.prefix);
-      console.log(this.suffix);
-      console.log(this.filterFunction);
-      console.log(this.ownerElement);
+      //todo here we can check to see if the element has a value at startup and then do from there.
+      //todo but, for this to be freezable, from inside a shadowRoot, then we need a meta element for this one..
+      this.value = "a" + Date.now();
       setTimeout(() => {
-        this.ownerElement.setAttribute(this.name, "called");
-        customEvents.dispatch(new Event(this.constructor.prefix), this); //here we must use the new dispatch system, as we are doing a single attr propagation.
-        this.value = "done"; //todo for now only setAttribute triggers the changeCallback(), attr.value = ... does not trigger changeCallback.
-        //this.ownerElement.removeAttribute(this.name); //todo this should be some kind of syntactic structure I think
+        this.ownerElement.setAttribute(this.name, "z" + Date.now());
+        customEvents.dispatch(new Event(this.constructor.prefix), this);
       }, this.suffix);
     }
 
     changeCallback(oldValue) {
-      console.log(oldValue, this.value);
+      console.log("changing to", this.value);
     }
 
     destructor() {
-      console.log("destructing", this);
+      console.log("destructing");
     }
   });
 </script>
