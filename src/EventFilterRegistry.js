@@ -74,23 +74,29 @@ class EventFilterRegistry {
     return filters.length === 1 ? this.findAndBind(filters[0]) : this.chain(filters, key);
   }
 
-  // callFilterWithDefaultActionOnTheDefaultAttr(at, event){
-  //   //todo
-  //   if(event.defaultAction || event.defaultPrevented)
-  //     return;
-  //   const res = this.getFilterFunction(at.filterFunction)?.call(at, event);
-  //   if(at.once)
-  //     at.ownerElement.removeAttribute(at.name);
-  // }
+  callFilterWithDefaultActionOnTheDefaultAttr(at, event) {
+    //todo
+    if (event.defaultAction || event.defaultPrevented)
+      return;
+    const res = this.getFilterFunction(at.filterFunction)?.call(at, event);
+    event.defaultAction = at;
+  }
 
   //todo
   // 3. passive? This should probably be a special first filter ":passive". This will add a special event listener with the passive argument set to true on the target node. This would also need to be cleaned up.
-  callFilter(at, event){
-    // if (at.defaultAction)
-    //   return this.callDefaultActionAttr(at, event);
+  callFilter(at, event) {
+    if (at.defaultAction)
+      return this.callFilterWithDefaultActionOnTheDefaultAttr(at, event);
     this.getFilterFunction(at.filterFunction)?.call(at, event);
-    if(at.once)
+    if (at.once)
+      at.ownerElement.removeAttribute(at.name);
+  }
+
+  callDefaultAction(at, event) {
+    this.getFilterFunction(at.defaultAction)?.call(at, event);
+    if (at.once)
       at.ownerElement.removeAttribute(at.name);
   }
 }
+
 window.customEventFilters = new EventFilterRegistry();

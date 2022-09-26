@@ -1,0 +1,26 @@
+<script src="https://cdn.jsdelivr.net/gh/orstavik/parse@v1.0.2/parse.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
+<script src="../src/EventRegistry.js"></script>
+<script src="../src/EventFilterRegistry.js"></script>
+<script src="../src/virtualEventLoop.js"></script>
+
+<main click:sync:log="TopListener">
+  <div click:sync:log="BottomListener">
+    <h1 click:sync::log="DefaultActionTop">
+      <span click:sync::log="DefaultActionBottom">
+        hello sunshine
+      </span>
+    </h1>
+  </div>
+</main>
+
+<script type="module">
+  customEventFilters.define("sync", function (e) {
+    console.log("sync", this.ownerElement.tagName);
+  });
+  customEventFilters.define("log", function (e) {
+    console.log(this.value);
+  });
+
+  document.querySelector("span").click();
+</script>

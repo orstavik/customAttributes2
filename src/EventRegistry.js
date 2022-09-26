@@ -205,6 +205,12 @@ class EventRegistry {
             if (attr.event === event.type)
               customEventFilters.callFilter(attr, event);
         }
+        if(event.defaultAction){
+          debugger
+          customEventFilters.callDefaultAction(event.defaultAction, event);
+          if(event.defaultAction.once)
+            event.defaultAction.ownerElement.removeAttribute(event.defaultAction.name);
+        }
       } else if (target instanceof Attr) {                     //target is a single attribute, then call only that attribute.
         customEventFilters.callFilter(target, event);
       } else if (!target) {                                    //there is no target, then broadcast to all attributes with that name
