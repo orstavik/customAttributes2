@@ -18,7 +18,7 @@
             } catch (err) {
                 //todo this is now wrong
                 const event = new ErrorEvent(err);
-                event.defaultAction = _ => console.error(err);
+                // event.defaultAction = _ => console.error(err);
                 window.dispatchEvent(event); //todo we need to queue it using nextTick. audioRatechange
             }
         }
