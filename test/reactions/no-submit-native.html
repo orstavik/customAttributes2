@@ -1,0 +1,22 @@
+<script src="https://cdn.jsdelivr.net/gh/orstavik/parse@v1.0.2/parse.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
+<script src="../../src/EventRegistry.js"></script>
+<script src="../../src/EventFilterRegistry.js"></script>
+<script src="../../src/virtualEventLoop.js"></script>
+
+<form submit:log:no action="shouldNeverHappen.html">
+  <input type="text" name="hello" value="sunshine">
+</form>
+
+<script type="module">
+  customEventFilters.define("no", function (e) {
+    e.preventDefault();
+  });
+  customEventFilters.define("log", function (e) {
+    console.log(e.type);
+  });
+
+  const form = document.querySelector("form");
+  form.requestSubmit();
+  setTimeout(() => console.log("only sunshine"), 20);
+</script>
