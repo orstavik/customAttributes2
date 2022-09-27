@@ -12,12 +12,9 @@
   customEventFilters.define("no", function (e) {
     e.preventDefault();
   });
-
-  customEventFilters.define("log", function (e) {
+  customEventFilters.define("log", function () {
     console.log(this.value);
   });
-
   document.querySelector("span").click();
-
   setTimeout(_ => console.log("only sunshine"), 20);
 </script>
