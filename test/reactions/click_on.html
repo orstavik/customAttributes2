@@ -1,10 +1,10 @@
 <script src="https://cdn.jsdelivr.net/gh/orstavik/parse@v1.0.2/parse.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
-<script src="../src/EventRegistry.js"></script>
-<script src="../src/EventFilterRegistry.js"></script>
-<script src="../src/virtualEventLoop.js"></script>
+<script src="../../src/EventRegistry.js"></script>
+<script src="../../src/EventFilterRegistry.js"></script>
+<script src="../../src/virtualEventLoop.js"></script>
 
-<h1 click:on="sayHi">hello on-click_shift</h1>
+<h1 click:on="sayHi" auxclick:ctrl:on="sayGoodbye" contextmenu:alt:meta:on="sayHi sayGoodbye sayHi">hello on-click_shift</h1>
 
 <script type="module">
   function runMethods(at, e, target = at.ownerElement) {
@@ -25,10 +25,29 @@
   customEventFilters.define("on", function(e){
     runMethods(this, e);
   });
+  customEventFilters.define("ctrl", function(e){
+    if(!e.ctrlKey)
+      return false;
+  });
+  customEventFilters.define("meta", function(e){
+    if(!e.metaKey)
+      return false;
+  });
+  customEventFilters.define("alt", function(e){
+    if(!e.altKey)
+      return false;
+  });
 
   const h1 = document.querySelector("h1");
   h1.sayHi = function (e) {
     console.log("Hello sunshine "+ e.type);
   }.bind(h1);
+  h1.sayGoodbye = function (e) {
+    console.log("Goodbye sunshine "+ e.type);
+  }.bind(h1);
+
   h1.click();
+  h1.dispatchEvent(new MouseEvent("auxclick", {ctrlKey: true}));
+  h1.dispatchEvent(new MouseEvent("contextmenu", {altKey: true, metaKey: true}));
+  h1.dispatchEvent(new MouseEvent("auxclick", {ctrlKey: true}));
 </script>

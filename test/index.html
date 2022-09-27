@@ -1,22 +1,3 @@
-<test-html test="at_toggle.html">
-  <script expected>["none", "block"]</script>
-</test-html>
-<test-html test="click_on.html">
-  <script expected>[
-    "Hello sunshine click",
-    "Goodbye sunshine auxclick",
-    "Hello sunshine contextmenu",
-    "Goodbye sunshine contextmenu",
-    "Hello sunshine contextmenu",
-    "Goodbye sunshine auxclick"
-  ]</script>
-</test-html>
-<test-html test="click_on_simple.html">
-  <script expected>["Hello sunshine click"]</script>
-</test-html>
-<test-html test="click_once.html">
-  <script expected>["Hello sunshine click"]</script>
-</test-html>
 <test-html test="onlineTest.html">
   <script expected>[["online", {}]]</script>
 </test-html>
@@ -28,27 +9,6 @@
 </test-html>
 <test-html test="upgradeTest.html">
   <script expected>["click"]</script>
-</test-html>
-<test-html test="log.html">
-  <script expected>[
-    ["sync", "SPAN"],
-    ["sync", "DIV"],
-    "BottomListener",
-    ["sync", "MAIN"],
-    "TopListener",
-    "DefaultActionBottom"
-  ]</script>
-</test-html>
-<test-html test="no-click.html">
-  <script expected>[
-    "Hello sunshine click",
-    "only sunshine"
-  ]</script>
-</test-html><test-html test="re-click.html">
-  <script expected>[
-    "hi click",
-    "hi click"
-  ]</script>
 </test-html>
 <!-- Note!! You must load the test-html component at the end -->
 <script src="https://cdn.jsdelivr.net/gh/orstavik/TestHTML@v1.0.3/TestHTML.js"></script>
