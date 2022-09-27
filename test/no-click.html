@@ -1,0 +1,47 @@
+<script src="https://cdn.jsdelivr.net/gh/orstavik/parse@v1.0.2/parse.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
+<script src="../src/EventRegistry.js"></script>
+<script src="../src/EventFilterRegistry.js"></script>
+<script src="../src/virtualEventLoop.js"></script>
+
+<h1 click:no>
+    <span click:on="helloSunshine">hello</span>
+</h1>
+
+<script type="module">
+    function runMethods(at, e, target = at.ownerElement) {
+        for (let method of at.value.split(" ")) {
+            try {
+                if (!(method in target))
+                    throw `'.${method}' is not a function on element <${target.tagName}>. Is it a typo?`;
+                target[method](e);
+            } catch (err) {
+                //todo this is now wrong
+                const event = new ErrorEvent(err);
+                event.defaultAction = _ => console.error(err);
+                window.dispatchEvent(event); //todo we need to queue it using nextTick. audioRatechange
+            }
+        }
+    }
+
+    customEventFilters.define("no", e => e.preventDefault());
+
+    customEventFilters.define("on", function (e) {
+        runMethods(this, e);
+    });
+
+    const span = document.querySelector("span");
+    const h1 = document.querySelector("h1");
+
+    span.helloSunshine = _ => console.log("default action should not be visible")
+
+    h1.addEventListener("click", e => console.log("ooops", e.type));
+
+    span.helloSunshine = function (e) {
+        console.log("Hello sunshine " + e.type);
+    }
+
+    span.click();
+
+    setTimeout(_ => console.log("only sunshine"), 20);
+</script>
