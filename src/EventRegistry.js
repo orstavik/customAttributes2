@@ -209,7 +209,7 @@ class EventRegistry {
             if (attr.event === event.type)
               customEventFilters.callFilter(attr, event);
         }
-        if(event.defaultAction){
+        if (event.defaultAction && !event.defaultPrevented) {
           customEventFilters.callDefaultAction(event.defaultAction, event);
           if(event.defaultAction.once)
             event.defaultAction.ownerElement.removeAttribute(event.defaultAction.name);

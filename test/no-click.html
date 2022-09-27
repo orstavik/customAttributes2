@@ -5,7 +5,7 @@
 <script src="../src/virtualEventLoop.js"></script>
 
 <h1 click:no>
-    <span click:on="helloSunshine">hello</span>
+    <span click::on="helloSunshine">hello</span>
 </h1>
 
 <script type="module">
@@ -31,16 +31,7 @@
     });
 
     const span = document.querySelector("span");
-    const h1 = document.querySelector("h1");
-
     span.helloSunshine = _ => console.log("default action should not be visible")
-
-    h1.addEventListener("click", e => console.log("ooops", e.type));
-
-    span.helloSunshine = function (e) {
-        console.log("Hello sunshine " + e.type);
-    }
-
     span.click();
 
     setTimeout(_ => console.log("only sunshine"), 20);
