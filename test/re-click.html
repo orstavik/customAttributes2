@@ -16,10 +16,9 @@
                     throw `'.${method}' is not a function on element <${target.tagName}>. Is it a typo?`;
                 target[method](e);
             } catch (err) {
-                //todo this is now wrong
                 const event = new ErrorEvent(err);
-                event.defaultAction = _ => console.error(err);
-                window.dispatchEvent(event); //todo we need to queue it using nextTick. audioRatechange
+                // event.defaultAction = _ => console.error(err);  //todo this is now wrong.. How can we do this?
+                target.dispatchEvent(event);
             }
         }
     }
