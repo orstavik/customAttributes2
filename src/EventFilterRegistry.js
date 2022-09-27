@@ -70,7 +70,9 @@ class EventFilterRegistry {
     }
   }
 
-  getFilterFunction(key, filters = key.split(":")) {
+  getFilterFunction(key, filters = key?.split(":")) {
+    if (filters === undefined)
+      return undefined;
     return filters.length === 1 ? this.findAndBind(filters[0]) : this.chain(filters, key);
   }
 
