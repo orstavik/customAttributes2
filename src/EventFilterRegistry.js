@@ -1,5 +1,7 @@
 class EventFilterRegistry {
   define(prefix, Function) {
+    if(!Function.prototype)
+      throw `Arrow functions cannot be bound as customEventFilters.`;
     const usedFilterName = this.getName(Function);
     if (usedFilterName === prefix)
       return console.warn(`Defining the event filter "${prefix}" multiple times.`);
@@ -31,14 +33,14 @@ class EventFilterRegistry {
 
   findAndBind(name) {
     if (this[name])
-      return this[name];         //todo prefix + attr.value? we need to pass in value of the customAttribute
+      return this[name];
     const prefix = this.findPrefix(name);
     if (!prefix)
       return;
     const cb = this[prefix];
     const suffix = name.substring(prefix.length);
     return this[name] = function (e) {
-      return cb.call(this, e, suffix, prefix);//todo attr.value? we need to pass in value of the customAttribute
+      return cb.call(this, e, suffix, prefix);
     };
   }
 
@@ -77,10 +79,10 @@ class EventFilterRegistry {
   }
 
   callFilterWithDefaultActionOnTheDefaultAttr(at, event) {
-    //todo
     if (event.defaultAction || event.defaultPrevented)
       return;
     const res = this.getFilterFunction(at.filterFunction)?.call(at, event);
+    // if(res!== false) //todo
     event.defaultAction = at;
   }
 

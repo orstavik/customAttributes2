@@ -7,8 +7,12 @@
 
 <h1 :timeout50:log:bob>hello :timeout50:log:bob</h1>
 <script>
-  customEventFilters.define("log", e => console.log(e.type));
-  customEventFilters.define("bob", e => console.log("bob"));
+  customEventFilters.define("log", function (e) {
+    console.log(e.type);
+  });
+  customEventFilters.define("bob", function () {
+    console.log("bob");
+  });
   customEvents.define("timeout", class TimeoutAttr extends Attr {
     upgrade() {
       //todo here we can check to see if the element has a value at startup and then do from there.

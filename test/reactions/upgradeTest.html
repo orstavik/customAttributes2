@@ -6,8 +6,12 @@
 
 <h1 click:log:sunshine>hello</h1>
 <script>
-  customEventFilters.define("log", e=> console.log(e.type));
-  customEventFilters.define("sunshine", e=> console.info("bob"));
+  customEventFilters.define("log", function (e) {
+    console.log(e.type);
+  });
+  customEventFilters.define("sunshine", function () {
+    console.info("bob");
+  });
   const h1 = document.querySelector("h1");
   h1.click();
 </script>
