@@ -16,15 +16,14 @@
 </div>
 
 <script type="module">
-  customEventFilters.define("co", function (e, suffix)  {
-    // this.ownerElement.dispatchEvent(new Event(suffix.substring(1)));
-    // todo in the filters, I think we wish to directly dispatch via the new event dispatch system.
-    customEvents.dispatch(new Event(suffix.substring(1)), this.ownerElement);
+  customEventFilters.define("co", function (e, [name])  {
+    //in filters, we wish to dispatch via the virtual event loop directly, I think.
+    customEvents.dispatch(new Event(name), this.ownerElement);
   });
-  customEventFilters.define("at", function (e, suffix){
-    this.ownerElement.hasAttribute(suffix.substring(1)) ?
-      this.ownerElement.removeAttribute(suffix.substring(1)) :
-      this.ownerElement.setAttribute(suffix.substring(1));
+  customEventFilters.define("at", function (e,[attr]){
+    this.ownerElement.hasAttribute(attr) ?
+      this.ownerElement.removeAttribute(attr) :
+      this.ownerElement.setAttribute(attr);
   });
 
   const h1 = document.querySelector("h1");
@@ -32,5 +31,5 @@
 
   console.log(getComputedStyle(p).display);
   h1.click();
-  setTimeout(_ => console.log(getComputedStyle(p).display), 20);
+  console.log(getComputedStyle(p).display);
 </script>

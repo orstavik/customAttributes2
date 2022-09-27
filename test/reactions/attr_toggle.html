@@ -54,7 +54,7 @@
   //todo use the suffix to get the attr value.
   // use the prefix to be the name of the attribute??
   // use the suffix for the parent querySelector root?
-  //todo we should probably syntactify the _arg1_arg2, or the -arg1-arg2?
+  //todo we should probably syntactify the _arg1_arg2, or the -arg1-arg2?   -positive1-negative2. So the - is loaded with more meaning. _ is freer semantically.
   customEventFilters.define("attr", function attrReaction(e) {
     const [_, atName, _2, propName, _3, query] = this.value.match(/([^=]+)(=([^=]*))(=>(.*))?/);
     const path = currentTargetAndUpLighterDomOnly(e.composedPath(), this.ownerElement);
