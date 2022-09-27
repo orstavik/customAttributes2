@@ -38,7 +38,8 @@ class EventFilterRegistry {
     if (!prefix)
       return;
     const cb = this[prefix];
-    const suffix = name.substring(prefix.length);
+    let suffix = name.substring(prefix.length);
+    if(suffix[0] === '_') suffix = suffix.split("_").slice(1);
     return this[name] = function (e) {
       return cb.call(this, e, suffix, prefix);
     };
@@ -53,7 +54,7 @@ class EventFilterRegistry {
       if (!ready)
         return false;
     }
-    return this[key] = function compound(...args) {
+    return this[key] = function compound(...args) {               //do we need compound function here?? don't think so.
       for (let func of ready) {
         try {
           const result = func.call(this, ...args);
