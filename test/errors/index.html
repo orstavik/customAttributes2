@@ -1,7 +1,13 @@
 <test-html test="arrow_functions.html">
     <script expected>["Arrow functions cannot be bound as customEventFilters."]</script>
 </test-html>
-<test-html test="filter_redefinition.html">
+<test-html test="filter_multiple_defining.html">
+    <script expected>["Defining the event filter \"co\" multiple times."]</script>
+</test-html>
+<test-html test="filter_used_name.html">
+    <script expected>["Function: \"myFilter\" is already defined as event filter \"co\"."]</script>
+</test-html>
+<test-html test="filter_overlap_definition.html">
     <script expected>["The eventFilter prefix: \"co\" is already defined as \"co\"."]</script>
 </test-html>
 
