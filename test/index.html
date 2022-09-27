@@ -1,14 +1,22 @@
-<test-html test="onlineTest.html">
-  <script expected>[["online", {}]]</script>
-</test-html>
-<test-html test="syncTest.html">
-  <script expected>["click"]</script>
-</test-html>
-<test-html test="timeoutTest.html">
-  <script expected>["changing", "changing", "timeout", "bob", "destructing"]</script>
-</test-html>
-<test-html test="upgradeTest.html">
-  <script expected>["click"]</script>
-</test-html>
-<!-- Note!! You must load the test-html component at the end -->
-<script src="https://cdn.jsdelivr.net/gh/orstavik/TestHTML@v1.0.3/TestHTML.js"></script>
+<a href="./reactions" target="_blank"><h1>reactions</h1></a>
+<iframe src="./reactions" onload="fitHeight()" width="100%"></iframe>
+<a href="./BroadcastEvents" target="_blank"><h1>BroadcastEvents</h1></a>
+<iframe src="./BroadcastEvents" onload="fitHeight()" width="100%"></iframe>
+<a href="./timerEvents" target="_blank"><h1>timerEvents</h1></a>
+<iframe src="./timerEvents" onload="fitHeight()" width="100%"></iframe>
+<!--<a href="./errors" target="_blank"><h1>Errors</h1></a>-->
+<!--<iframe src="./errors" onload="fitHeight()" width="100%"></iframe>-->
+<!--<a href="./navigation" target="_blank"><h1>navigation</h1></a>-->
+<!--<iframe src="./navigation" onload="fitHeight()" width="100%"></iframe>-->
+<!--<a href="./FormData" target="_blank"><h1>FormData</h1></a>-->
+<!--<iframe src="./FormData" onload="fitHeight()" width="100%"></iframe>-->
+<!--<a href="./navigation_old" target="_blank"><h1>navigation_old</h1></a>-->
+<!--<iframe src="./navigation_old" onload="fitHeight()" width="100%"></iframe>-->
+<!--<a href="./customAttributes" target="_blank"><h1>customAttributes</h1></a>-->
+<!--<iframe src="./customAttributes" onload="fitHeight()" width="100%"></iframe>-->
+
+<script>
+  function fitHeight(iframe = event.currentTarget) {
+    iframe.style.height = iframe.contentWindow.document.body.scrollHeight + 'px';
+  }
+</script>
