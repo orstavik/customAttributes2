@@ -10,17 +10,20 @@
     }
 </style>
 
-<div toggle:at_open></div>
+<div toggle:co_open:co_toggle></div>
 
 <script type="module">
+    console.warn = (err) => {
+        console.log(err)
+    }
+
+    function myFilter(e, suffix) {
+        console.log("hello", suffix)
+    }
 
     try {
-        customEventFilters.define("co", function (e, suffix) {
-            console.log("hello function 1")
-        });
-        customEventFilters.define("co", function (e, suffix) {
-            console.log("hello function 2")
-        });
+        customEventFilters.define("co", myFilter);
+        customEventFilters.define("co", myFilter);
     } catch (e) {
         console.log(e)
     }
