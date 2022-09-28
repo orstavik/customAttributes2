@@ -39,10 +39,6 @@ class NativeBubblingAttribute extends Attr {
     customEvents.dispatch(e, e.composedPath()[0]);
   }
 
-  static get suffix() {
-    return "";
-  }
-
   static bubblingEvent(prefix) {
     return `on${prefix}` in HTMLElement.prototype && `on${prefix}` in window;
   }
@@ -87,7 +83,7 @@ class NativeNonBubblingAttribute extends Attr {
           return prefix;
         }
 
-        static get suffix() {                                       //todo this should be static, because this is a static property.
+        static get suffix() {
           return "";
         }
       };
@@ -118,7 +114,7 @@ class EventRegistry {
   #allAttributes = {};
 
   static makeSuffixDefinition(aCustomAttrDefinition, prefix, suffix) {
-    if(suffix[0] === "_")
+    if (suffix[0] === "_")
       suffix = suffix.substring(1).split("_");
     return class SuffixedCustomAttr extends aCustomAttrDefinition {
       static get prefix() {
@@ -160,9 +156,8 @@ class EventRegistry {
   }
 
   suffixDefinition(name) {
-    for (let prefix in this)
-      if (this[prefix] && name.startsWith(prefix))
-        return EventRegistry.makeSuffixDefinition(this[prefix], prefix, name.substring(prefix.length));
+    const prefix = Object.keys(this).find(prefix => this[prefix] && name.startsWith(prefix));
+    return prefix && EventRegistry.makeSuffixDefinition(this[prefix], prefix, name.substring(prefix.length));
   }
 
   upgrade(...attrs) {
