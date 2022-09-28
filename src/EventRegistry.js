@@ -18,10 +18,6 @@ Object.defineProperties(Attr.prototype, {
     get: function () {
       return this.name.split("::")[1];
     }
-  }, "suffix": {
-    get: function(){
-      return this.constructor === Attr ? '' : this.event.substring(this.constructor.prefix.length);
-    }
   }
 });
 
@@ -57,7 +53,8 @@ class NativeBubblingAttribute extends Attr {
         static get prefix() {
           return prefix;
         }
-        get suffix(){
+
+        get suffix() {
           return "";
         }
       };
@@ -120,6 +117,18 @@ class EventRegistry {
   #unknownEvents = [];
   #allAttributes = {};
 
+  static makeSuffixDefinition(aCustomAttrDefinition, prefix, suffix) {
+    return class SuffixedCustomAttr extends aCustomAttrDefinition {
+      static get prefix() {
+        return prefix;
+      }
+
+      get suffix() {
+        return suffix;
+      }
+    };
+  }
+
   define(prefix, Class) {
     const overlapDefinition = this.prefixOverlaps(prefix);
     if (overlapDefinition)
@@ -138,20 +147,18 @@ class EventRegistry {
         return name;
   }
 
-  find(name) {
-    if (this[name] ??= NativeBubblingAttribute.subclass(name) || NativeNonBubblingAttribute.subclass(name))
-      return this[name];
-    for (let def in this)
-      if (this[def] && name.startsWith(def))
-        return this[def];
+  suffixDefinition(name, prefixes) {
+    for (let prefix of prefixes)
+      if (this[prefix] && name.startsWith(prefix))
+        return EventRegistry.makeSuffixDefinition(this[prefix], prefix, name.substring(prefix.length));
   }
 
   upgrade(...attrs) {
     for (let at of attrs) {
       (this.#allAttributes[at.event] ??= new UnsortedWeakArray()).push(at);
-      const Definition = this.find(at.event);
-      Definition ?
-        this.#upgradeAttribute(at, Definition) :
+      this[at.event] ??= NativeBubblingAttribute.subclass(at.event) || NativeNonBubblingAttribute.subclass(at.event) || this.suffixDefinition(at.event, Object.keys(this));
+      this[at.event] ?
+        this.#upgradeAttribute(at, this[at.event]) :
         this.#unknownEvents.push(at.event);
     }
   }
@@ -172,7 +179,7 @@ class EventRegistry {
     }
   }
 
-  count(name) {
+  count(name) {              //todo this doesn't work.
     return this.#allAttributes[name].length;
   }
 
@@ -185,9 +192,10 @@ class EventRegistry {
   #upgradeUnknownEvents(prefix, Definition) {
     for (let event of this.#unknownEvents)
       if (event.startsWith(prefix)) {
-        for (let at of this.#allAttributes[event])
-          this.#upgradeAttribute(at, Definition);
+        this[event] = EventRegistry.makeSuffixDefinition(Definition, prefix, event.substring(prefix.length));
         delete this.#upgradeUnknownEvents[event];
+        for (let at of this.#allAttributes[event])
+          this.#upgradeAttribute(at, this[event]);
       }
   }
 
@@ -210,7 +218,7 @@ class EventRegistry {
         }
         if (event.defaultAction && !event.defaultPrevented) {
           customEventFilters.callDefaultAction(event.defaultAction, event);
-          if(event.defaultAction.once)
+          if (event.defaultAction.once)
             event.defaultAction.ownerElement.removeAttribute(event.defaultAction.name);
         }
       } else if (target instanceof Attr) {                     //target is a single attribute, then call only that attribute.
