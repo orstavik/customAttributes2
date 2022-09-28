@@ -22,71 +22,63 @@ Object.defineProperties(Attr.prototype, {
 });
 
 class NativeBubblingAttribute extends Attr {
+  static #reroute = function (e) {
+    // e.preventDefault(); // if dispatchEvent propagates sync, native defaultActions can still be used.
+    e.stopImmediatePropagation();
+    customEvents.dispatch(e, e.composedPath()[0]);
+  };
+
   upgrade() {
-    this.ownerElement.addEventListener(this.constructor.prefix, this.reroute);
+    this.ownerElement.addEventListener(this.constructor.prefix, NativeBubblingAttribute.#reroute);
   }
 
   destructor() {
     for (let o of this.ownerElement.attributes)
       if (this.constructor.prefix === o.constructor.prefix && o !== this)
         return;
-    this.ownerElement.removeEventListener(this.constructor.prefix, this.reroute);
-  }
-
-  reroute(e) {
-    // e.preventDefault(); // if dispatchEvent propagates sync, native defaultActions can still be used.
-    e.stopImmediatePropagation();
-    customEvents.dispatch(e, e.composedPath()[0]);
-  }
-
-  static bubblingEvent(prefix) {
-    return `on${prefix}` in HTMLElement.prototype && `on${prefix}` in window;
+    this.ownerElement.removeEventListener(this.constructor.prefix, NativeBubblingAttribute.#reroute);
   }
 
   static subclass(prefix) {
-    if (this.bubblingEvent(prefix))
-      return class NativeBubblingAttributeImpl extends NativeBubblingAttribute {
-        static get prefix() {
-          return prefix;
-        }
+    if (!(`on${prefix}` in HTMLElement.prototype && `on${prefix}` in window))
+      return;
+    return class NativeBubblingAttributeImpl extends NativeBubblingAttribute {
+      static get prefix() {
+        return prefix;
+      }
 
-        static get suffix() {
-          return "";
-        }
-      };
+      static get suffix() {
+        return "";
+      }
+    };
   }
 }
 
+
 class NativeNonBubblingAttribute extends Attr {
-
-  static nonBubblingEvent(prefix) {
-    return `on${prefix}` in window && !(`on${prefix}` in HTMLElement.prototype);
-  }
-
   static subclass(prefix) {
-    if (this.nonBubblingEvent(prefix))
-      return class NativeNonBubblingAttributeImpl extends Attr {
+    if (!(`on${prefix}` in window) || `on${prefix}` in HTMLElement.prototype)
+      return;
+    return class NativeNonBubblingAttributeImpl extends Attr {
 
-        static #rerouter = this.reroute.bind(this);
+      static #rerouter = function reroute(e) {
+        customEvents.dispatch(e);
+        if (!customEvents.count(e.type))
+          window.removeEventListener(this.prefix, this.#rerouter);
+      }.bind(this);
 
-        static reroute(e) {
-          customEvents.dispatch(e);
-          if (!customEvents.count(e.type))
-            window.removeEventListener(this.prefix, this.constructor.#rerouter);
-        }
+      upgrade() {
+        window.addEventListener(this.constructor.prefix, this.constructor.#rerouter);
+      }
 
-        upgrade() {
-          window.addEventListener(this.constructor.prefix, this.constructor.#rerouter);
-        }
+      static get prefix() {
+        return prefix;
+      }
 
-        static get prefix() {
-          return prefix;
-        }
-
-        static get suffix() {
-          return "";
-        }
-      };
+      static get suffix() {
+        return "";
+      }
+    };
   }
 }
 
