@@ -57,6 +57,9 @@ class NativeBubblingAttribute extends Attr {
         static get prefix() {
           return prefix;
         }
+        get suffix(){
+          return "";
+        }
       };
   }
 }
@@ -70,21 +73,24 @@ class NativeNonBubblingAttribute extends Attr {
   static subclass(prefix) {
     if (this.nonBubblingEvent(prefix))
       return class NativeNonBubblingAttributeImpl extends Attr {
-        upgrade() {
-          window.addEventListener(prefix, this.constructor.reroute);
-        }
+
+        static #rerouter = this.reroute.bind(this);
 
         static reroute(e) {
           customEvents.dispatch(e);
           if (!customEvents.count(e.type))
-            window.removeEventListener(prefix, this.reroute);
+            window.removeEventListener(this.prefix, this.constructor.#rerouter);
+        }
+
+        upgrade() {
+          window.addEventListener(this.constructor.prefix, this.constructor.#rerouter);
         }
 
         static get prefix() {
           return prefix;
         }
 
-        get suffix() {
+        get suffix() {                                       //todo this should be static, because this is a static property.
           return "";
         }
       };
@@ -133,13 +139,10 @@ class EventRegistry {
   }
 
   find(name) {
-    if (this[name])
+    if (this[name] ??= NativeBubblingAttribute.subclass(name) || NativeNonBubblingAttribute.subclass(name))
       return this[name];
-    const native = NativeBubblingAttribute.subclass(name) || NativeNonBubblingAttribute.subclass(name);
-    if (native)
-      return this[name] = native;
     for (let def in this)
-      if (name.startsWith(def))
+      if (this[def] && name.startsWith(def))
         return this[def];
   }
 
@@ -175,7 +178,7 @@ class EventRegistry {
 
   prefixOverlaps(newPrefix) {
     for (let oldPrefix in this)
-      if (oldPrefix && newPrefix.startsWith(oldPrefix) || oldPrefix.startsWith(newPrefix))
+      if (this[oldPrefix] && (newPrefix.startsWith(oldPrefix) || oldPrefix.startsWith(newPrefix)))
         return oldPrefix;
   }
 
