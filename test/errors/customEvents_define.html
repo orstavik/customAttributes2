@@ -12,19 +12,20 @@
         }
     }
 
+    class Definition2 {
+        hello() {
+            console.log(hello)
+        }
+    }
+
     // 1. cannot define custom event prefix twice
     try {
-        customEvents.define("hello", function (e, suffix) {
-            console.log("hello", suffix)
-        });
-        customEvents.define("hello2", function (e, suffix) {
-            console.log("hello", suffix)
-        });
+        customEvents.define("hello", Definition);
+        customEvents.define("hello2", Definition2);
     } catch (e) {
         console.log(e)
     }
     // 2. cannot use Class definition twice
-
     try {
         customEvents.define("goodbye", Definition);
         customEvents.define("darkness", Definition);
