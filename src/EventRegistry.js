@@ -39,7 +39,7 @@ class NativeBubblingAttribute extends Attr {
     customEvents.dispatch(e, e.composedPath()[0]);
   }
 
-  get suffix() {
+  static get suffix() {
     return "";
   }
 
@@ -54,7 +54,7 @@ class NativeBubblingAttribute extends Attr {
           return prefix;
         }
 
-        get suffix() {
+        static get suffix() {
           return "";
         }
       };
@@ -87,7 +87,7 @@ class NativeNonBubblingAttribute extends Attr {
           return prefix;
         }
 
-        get suffix() {                                       //todo this should be static, because this is a static property.
+        static get suffix() {                                       //todo this should be static, because this is a static property.
           return "";
         }
       };
@@ -118,12 +118,14 @@ class EventRegistry {
   #allAttributes = {};
 
   static makeSuffixDefinition(aCustomAttrDefinition, prefix, suffix) {
+    if(suffix[0] === "_")
+      suffix = suffix.substring(1).split("_");
     return class SuffixedCustomAttr extends aCustomAttrDefinition {
       static get prefix() {
         return prefix;
       }
 
-      get suffix() {
+      static get suffix() {
         return suffix;
       }
     };
@@ -136,7 +138,17 @@ class EventRegistry {
     if (Class.prefix)
       throw `${Class.name} definition is already used (${Class.name}.prefix === "${Class.prefix}"). 
     What about 'customEvents.define("${prefix}", class Something extends ${Class.name}{});'?`;
-    Class.prefix = prefix;
+    Object.defineProperties(Class, {
+      "prefix": {
+        get: function () {
+          return prefix;
+        }
+      }, "suffix": {
+        get: function () {
+          return "";
+        }
+      }
+    });
     this[prefix] = Class;
     this.#upgradeUnknownEvents(prefix, Class);
   }
@@ -147,8 +159,8 @@ class EventRegistry {
         return name;
   }
 
-  suffixDefinition(name, prefixes) {
-    for (let prefix of prefixes)
+  suffixDefinition(name) {
+    for (let prefix in this)
       if (this[prefix] && name.startsWith(prefix))
         return EventRegistry.makeSuffixDefinition(this[prefix], prefix, name.substring(prefix.length));
   }
@@ -156,7 +168,10 @@ class EventRegistry {
   upgrade(...attrs) {
     for (let at of attrs) {
       (this.#allAttributes[at.event] ??= new UnsortedWeakArray()).push(at);
-      this[at.event] ??= NativeBubblingAttribute.subclass(at.event) || NativeNonBubblingAttribute.subclass(at.event) || this.suffixDefinition(at.event, Object.keys(this));
+      this[at.event] ??=
+        NativeBubblingAttribute.subclass(at.event) ||
+        NativeNonBubblingAttribute.subclass(at.event) ||
+        this.suffixDefinition(at.event);
       this[at.event] ?
         this.#upgradeAttribute(at, this[at.event]) :
         this.#unknownEvents.push(at.event);
