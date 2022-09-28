@@ -1,9 +1,3 @@
-//todo syntax:
-// normal sync reaction: "click:log:bob"
-// once sync reaction: ":timeout50:log:bob"
-// normal sync reaction+default action: (filter1:filter2) with default action(log:open): "click:filter1:filter2::log:open:"
-// once sync reaction+default action: (filter1:filter2) with default action(log:open): ":click:filter1:filter2::log:open:"
-
 function deprecate(name) {
   return function deprecated() {
     throw `${name}() is deprecated`;

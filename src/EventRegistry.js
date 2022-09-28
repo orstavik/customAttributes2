@@ -1,6 +1,3 @@
-//todo if we have two ::, then the thing after the double colon is marked as a defaultAction. That makes sense
-//todo if we have a : infront of the attribute, then it is a once
-//todo this parse, is it possible to make a more efficient version? One based on a super class with caching getters?
 Object.defineProperties(Attr.prototype, {
   "once": {
     get: function () {
@@ -157,7 +154,6 @@ class EventRegistry {
   }
 
   #upgradeAttribute(at, Definition) {
-    // at.suffix = at.event.substring(Definition.prefix.length);
     Object.setPrototypeOf(at, Definition.prototype);
     try {
       at.upgrade?.();
@@ -178,8 +174,8 @@ class EventRegistry {
   }
 
   prefixOverlaps(newPrefix) {
-    for (let oldPrefix in this) //todo prefix in this is a bad iteration that causes bugs.
-      if (newPrefix.startsWith(oldPrefix) || oldPrefix.startsWith(newPrefix))
+    for (let oldPrefix in this)
+      if (oldPrefix && newPrefix.startsWith(oldPrefix) || oldPrefix.startsWith(newPrefix))
         return oldPrefix;
   }
 
