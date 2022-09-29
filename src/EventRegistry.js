@@ -18,6 +18,10 @@ Object.defineProperties(Attr.prototype, {
     get: function () {
       return this.name.split("::")[1];
     }
+  }, "allFunctions": {
+    get: function () {
+      return !this.defaultAction ? this.filterFunction : !this.filterFunction ? this.defaultAction : this.filterFunction + ":" + this.defaultAction;
+    }
   }
 });
 
@@ -212,26 +216,53 @@ class EventRegistry {
       return;
     while (this.#eventLoop.length) {
       const {target, event} = this.#eventLoop[0];
+      //bubble propagation
       if (target instanceof Element) {  //todo there is a bug from the ElementObserver.js so that instanceof HTMLElement doesn't work.
         for (let t = target; t; t = t.assignedSlot || t.parentElement || t.parentNode?.host) {
-          for (let attr of t.attributes)
-            if (attr.event === event.type)
-              customEventFilters.callFilter(attr, event);
+          for (let attr of t.attributes) {
+            if (attr.event === event.type) {
+              if (!event.defaultPrevented || !attr.defaultAction) {            //todo 1.
+                if (attr.defaultAction && event.defaultAction)
+                  continue;
+                const res = this.callFilterImpl(attr.filterFunction, attr, event);
+                if (res !== false && attr.defaultAction) {
+                  event.defaultAction = attr;
+                }
+                if (!attr.defaultAction && attr.once) {
+                  attr.ownerElement.removeAttribute(attr.name);
+                }
+              }                                                                 //todo 1.
+            }
+          }
         }
-        if (event.defaultAction && !event.defaultPrevented)
-          customEventFilters.callDefaultAction(event.defaultAction, event);
-      } else if (target instanceof Attr) {                     //target is a single attribute, then call only that attribute.
-        customEventFilters.callFilter(target, event);
-        // if (event.defaultAction && !event.defaultPrevented) //todo do we ever use defaultActions for this type of event dispatches?
-        //   customEventFilters.callDefaultAction(event.defaultAction, event);
-      } else if (!target) {                                    //there is no target, then broadcast to all attributes with that name
-        for (let attr of this.#allAttributes[event.type])
-          customEventFilters.callFilter(attr, event);
-        // if (event.defaultAction && !event.defaultPrevented) //todo do we ever use defaultActions for this type of event dispatches?
-        //   customEventFilters.callDefaultAction(event.defaultAction, event);
+        if (event.defaultAction) {
+          if (!event.defaultPrevented)                                                        //todo 1.
+            this.callFilterImpl(event.defaultAction.defaultAction, event.defaultAction, event);
+          if (event.defaultPrevented.once)
+            event.defaultPrevented.ownerElement.removeAttribute(event.defaultPrevented.name);//todo 1.
+        }
+        //broadcast and single-attribute propagation
+      } else {
+        const attributes = target instanceof Attr ? [target] : this.#allAttributes[event.type];
+        for (let attr of attributes) {
+          this.callFilterImpl(attr.allFunctions, attr, event);
+          if (attr.once)
+            attr.ownerElement.removeAttribute(attr.name);
+        }
       }
       this.#eventLoop.shift();
     }
+  }
+
+  callFilterImpl(filter, at, event) {
+    let inputOutput = event;
+    try {
+      for (let {Definition, prefix, suffix} of customEventFilters.getFilterFunctions(filter) || [])
+        inputOutput = Definition.call(at, event, suffix, prefix); //todo       inputOutput);
+    } catch (err) {
+      return false;      //todo we need to handle this
+    }
+    return inputOutput;
   }
 }
 
