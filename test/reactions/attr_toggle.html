@@ -51,16 +51,11 @@
     return res;
   }
 
-  //todo use the suffix to get the attr value.
-  // use the prefix to be the name of the attribute??
-  // use the suffix for the parent querySelector root?
-  //todo we should probably syntactify the _arg1_arg2, or the -arg1-arg2?   -positive1-negative2. So the - is loaded with more meaning. _ is freer semantically.
-  customEventFilters.define("attr", function attrReaction(e) {
-    const [_, atName, _2, propName, _3, query] = this.value.match(/([^=]+)(=([^=]*))(=>(.*))?/);
+  customEventFilters.define("attr", function attrReaction(e, [atName, propName]) {
     const path = currentTargetAndUpLighterDomOnly(e.composedPath(), this.ownerElement);
     //remove elements between <slot> and document
     //filter away, so that if a parent element is a <slot>, then we must skip all the other elements up to and including that slot elements document.
-    const target = findNearestParentMatching(path, query);
+    const target = findNearestParentMatching(path, this.value);
     if (!propName)
       target.hasAttribute(atName) ? target.removeAttribute(atName) : target.setAttribute(atName, "");
     else
@@ -75,7 +70,7 @@
 </style>
 
 <div id="bob">
-  <h1 click::attr="open==>:parent">hello</h1>
+  <h1 click::attr_open=":parent">hello</h1>
   <p>sunshine</p>
 </div>
 
@@ -84,5 +79,5 @@
   const p = document.querySelector("p");
   console.log(getComputedStyle(p).display);
   h1.click();
-  setTimeout(() => console.log(getComputedStyle(p).display), 0);
+  console.log(getComputedStyle(p).display);
 </script>
