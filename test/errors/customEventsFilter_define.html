@@ -1,0 +1,49 @@
+<script src="https://cdn.jsdelivr.net/gh/orstavik/parse@v1.0.2/parse.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
+<script src="../../src/EventRegistry.js"></script>
+<script src="../../src/EventFilterRegistry.js"></script>
+<script src="../../src/virtualEventLoop.js"></script>
+
+<script>
+  function one() {
+    console.log("one");
+  }
+
+  function two() {
+    console.log("two");
+  }
+
+  const arrow = _ => console.log("arrow");
+
+  //1. cannot define arrow functions as eventFilter
+  try {
+    customEventFilters.define("co", arrow);
+  } catch (e) {
+    console.log(e);
+  }
+
+  customEventFilters.define("co", one);
+  //grab console.warn
+  console.warn = (err) => console.log(err);
+
+  //2. cannot define the same filter twice, even though they have the same name
+  try {
+    customEventFilters.define("co", one);
+  } catch (e) {
+    console.log(e)
+  }
+
+  //3. cannot use the same filter function to define different attributes.
+  try {
+    customEventFilters.define("at", one);
+  } catch (e) {
+    console.log(e)
+  }
+
+  //4. cannot redefine the same event filter prefix with a different filter function.
+  try {
+    customEventFilters.define("co", two);
+  } catch (e) {
+    console.log(e)
+  }
+</script>
