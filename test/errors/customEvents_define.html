@@ -7,15 +7,9 @@
 <script type="module">
 
     class Definition {
-        hello() {
-            console.log("hello")
-        }
     }
 
     class Definition2 {
-        hello2() {
-            console.log("hello2")
-        }
     }
 
     // 1. cannot define custom event prefix twice
@@ -28,7 +22,6 @@
     // 2. cannot use Class definition twice
     try {
         customEvents.define("goodbye", Definition);
-        customEvents.define("darkness", Definition);
     } catch (e) {
         console.log(e)
     }
