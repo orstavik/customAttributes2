@@ -18,7 +18,6 @@
     import {DOM_FormData} from "../src/FormData/DOM_FormData.js";
 
     customEventFilters.define("makeform", DOM_FormData);
-
     window.addEventListener("submit", e => console.log(...e.detail));
     document.querySelector("div").click();
     // todo: now it does not produce submit event. should I dispatch it inside DOM_FormData based on attribute value or dispatch manually?

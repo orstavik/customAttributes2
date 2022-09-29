@@ -13,7 +13,6 @@
 
     //att!! intercepting native window.open(...) method for testing purposes
     window.open = (...args) => console.log(...args);
-
     const h1 = document.querySelector("h1");
     h1.click();
 </script>

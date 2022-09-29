@@ -29,6 +29,31 @@ function openForm(href, target, enctype, nameValues) {
     form.remove();
 }
 
+function formDataToEncodedUri(formData, base, href) {
+    const url = new URL(href, base);
+    if (!formData)
+        return url;
+    for (let [k, v] of formData.entries()) {
+        if (!(v instanceof String) && typeof v !== "string")
+            throw TypeError("FormData with File/Blob entities cannot be encoded to uriComponent here.");
+        url.searchParams.set(k, v);
+    }
+    return url;
+}
+
+export const GetFormDataJSON = function (e) {
+    const formData = e.detail;
+    const url = formDataToEncodedUri(formData, location, this.value);
+    doFetchAndEvents(this.ownerElement, url, null, "GET", "json");
+}
+
+export class GetFormDataText extends Attr {
+    onEvent({detail: formData}) {
+        const url = formDataToEncodedUri(formData, location, this.value);
+        doFetchAndEvents(this.ownerElement, url, null, "GET", "text");
+    }
+}
+
 function GETAttr(e, returnType = "_self") {
     const entries = e.detail;
     const url = new URL(this.value, location);

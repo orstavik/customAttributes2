@@ -10,7 +10,6 @@
   import {GetFormDataJSON} from "../src/FormData/AjaxAttr.js";
 
   customEventFilters.define("ajax", GetFormDataJSON);
-
   document.addEventListener("load", e => console.log(e.type, e.detail.args));
 
   const formData = new FormData();
