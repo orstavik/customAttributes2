@@ -1,0 +1,24 @@
+<script src="https://cdn.jsdelivr.net/gh/orstavik/parse@v1.0.2/parse.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
+<script src="../../src/EventRegistry.js"></script>
+<script src="../../src/EventFilterRegistry.js"></script>
+<script src="../../src/virtualEventLoop.js"></script>
+
+<div click:makeform="submit">
+    <div name="one" value="hello sunshine"></div>
+    <div name="two">2</div>
+    <ul name="three">
+        <li name="31">thirty-one</li>
+        <li name="32">thirty-two</li>
+        <li name="33">thirty-three</li>
+    </ul>
+</div>
+
+<script type="module">
+    import {DOM_FormData} from "../src/FormData/DOM_FormData.js";
+
+    customEventFilters.define("makeform", DOM_FormData);
+    window.addEventListener("submit", e => console.log(...e.detail));
+    document.querySelector("div").click();
+    // todo: now it does not produce submit event. should I dispatch it inside DOM_FormData based on attribute value or dispatch manually?
+</script>

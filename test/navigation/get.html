@@ -1,0 +1,18 @@
+<script src="https://cdn.jsdelivr.net/gh/orstavik/parse@v1.0.2/parse.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
+<script src="../../src/EventRegistry.js"></script>
+<script src="../../src/EventFilterRegistry.js"></script>
+<script src="../../src/virtualEventLoop.js"></script>
+
+<h1 click:get="https://example.com/bob/sideisy/bob?hello=sunshine&sunshine=hello#sunshine">hello sunshine</h1>
+
+<script type="module">
+    import {GET_Attr} from "../src/FormData/AjaxAttr.js";
+
+    customEventFilters.define("get", GET_Attr);
+
+    //att!! intercepting native window.open(...) method for testing purposes
+    window.open = (...args) => console.log(...args);
+    const h1 = document.querySelector("h1");
+    h1.click();
+</script>
