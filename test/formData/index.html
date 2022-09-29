@@ -1,0 +1,27 @@
+<test-html test="openform-submit.html">
+    <script expected>[
+        "triggered navigation"
+    ]</script>
+</test-html>
+<test-html test="makeform-click.html">
+    <script expected>[
+        [["one", "hello sunshine"], ["two", "<div name=\"two\">2</div>"], ["three", "31;32;33"]]
+    ]</script>
+</test-html>
+<test-html test="FormData_GET_json.html">
+    <script expected>[
+        {"userId": 1, "id": 1, "title": "delectus aut autem", "completed": false}
+    ]</script>
+</test-html>
+<test-html test="FormData_GET_text.html">
+    <script expected>[
+        "{\"data\":{\"id\":3,\"name\":\"true red\",\"year\":2002,\"color\":\"#BF1932\",\"pantone_value\":\"19-1664\"},\"support\":{\"url\":\"https://reqres.in/#support-heading\",\"text\":\"To keep ReqRes free, contributions towards server costs are appreciated!\"}}"
+    ]</script>
+</test-html>
+<test-html test="ajaxFormData.html">
+    <script expected>[
+        ["load", {"a": "A", "b": "B", "hello": "sunshine"}]
+    ]</script>
+</test-html>
+<!-- Note!! You must load the test-html component at the end -->
+<script src="https://cdn.jsdelivr.net/gh/orstavik/TestHTML@v1.0.3/TestHTML.js"></script>

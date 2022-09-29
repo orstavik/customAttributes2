@@ -1,0 +1,20 @@
+<script src="https://cdn.jsdelivr.net/gh/orstavik/parse@v1.0.2/parse.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
+<script src="../../src/EventRegistry.js"></script>
+<script src="../../src/EventFilterRegistry.js"></script>
+<script src="../../src/virtualEventLoop.js"></script>
+
+<h1 submit:openform="https://example.com/bob/sideisy/bob">hello sunshine</h1>
+
+<script type="module">
+    import {FormData_open_GET_self} from "../src/FormData/FormData_GET.js";
+
+    customEventFilters.define("openform", FormData_open_GET_self);
+
+    window.addEventListener("unload", _ => console.log("triggered navigation"));
+
+    const formData = new FormData();
+    formData.append("a", "A");
+    formData.append("b", "B");
+    document.querySelector("h1").dispatchEvent(new CustomEvent("submit", {detail: formData}));
+</script>
