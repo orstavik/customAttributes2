@@ -1,9 +1,16 @@
-<test-html test="customEvents_define.html">
+<test-html test="customEventsFilter_define.html">
     <script expected>[
         "Arrow functions cannot be bound as customEventFilters.",
         "Defining the event filter \"co\" multiple times.",
         "Function: \"one\" is already defined as event filter \"co\".",
         "The eventFilter prefix: \"co\" is already defined as \"co\"."
+    ]</script>
+</test-html>
+
+<test-html test="customEvents_define.html">
+    <script expected>[
+        "The customEvent \"hello2\" is already defined as \"hello\".",
+        "Definition definition is already used (Definition.prefix === \"goodbye\"). \n    What about 'customEvents.define(\"darkness\", class Something extends Definition{});'?"
     ]</script>
 </test-html>
 
