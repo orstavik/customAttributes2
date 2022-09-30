@@ -27,7 +27,6 @@ function stringInput(name, value) {
   input.value = value;
   return input;
 }
-
 function openForm(href, target, formData) {
   const form = document.createElement("form");
   form.method = "POST";
@@ -47,7 +46,7 @@ function dispatchAsyncErrorEvent(target, error) {
   target.dispatchEvent(e);
 }
 
-export function FormData_POST(returnType) {
+export function Old___FormData_POST(returnType) {
   return class FormData_POST extends Attr {
     upgrade() {                                       //todo move to under onChange
       this._eventType = this.name.match(/[^:-]+/)[0];
