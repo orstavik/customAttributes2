@@ -257,8 +257,14 @@ class EventRegistry {
   callFilterImpl(filter, at, event) {
     let inputOutput = event;
     try {
-      for (let {Definition, prefix, suffix} of customEventFilters.getFilterFunctions(filter) || [])
+      for (let {Definition, prefix, suffix} of customEventFilters.getFilterFunctions(filter) || []){
         inputOutput = Definition.call(at, event, suffix, prefix); //todo       inputOutput);
+        if(inputOutput === false)        //todo 0. this array needs to abort if the output is undefined..
+          return false;
+      }
+      //todo 1. change from undefined is ok, false is end, to undefined is abort and the rest is continue.
+      //todo 2. make the defaultAction behave differently. The defaultAction should have a res to be added, not only the attribute itself
+      //todo 3. change inputOutput to event.
     } catch (err) {
       return false;      //todo we need to handle this
     }

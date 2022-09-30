@@ -1,0 +1,19 @@
+<script src="https://cdn.jsdelivr.net/gh/orstavik/parse@v1.0.2/parse.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
+<script src="../../src/EventRegistry.js"></script>
+<script src="../../src/EventFilterRegistry.js"></script>
+<script src="../../src/virtualEventLoop.js"></script>
+
+<h1 click:one:two>hello on-click_shift</h1>
+
+<script type="module">
+  customEventFilters.define("one", function(e){
+    console.log("one");
+    return false;
+  });
+  customEventFilters.define("two", function(e){
+    console.log("two");
+  });
+
+  document.querySelector("h1").click();
+</script>
