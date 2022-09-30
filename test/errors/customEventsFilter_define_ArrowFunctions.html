@@ -1,0 +1,97 @@
+<script src="../../src/EventFilterRegistry.js"></script>
+
+<script type="module">
+  const anonymous = function (e) {
+    console.log("one");
+  }
+
+  const asyncAnonymous = async function (e) {
+    console.log("one");
+  }
+
+  function normal(e) {
+    console.log("one");
+  }
+
+  async function asyncNormal(e) {
+    console.log("one");
+  }
+
+  const arrow = (e) => {
+    console.log("one");
+  }
+
+  const arrow2 = _bob => {
+    console.log("one");
+  }
+
+  const arrow3 = ({_bob = "=> {...omg"}) => console.log("one", _bob);
+
+  const asyncArrow = async (e) => {
+    console.log("one");
+  }
+
+  const asyncArrow2 = async _bob => {
+    console.log("one");
+  }
+  const asyncArrow3 = async ({_bob = "=> {...omg"}) => console.log("one", _bob);
+
+  const hello = "hello";
+
+  class Bob {
+    method() {
+      console.log("one");
+    }
+
+    async method2() {
+      console.log("one");
+    }
+
+    [hello]() {
+      console.log("one");
+    }
+  }
+
+  //hack that works, we can identify arrow functions
+  // function isBindableFunction(Function) {
+  //   return !/^(async )?\(/.test(Function.toString());
+  // }
+
+  //hack that works, we can identify arrow functions
+  function isArrowFunction(Function) {
+    let str = Function.toString();
+    if (str.startsWith("async "))
+      str = str.substring(6);
+    if(str.startsWith("(")) //arrow with: (...what,{ever="=>omg"})=>
+      return true;
+    if(/^[^([]+=/.test(str)) //arrow with single argument: _whatEver =>
+      return true;
+    return false;
+  }
+
+  function isArrowFunctionRegex(Function) {
+    return /^(async\s+|)(\(|[^([]+=)/.test(Function.toString());
+  }
+
+  for (let [name, Function] of Object.entries({
+    anonymous,
+    asyncAnonymous,
+    normal,
+    asyncNormal,
+    method: Bob.prototype.method,
+    asyncMethod: Bob.prototype.method2,
+    bracketMethod: Bob.prototype.hello,
+    arrow,
+    arrow2,
+    arrow3,
+    asyncArrow
+  })) {
+    let success = false;
+    try {
+      customEventFilters.define(name, Function);
+    } catch (err) {
+      success = true;
+    }
+    console.log(name, isArrowFunction(Function), isArrowFunctionRegex(Function), success);
+  }
+</script>

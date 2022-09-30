@@ -1,6 +1,6 @@
 class EventFilterRegistry {
   define(prefix, Function) {
-    if (!Function.prototype)
+    if (/^(async |)(\(|[^([]+=)/.test(Function.toString()))
       throw `Arrow functions cannot be bound as customEventFilters.`;
     const usedFilterName = Object.keys(this).find(name => this[name] === Function);
     if (usedFilterName === prefix)

@@ -1,17 +1,32 @@
 <test-html test="customEventsFilter_define.html">
-    <script expected>[
-        "Arrow functions cannot be bound as customEventFilters.",
-        "Defining the event filter \"co\" multiple times.",
-        "Function: \"one\" is already defined as event filter \"co\".",
-        "The eventFilter prefix: \"co\" is already defined as \"co\"."
-    ]</script>
+  <script expected>[
+    "Arrow functions cannot be bound as customEventFilters.",
+    "Defining the event filter \"co\" multiple times.",
+    "Function: \"one\" is already defined as event filter \"co\".",
+    "The eventFilter prefix: \"co\" is already defined as \"co\"."
+  ]</script>
+</test-html>
+<test-html test="customEventsFilter_define_ArrowFunctions.html">
+  <script expected>[
+    ["anonymous",false,false,false],
+    ["asyncAnonymous",false,false,false],
+    ["normal",false,false,false],
+    ["asyncNormal",false,false,false],
+    ["method",false,false,false],
+    ["asyncMethod",false,false,false],
+    ["bracketMethod",false,false,false],
+    ["arrow",true,true,true],
+    ["arrow2",true,true,true],
+    ["arrow3",true,true,true],
+    ["asyncArrow",true,true,true]
+  ]</script>
 </test-html>
 
 <test-html test="customEvents_define.html">
-    <script expected>[
-        "The customEvent \"hello2\" is already defined as \"hello\".",
-        "Definition definition is already used (Definition.prefix === \"hello\"). \n    What about 'customEvents.define(\"goodbye\", class Something extends Definition{});'?"
-    ]</script>
+  <script expected>[
+    "The customEvent \"hello2\" is already defined as \"hello\".",
+    "Definition definition is already used (Definition.prefix === \"hello\"). \n    What about 'customEvents.define(\"goodbye\", class Something extends Definition{});'?"
+  ]</script>
 </test-html>
 
 <!-- Note!! You must load the test-html component at the end -->
