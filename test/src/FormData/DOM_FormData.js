@@ -36,7 +36,7 @@ class FormDataEvent extends CustomEvent {
 
   get detail() {
     const namedDesc = getNames(this.#target);
-    if(!namedDesc.length)
+    if (!namedDesc.length)
       return null;
     const formData = new FormData();
     for (let el of namedDesc)
@@ -45,6 +45,6 @@ class FormDataEvent extends CustomEvent {
   }
 }
 
-export const DOM_FormData = function (e) {
-  return this.ownerElement.dispatchEvent(new FormDataEvent(this.value, this.ownerElement));
+export function DOM_FormData(e, suffix, prefix) {
+  return customEvents.dispatch(new FormDataEvent(prefix, this.ownerElement), this.ownerElement);
 }
