@@ -4,13 +4,15 @@
 <script src="../../src/EventFilterRegistry.js"></script>
 <script src="../../src/virtualEventLoop.js"></script>
 
-<h1 submit:ajax="https://httpbin.org/anything?hello=sunshine">hello sunshine</h1>
+<h1 submit:ajax="https://httpbin.org/anything?hello=sunshine" load:log>hello sunshine</h1>
 
 <script type="module">
   import {GetFormData} from "../src/FormData/AjaxAttr.js";
 
   customEventFilters.define("ajax", GetFormData);
-  document.addEventListener("load", e => console.log(e.type, e.detail.args));
+  customEventFilters.define("log", function(e){
+    console.log(e.type, e.detail.args);
+  });
 
   const formData = new FormData();
   formData.append("a", "A");
