@@ -4,18 +4,19 @@
 <script src="../../src/EventFilterRegistry.js"></script>
 <script src="../../src/virtualEventLoop.js"></script>
 
-<form click:on="https://jsonplaceholder.typicode.com/todos/1" action="http://foo.com" method="post">
-    <div><input name="hello" type="text" value="asds"></div>
-    <input name="sunshine" type="text" value="312312">
-    <input type="submit">
+<form click:get="https://jsonplaceholder.typicode.com/todos/1" get:log action="http://foo.com" method="post">
+  <div><input name="hello" type="text" value="asds"></div>
+  <input name="sunshine" type="text" value="312312">
+  <input type="submit">
 </form>
 
 <script type="module">
-    import {FormData_GET_json} from "../src/FormData/FormData_GET.js";
+  import {FormData_GET} from "../src/FormData/FormData_GET.js";
 
-    const form = document.querySelector("form");
-    form.addEventListener("on", e => console.log(e.detail));
+  customEventFilters.define("get", FormData_GET);
+  customEventFilters.define("log", function(e){
+    console.log(e.detail);
+  });
 
-    customEventFilters.define("on", FormData_GET_json);
-    form.dispatchEvent(new PointerEvent("click"));
+  document.querySelector("form").click();
 </script>
