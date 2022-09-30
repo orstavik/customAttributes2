@@ -24,30 +24,17 @@ function formDataToEncodedUri(href, formData) {
     return url;
 }
 
-async function FormData_GET(e, returnType) {
-    this._eventType = this.name.match(/[^:]*$/)[0];
+//this should probably be a load_json
+export async function FormData_GET(e, [returnType = "json"], eventType) {
     let formData = e.formData; //todo: clarify this? e.detail can has some value
     const url = formDataToEncodedUri(this.value, formData);
     try {
         const detail = await (await getFetch(url))[returnType]();
-        this.ownerElement.dispatchEvent(new CustomEvent(this._eventType, { //on
-            bubbles: true,
-            composed: true,
-            detail
-        }));
+        customEvents.dispatch(new CustomEvent(eventType, {detail}), this.ownerElement);
     } catch (err) {
         const target = this.ownerElement.isConnected ? this.ownerElement : window;
         dispatchAsyncErrorEvent(target, `${this.name}: ${err}`);
     }
-}
-
-
-export const FormData_GET_json = function (e) {
-    FormData_GET.call(this, e, "json");
-}
-
-export const FormData_GET_text = function (e) {
-    FormData_GET.call(this, e, "text");
 }
 
 export class FormData_History extends Attr {
