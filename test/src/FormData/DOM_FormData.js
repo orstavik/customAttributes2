@@ -45,6 +45,6 @@ class FormDataEvent extends CustomEvent {
   }
 }
 
-export function DOM_FormData(e, suffix, prefix) {
-  return customEvents.dispatch(new FormDataEvent(prefix, this.ownerElement), this.ownerElement);
+export function DOM_FormData(e, [eventName]) {
+  return new FormDataEvent(eventName, this.ownerElement);
 }

@@ -10,8 +10,8 @@
   import {FormData_open_GET} from "../src/FormData/FormData_GET.js";
 
   customEventFilters.define("openform", FormData_open_GET);
-  customEventFilters.define("log", function () {
-    console.log("triggered navigation");
+  customEventFilters.define("log", function (e) {
+    return console.log("triggered navigation"), e;
   });
 
   const formData = new FormData();

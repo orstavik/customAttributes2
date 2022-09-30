@@ -4,19 +4,19 @@
 <script src="../../src/EventFilterRegistry.js"></script>
 <script src="../../src/virtualEventLoop.js"></script>
 
-<form submit:log:no action="shouldNeverHappen.html">
+<form submit:log:no action="shouldNeverHappen.html" unload:bug>
   <input type="text" name="hello" value="sunshine">
 </form>
 
 <script type="module">
   customEventFilters.define("no", function (e) {
-    e.preventDefault();
+    return e.preventDefault(), e;
   });
   customEventFilters.define("log", function (e) {
-    console.log(e.type);
+    return console.log(e.type), e;
   });
 
   const form = document.querySelector("form");
-  form.requestSubmit();
+  form.requestSubmit(); //todo why doesn't this work??
   setTimeout(() => console.log("only sunshine"), 20);
 </script>

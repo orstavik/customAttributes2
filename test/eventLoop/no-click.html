@@ -10,10 +10,10 @@
 
 <script type="module">
   customEventFilters.define("no", function (e) {
-    e.preventDefault();
+    return e.preventDefault(), e;
   });
-  customEventFilters.define("log", function () {
-    console.log(this.value);
+  customEventFilters.define("log", function (e) {
+    return console.log(this.value), e;
   });
   document.querySelector("span").click();
   setTimeout(_ => console.log("only sunshine"), 20);

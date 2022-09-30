@@ -4,7 +4,7 @@
 <script src="../../src/EventFilterRegistry.js"></script>
 <script src="../../src/virtualEventLoop.js"></script>
 
-<div click:submit submit:log>
+<div click:formdata_submit:dispatch submit:log>
     <div name="one" value="hello sunshine"></div>
     <div name="two">2</div>
     <ul name="three">
@@ -17,7 +17,10 @@
 <script type="module">
     import {DOM_FormData} from "../src/FormData/DOM_FormData.js";
 
-    customEventFilters.define("submit", DOM_FormData);
+    customEventFilters.define("formdata", DOM_FormData);
+    customEventFilters.define("dispatch", function(event){
+        this.ownerElement.dispatchEvent(event);
+    });
     customEventFilters.define("log", function(e){
         console.log(...e.detail);
     });
