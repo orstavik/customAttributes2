@@ -38,7 +38,7 @@ class NativeBubblingAttribute extends Attr {
 
   destructor() {
     for (let o of this.ownerElement.attributes)
-      if (this.constructor.prefix === o.constructor.prefix && o !== this)
+      if (this.constructor === o.constructor && o !== this)
         return;
     this.ownerElement.removeEventListener(this.constructor.prefix, NativeBubblingAttribute.#reroute);
   }
@@ -172,7 +172,7 @@ class EventRegistry {
   #upgradeAttribute(at, Definition) {
     Object.setPrototypeOf(at, Definition.prototype);
     try {
-      at.upgrade?.();
+      at.upgrade?.(Definition.prefix, Definition.suffix);
       at.changeCallback?.();
     } catch (error) {
       at.ownerElement.dispatchEvent(new ErrorEvent("error", {
