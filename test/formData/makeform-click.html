@@ -4,26 +4,28 @@
 <script src="../../src/EventFilterRegistry.js"></script>
 <script src="../../src/virtualEventLoop.js"></script>
 
-<div click:formdata_submit:dispatch submit:log>
-    <div name="one" value="hello sunshine"></div>
-    <div name="two">2</div>
-    <ul name="three">
-        <li name="31">thirty-one</li>
-        <li name="32">thirty-two</li>
-        <li name="33">thirty-three</li>
-    </ul>
+<div click:formdata:dispatch_submit submit:log>
+  <div name="one" value="hello sunshine"></div>
+  <div name="two">2</div>
+  <ul name="three">
+    <li name="31">thirty-one</li>
+    <li name="32">thirty-two</li>
+    <li name="33">thirty-three</li>
+  </ul>
 </div>
 
 <script type="module">
-    import {DOM_FormData} from "../src/FormData/DOM_FormData.js";
+  import {DOM_FormData_Lazy} from "../src/FormData/DOM_FormData.js";
 
-    customEventFilters.define("formdata", DOM_FormData);
-    customEventFilters.define("dispatch", function(event){
-        this.ownerElement.dispatchEvent(event);
-    });
-    customEventFilters.define("log", function(e){
-        console.log(...e.detail);
-    });
+  customEventFilters.define("formdata", DOM_FormData_Lazy);
+  customEventFilters.define("dispatch", function (data, [eventName]) {
+    const event = new CustomEvent(eventName, data);
+    this.ownerElement.dispatchEvent(event);
+    return event;
+  });
+  customEventFilters.define("log", function (e) {
+    return console.log(...e.detail), e;
+  });
 
-    document.querySelector("div").click();
+  document.querySelector("div").click();
 </script>

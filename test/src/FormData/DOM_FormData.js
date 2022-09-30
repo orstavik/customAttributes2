@@ -26,25 +26,27 @@ function getValue(el) {
   return el.outerHTML;
 }
 
-class FormDataEvent extends CustomEvent {
-  #target;
-
-  constructor(type, target) {
-    super(type, {bubbles: true});
-    this.#target = target;
-  }
-
-  get detail() {
-    const namedDesc = getNames(this.#target);
-    if (!namedDesc.length)
-      return null;
-    const formData = new FormData();
-    for (let el of namedDesc)
-      formData.append(el.getAttribute("name"), getValue(el));
-    return formData;
-  }
+export function DOM_FormData_Lazy() {
+  const target = this.ownerElement;
+  return {
+    get detail() {
+      const namedDesc = getNames(target);
+      if (!namedDesc.length)
+        return null;
+      const formData = new FormData();
+      for (let el of namedDesc)
+        formData.append(el.getAttribute("name"), getValue(el));
+      return formData;
+    }
+  };
 }
 
-export function DOM_FormData(e, [eventName]) {
-  return new FormDataEvent(eventName, this.ownerElement);
+export function DOM_FormData() {
+  const namedDesc = getNames(this.ownerElement);
+  if (!namedDesc.length)
+    return null;
+  const formData = new FormData();
+  for (let el of namedDesc)
+    formData.append(el.getAttribute("name"), getValue(el));
+  return formData;
 }
