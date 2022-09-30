@@ -1,15 +1,14 @@
-<script src="https://cdn.jsdelivr.net/gh/orstavik/parse@v1.0.2/parse.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/orstavik/parse@v1.0.2/parse.js" xmlns:click="http://www.w3.org/1999/xhtml"></script>
 <script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
 <script src="../../src/EventRegistry.js"></script>
 <script src="../../src/EventFilterRegistry.js"></script>
 <script src="../../src/virtualEventLoop.js"></script>
 
-<h1 click:get="#sunshine">hello sunshine</h1>
+<h1 click:get_history="#sunshine">hello sunshine</h1>
 
 <script type="module">
-  import {GET_history_Attr} from "../src/FormData/AjaxAttr.js";
-
-  customEventFilters.define("get", GET_history_Attr);
+  import {GETAttr} from "../src/FormData/AjaxAttr.js";
+  customEventFilters.define("get", GETAttr);
 
   console.log(location.href.substring(location.href.length - 9));
   window.addEventListener("popstate", e => console.log(location.href.substring(location.href.length - 9)));

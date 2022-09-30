@@ -4,14 +4,14 @@
 <script src="../../src/EventFilterRegistry.js"></script>
 <script src="../../src/virtualEventLoop.js"></script>
 
-<h1 submit:get="https://httpbin.org/anything?hello=sunshine" load:log="1"></h1>
+<h1 submit:get_json="https://httpbin.org/anything?hello=sunshine" load:log="1"></h1>
 <h2 submit:formdata="https://httpbin.org/anything?hello=sunshine" load:log="2"></h2>
 <h3 submit:uricomponents="https://httpbin.org/anything?hello=sunshine" load:log="3"></h3>
 
 <script type="module">
-    import {GET_json_Attr, POST_json_formdata_Attr, POST_json_uriComponent_Attr} from "../src/FormData/AjaxAttr.js";
+    import {GETAttr, POST_json_formdata_Attr, POST_json_uriComponent_Attr} from "../src/FormData/AjaxAttr.js";
 
-    customEventFilters.define("get", GET_json_Attr);
+    customEventFilters.define("get", GETAttr);
     customEventFilters.define("formdata", POST_json_formdata_Attr);
     customEventFilters.define("uricomponents", POST_json_uriComponent_Attr);
 

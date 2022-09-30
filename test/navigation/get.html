@@ -7,9 +7,9 @@
 <h1 click:get="https://example.com/bob/sideisy/bob?hello=sunshine&sunshine=hello#sunshine">hello sunshine</h1>
 
 <script type="module">
-    import {GET_Attr} from "../src/FormData/AjaxAttr.js";
+    import {GETAttr} from "../src/FormData/AjaxAttr.js";
 
-    customEventFilters.define("get", GET_Attr);
+    customEventFilters.define("get", GETAttr);
 
     //att!! intercepting native window.open(...) method for testing purposes
     window.open = (...args) => console.log(...args);
