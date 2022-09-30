@@ -7,9 +7,9 @@
 <h1 submit:ajax="https://httpbin.org/anything?hello=sunshine">hello sunshine</h1>
 
 <script type="module">
-  import {GetFormDataJSON} from "../src/FormData/AjaxAttr.js";
+  import {GetFormData} from "../src/FormData/AjaxAttr.js";
 
-  customEventFilters.define("ajax", GetFormDataJSON);
+  customEventFilters.define("ajax", GetFormData);
   document.addEventListener("load", e => console.log(e.type, e.detail.args));
 
   const formData = new FormData();

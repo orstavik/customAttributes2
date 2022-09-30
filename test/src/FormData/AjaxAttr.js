@@ -41,17 +41,10 @@ function formDataToEncodedUri(formData, base, href) {
   return url;
 }
 
-export const GetFormDataJSON = function (e) {
+export function GetFormData(e, [type = "json"]) {
   const formData = e.detail;
   const url = formDataToEncodedUri(formData, location, this.value);
-  doFetchAndEvents(this.ownerElement, url, null, "GET", "json");
-}
-
-export class GetFormDataText extends Attr {
-  onEvent({detail: formData}) {
-    const url = formDataToEncodedUri(formData, location, this.value);
-    doFetchAndEvents(this.ownerElement, url, null, "GET", "text");
-  }
+  doFetchAndEvents(this.ownerElement, url, null, "GET", type);
 }
 
 export function GETAttr(e, [returnType = "self"]) {
