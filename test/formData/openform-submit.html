@@ -4,16 +4,18 @@
 <script src="../../src/EventFilterRegistry.js"></script>
 <script src="../../src/virtualEventLoop.js"></script>
 
-<h1 submit:openform="https://example.com/bob/sideisy/bob">hello sunshine</h1>
+<h1 submit:openform="https://example.com/bob/sideisy/bob" unload:log>hello sunshine</h1>
 
 <script type="module">
-    import {FormData_open_GET_self} from "../src/FormData/FormData_GET.js";
+  import {FormData_open_GET} from "../src/FormData/FormData_GET.js";
 
-    customEventFilters.define("openform", FormData_open_GET_self);
-    window.addEventListener("unload", _ => console.log("triggered navigation"));
+  customEventFilters.define("openform", FormData_open_GET);
+  customEventFilters.define("log", function () {
+    console.log("triggered navigation");
+  });
 
-    const formData = new FormData();
-    formData.append("a", "A");
-    formData.append("b", "B");
-    document.querySelector("h1").dispatchEvent(new CustomEvent("submit", {detail: formData}));
+  const formData = new FormData();
+  formData.append("a", "A");
+  formData.append("b", "B");
+  document.querySelector("h1").dispatchEvent(new CustomEvent("submit", {detail: formData}));
 </script>
