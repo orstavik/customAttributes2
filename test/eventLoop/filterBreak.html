@@ -4,12 +4,12 @@
 <script src="../../src/EventFilterRegistry.js"></script>
 <script src="../../src/virtualEventLoop.js"></script>
 
-<h1 click:one:two>hello on-click_shift</h1>
+<h1 click:one:two:one>hello on-click_shift</h1>
 
 <script type="module">
   customEventFilters.define("one", function(e){
     console.log("one");
-    return false;
+    return e;
   });
   customEventFilters.define("two", function(e){
     console.log("two");

@@ -26,8 +26,7 @@
     runMethods(this, e);
   });
   customEventFilters.define("shift", function(e){
-    if(!e.shiftKey)
-      return false;
+    if(e.shiftKey)      return e;
   });
 
   const h1 = document.querySelector("h1");

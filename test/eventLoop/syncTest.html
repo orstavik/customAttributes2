@@ -4,14 +4,15 @@
 <script src="../../src/EventFilterRegistry.js"></script>
 <script src="../../src/virtualEventLoop.js"></script>
 
-<h1 click:log:sunshine>hello</h1>
+<h1>hello sunshine</h1>
 <script>
-  customEventFilters.define("log", function (e) {
-    console.log(e.type);
+  customEventFilters.define("hello", function (e) {
+    return console.log(e.type), e;
   });
-  customEventFilters.define("sunshine", function () {
-    console.info("bob");
+  customEventFilters.define("sunshine", function (e) {
+    return console.log("sunshine"), e;
   });
   const h1 = document.querySelector("h1");
+  h1.setAttribute("click:hello:sunshine");
   h1.click();
 </script>

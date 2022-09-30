@@ -12,6 +12,7 @@
   customEventFilters.define("ajax", GetFormData);
   customEventFilters.define("log", function(e){
     console.log(e.type, e.detail.args);
+    return e;
   });
 
   const formData = new FormData();

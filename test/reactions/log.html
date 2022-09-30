@@ -16,10 +16,10 @@
 
 <script type="module">
   customEventFilters.define("sync", function (e) {
-    console.log("sync", this.ownerElement.tagName);
+    return console.log("sync", this.ownerElement.tagName), e;
   });
   customEventFilters.define("log", function (e) {
-    console.log(this.value);
+    return console.log(this.value), e;
   });
 
   document.querySelector("span").click();

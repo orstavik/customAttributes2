@@ -9,9 +9,11 @@
 <script>
   customEventFilters.define("log", function (e) {
     console.log(e.type);
+    return e;
   });
-  customEventFilters.define("bob", function () {
+  customEventFilters.define("bob", function (e) {
     console.log("bob");
+    return e;
   });
   customEvents.define("timeout", class TimeoutAttr extends Attr {
     upgrade() {
