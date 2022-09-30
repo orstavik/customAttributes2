@@ -31,6 +31,11 @@
 <test-html test="get_history.html">
     <script expected>["script%3E", "#sunshine"]</script>
 </test-html>
+<test-html test="get_json.html">
+    <script expected>[
+        ["1", ["https://httpbin.org/anything?hello=sunshine", "GET", {"hello": "sunshine"}, "", {}]]
+    ]</script>
+</test-html>
 
 <!-- Note!! You must load the test-html component at the end -->
 <script src="https://cdn.jsdelivr.net/gh/orstavik/TestHTML@v1.0.3/TestHTML.js"></script>

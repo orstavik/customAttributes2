@@ -1,8 +1,7 @@
-<test-html test="get_json.html">
+<test-html test="post_json.html">
   <script expected>[[
-    ["1", ["https://httpbin.org/anything?hello=sunshine", "GET", {"hello": "sunshine"}, "", {}]],
-    ["2", ["https://httpbin.org/anything", "POST", {}, "", {"hello": ["sunshine", "sunshine"]}]],
-    ["3", ["https://httpbin.org/anything", "POST", {}, "hello=sunshine&hello=sunshine", {}]]
+    ["1", ["https://httpbin.org/anything", "POST", {}, "", {"hello": ["sunshine", "sunshine"]}]],
+    ["2", ["https://httpbin.org/anything", "POST", {}, "hello=sunshine&hello=sunshine", {}]]
   ]]</script>
 </test-html>
 
