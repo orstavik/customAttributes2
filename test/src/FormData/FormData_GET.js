@@ -1,17 +1,3 @@
-async function getFetch(url) {
-  const res = await fetch(url, {method: "GET"});
-  if (res.status >= 200 && res.status < 300)
-    return res;
-  //todo here it is possible to manage res.status 3xx. For example.
-  throw `Failed to fetch "${url.href}": ${res.status} ${res.statusText}.`
-}
-
-function dispatchAsyncErrorEvent(target, error) {
-  const e = new ErrorEvent("error", {bubbles: true, composed: true, error});
-  e.defaultAction = _ => console.error(error);
-  target.dispatchEvent(e);
-}
-
 function formDataToEncodedUri(href, formData) {
   const url = new URL(href);
   if (!formData)
@@ -24,27 +10,34 @@ function formDataToEncodedUri(href, formData) {
   return url;
 }
 
-//this should probably be a load_json
-export async function FormData_GET(e, [returnType = "json"], eventType) {
-  let formData = e.formData; //todo: clarify this? e.detail can has some value
-  const url = formDataToEncodedUri(this.value, formData);
+async function fetchAndEvent(attr, url, returnType, eventType) {
   try {
-    const detail = await (await getFetch(url))[returnType]();
-    customEvents.dispatch(new CustomEvent(eventType, {detail}), this.ownerElement);
+    const response = await fetch(url, {method: "GET"});
+    if (!(response.status >= 200 && response.status < 300))
+      throw `Failed to fetch "${url.href}": ${response.status} ${response.statusText}.`
+    //todo here it is possible to manage res.status 3xx. For example.
+    const detail = await response[returnType]();
+    customEvents.dispatch(new CustomEvent(eventType, {detail}), attr.ownerElement);
   } catch (err) {
-    const target = this.ownerElement.isConnected ? this.ownerElement : window;
-    dispatchAsyncErrorEvent(target, `${this.name}: ${err}`);
+    const target = this.ownerElement.isConnected ? attr.ownerElement : document.documentElement;//todo move this logic to the propagation algorithm??
+    customEvents.dispatch(new ErrorEvent("error", {error: `${attr.name}: ${err}`}), target);
   }
 }
 
-export async function FormData_History({detail: formData}) {
-  const url = formDataToEncodedUri(this.value, formData);
-  history.pushState(null, null, url.href);
-  window.dispatchEvent(new PopStateEvent("popstate"));
-}
-
-export function FormData_open_GET(e, [target = "self"]) {
-  const formData = e.detail;
-  const url = formDataToEncodedUri(this.value, formData);
-  window.open(url, "_" + target);
+export async function FormData_GET(data, [returnType = "json"], eventType) {
+  //1. get the formData. Fallback is the ownerElement being a <form> element.
+  const formData =
+    data instanceof FormData ? data :
+      data.detail instanceof FormData ? data.detail :
+        this.ownerElement instanceof HTMLFormElement ? new FormData(this.ownerElement) :
+          undefined;
+  //2. turn the formData into a URL. Fallback is the location of the document.
+  const url = formDataToEncodedUri(this.value || location.href, formData);
+  //3. react to the FormData url
+  if (returnType === "json" || returnType === "text")
+    await fetchAndEvent(this, url, returnType, eventType);
+  else if (returnType === "popstate")
+    history.pushState(null, null, url.href), window.dispatchEvent(new PopStateEvent("popstate"));
+  else if (returnType === "self" || returnType === "blank" || returnType === "parent" || returnType === "top")
+    window.open(url, "_" + returnType);
 }

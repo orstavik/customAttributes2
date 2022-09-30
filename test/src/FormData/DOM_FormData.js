@@ -28,7 +28,9 @@ function getValue(el) {
 
 export function DOM_FormData_Lazy() {
   const target = this.ownerElement;
-  return {
+  if(target.tagName === "FORM")
+    return new FormData(target);
+  return  {
     get detail() {
       const namedDesc = getNames(target);
       if (!namedDesc.length)
@@ -42,6 +44,8 @@ export function DOM_FormData_Lazy() {
 }
 
 export function DOM_FormData() {
+  if(this.ownerElement.tagName === "FORM")
+    return new FormData(this.ownerElement);
   const namedDesc = getNames(this.ownerElement);
   if (!namedDesc.length)
     return null;

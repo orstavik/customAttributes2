@@ -4,12 +4,12 @@
 <script src="../../src/EventFilterRegistry.js"></script>
 <script src="../../src/virtualEventLoop.js"></script>
 
-<h1 submit:openform="https://example.com/bob/sideisy/bob" unload:log>hello sunshine</h1>
+<h1 submit:open_self="https://example.com/bob/sideisy/bob" unload:log>hello sunshine</h1>
 
 <script type="module">
-  import {FormData_open_GET} from "../src/FormData/FormData_GET.js";
+  import {FormData_GET} from "../src/FormData/FormData_GET.js";
 
-  customEventFilters.define("openform", FormData_open_GET);
+  customEventFilters.define("open", FormData_GET);
   customEventFilters.define("log", function (e) {
     return console.log("triggered navigation"), e;
   });

@@ -4,7 +4,7 @@
 <script src="../../src/EventFilterRegistry.js"></script>
 <script src="../../src/virtualEventLoop.js"></script>
 
-<form click:get="https://jsonplaceholder.typicode.com/todos/1" get:log action="http://foo.com" method="post">
+<form click:formdata:get="https://jsonplaceholder.typicode.com/todos/1" get:log action="http://foo.com" method="post">
   <div><input name="hello" type="text" value="asds"></div>
   <input name="sunshine" type="text" value="312312">
   <input type="submit">
@@ -12,7 +12,9 @@
 
 <script type="module">
   import {FormData_GET} from "../src/FormData/FormData_GET.js";
+  import {DOM_FormData} from "../src/FormData/DOM_FormData.js";
 
+  customEventFilters.define("formdata", DOM_FormData);
   customEventFilters.define("get", FormData_GET);
   customEventFilters.define("log", function(e){
     console.log(e.detail);
