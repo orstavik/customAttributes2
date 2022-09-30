@@ -29,8 +29,8 @@ function openForm(href, target, enctype, nameValues) {
   form.remove();
 }
 
-function POSTFormDataAttr(e, returnType) {             //formdata is only useful for POST
-  const entries = e.detail;
+//method_target_enctype_Attr
+export function POST_json_formdata_Attr({detail: entries}, [returnType]) {
   const url = new URL(this.value);
   const formData = new FormData();
   for (let [name, value] of entries)
@@ -42,8 +42,7 @@ function POSTFormDataAttr(e, returnType) {             //formdata is only useful
   doFetchAndEvents(this.ownerElement, url, formData, "POST", returnType);
 }
 
-function POSTUrlEncodedAttr(e, returnType) {
-  const entries = e.detail;
+export function POST_json_uriComponent_Attr({detail: entries}, [returnType]) {
   const url = new URL(this.value);
   for (let [k, v] of entries)
     url.searchParams.append(k, v);
@@ -53,35 +52,17 @@ function POSTUrlEncodedAttr(e, returnType) {
   doFetchAndEvents(this.ownerElement, url, body, "post", returnType);
 }
 
+//todo the Post form data are untested.
 function POSTAttr(target = "_self", enctype = "application/x-www-form-urlencoded") {
-  return class AjaxAttr extends Attr {
-    onEvent({detail: entries}) {
-      const url = new URL(this.value);
-      const body = [...entries, ...url.searchParams.entries()];
-      for (let k of url.searchParams.keys())
-        url.searchParams.delete(k);
-      openForm(url, target, enctype, body);
-    }
+  return function POSTAttr({detail: entries}) {
+    const url = new URL(this.value);
+    const body = [...entries, ...url.searchParams.entries()];
+    for (let k of url.searchParams.keys())
+      url.searchParams.delete(k);
+    openForm(url, target, enctype, body);
   }
 }
 
-//method_target_enctype_Attr
-
-export const POST_text_formdata_Attr = function (e) {
-  POSTFormDataAttr.call(this, e, "text");
-}
-export const POST_json_formdata_Attr = function (e) {
-  POSTFormDataAttr.call(this, e, "json");
-}
-
-export const POST_text_uriComponent_Attr = function (e) {
-  POSTUrlEncodedAttr.call(this, e, "text");
-}
-export const POST_json_uriComponent_Attr = function (e) {
-  POSTUrlEncodedAttr.call(this, e, "json");
-}
-
-//todo the Post form data are untested.
 export const POST_uriComponent_Attr = POSTAttr();
 export const POST__blank_uriComponent_Attr = POSTAttr("_blank");
 export const POST__parent_uriComponent_Attr = POSTAttr("_parent");

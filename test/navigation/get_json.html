@@ -5,35 +5,35 @@
 <script src="../../src/virtualEventLoop.js"></script>
 
 <h1 submit:get_json="https://httpbin.org/anything?hello=sunshine" get:log="1"></h1>
-<h2 submit:formdata="https://httpbin.org/anything?hello=sunshine" load:log="2"></h2>
-<h3 submit:uricomponents="https://httpbin.org/anything?hello=sunshine" load:log="3"></h3>
+<h2 submit:formdata_json="https://httpbin.org/anything?hello=sunshine" load:log="2"></h2>
+<h3 submit:uricomponents_json="https://httpbin.org/anything?hello=sunshine" load:log="3"></h3>
 
 <script type="module">
-    import {POST_json_formdata_Attr, POST_json_uriComponent_Attr} from "../src/FormData/AjaxAttr.js";
-    import {JSON_GET} from "../src/FormData/FormData_GET.js";
+  import {POST_json_formdata_Attr, POST_json_uriComponent_Attr} from "../src/FormData/AjaxAttr.js";
+  import {JSON_GET} from "../src/FormData/FormData_GET.js";
 
-    customEventFilters.define("get", JSON_GET);
-    customEventFilters.define("formdata", POST_json_formdata_Attr);
-    customEventFilters.define("uricomponents", POST_json_uriComponent_Attr);
+  customEventFilters.define("get", JSON_GET);
+  customEventFilters.define("formdata", POST_json_formdata_Attr);
+  customEventFilters.define("uricomponents", POST_json_uriComponent_Attr);
 
-    const log = {};
+  const log = {};
 
-    function doLog(e) {
-        let k = this.value;
-        let url = e.detail.url;
-        let method = e.detail.method;
-        let args = e.detail.args;
-        let data = e.detail.data;
-        let form = e.detail.form;
-        log[k] = [url, method, args, data, form];
-        const entries = Object.entries(log);
-        if (entries.length === 3)
-            console.log(...entries.sort());
-    }
+  function doLog(e) {
+    let k = this.value;
+    let url = e.detail.url;
+    let method = e.detail.method;
+    let args = e.detail.args;
+    let data = e.detail.data;
+    let form = e.detail.form;
+    log[k] = [url, method, args, data, form];
+    const entries = Object.entries(log);
+    if (entries.length === 3)
+      console.log(...entries.sort());
+  }
 
-    customEventFilters.define("log", doLog);
+  customEventFilters.define("log", doLog);
 
-    document.querySelector("h1").dispatchEvent(new CustomEvent("submit", {detail: [["hello", "sunshine"]]}));
-    document.querySelector("h2").dispatchEvent(new CustomEvent("submit", {detail: [["hello", "sunshine"]]}));
-    document.querySelector("h3").dispatchEvent(new CustomEvent("submit", {detail: [["hello", "sunshine"]]}));
+  document.querySelector("h1").dispatchEvent(new CustomEvent("submit", {detail: [["hello", "sunshine"]]}));
+  document.querySelector("h2").dispatchEvent(new CustomEvent("submit", {detail: [["hello", "sunshine"]]}));
+  document.querySelector("h3").dispatchEvent(new CustomEvent("submit", {detail: [["hello", "sunshine"]]}));
 </script>

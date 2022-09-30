@@ -24,34 +24,35 @@ async function fetchAndEvent(attr, url, returnType, eventType) {
   }
 }
 
-export function FormData_GET(data, [returnType = "json"], eventType) {
-  //1. get the formData. Fallback is the ownerElement being a <form> element.
-  const formData =
-    data instanceof FormData ? data :
-      data.detail instanceof FormData ? data.detail :
-        this.ownerElement instanceof HTMLFormElement ? new FormData(this.ownerElement) :
-          undefined;
-  //2. turn the formData into a URL. Fallback is the location of the document.
-  const url = formDataToEncodedUri(this.value || location.href, formData);
-  //3. react to the FormData url
+function reactToUrl(attr, returnType, url, eventType) {
   if (returnType === "json" || returnType === "text")
-    fetchAndEvent(this, url, returnType, eventType);
+    fetchAndEvent(attr, url, returnType, eventType);
   else if (returnType === "popstate")
     history.pushState(null, null, url.href), window.dispatchEvent(new PopStateEvent("popstate"));
   else if (returnType === "self" || returnType === "blank" || returnType === "parent" || returnType === "top")
     window.open(url, "_" + returnType);
 }
 
+export function FormData_GET(data, [returnType = "json"], eventType) {
+  //1. get the formData. Fallback is the ownerElement being a <form> element.
+  //2. turn the formData into a URL. Fallback is the location of the document.
+  const formData =
+    data instanceof FormData ? data :
+      data.detail instanceof FormData ? data.detail :
+        this.ownerElement instanceof HTMLFormElement ? new FormData(this.ownerElement) :
+          undefined;
+  const url = formDataToEncodedUri(this.value || location.href, formData);
+  //3. react to the FormData url
+  reactToUrl(this, returnType, url, eventType);
+}
+
 export function JSON_GET(ar, [returnType = "self"], eventType) {
   const url = new URL(this.value, location);
-  if(ar instanceof Event) ar = ar.detail;
+  if(ar instanceof Event)
+    ar = ar.detail;
   if (ar instanceof Array)
     for (let [k, v] of ar)
       url.searchParams.set(k, v);
-  if (returnType === "text" || returnType === "json")
-    fetchAndEvent(this, url, returnType, eventType);
-  else if (returnType === "popstate")
-    history.pushState(null, null, url), window.dispatchEvent(new PopStateEvent("popstate"));
-  else if (["self", "blank", "parent", "top"].includes(returnType))
-    open(url, "_" + returnType);
+  //3. react to the FormData url
+  reactToUrl(this, returnType, url, eventType);
 }
