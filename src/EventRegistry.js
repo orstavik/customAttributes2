@@ -260,8 +260,9 @@ class EventRegistry {
         if (event === undefined)
           return;
       }
-    } catch (err) {
-      return;      //todo we need to handle this
+    } catch (error) {
+      customEvents.dispatch(new ErrorEvent("FilterError", {error}), at.ownerElement);
+      return;
     }
     return event;
   }

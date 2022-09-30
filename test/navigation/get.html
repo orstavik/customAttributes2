@@ -4,15 +4,18 @@
 <script src="../../src/EventFilterRegistry.js"></script>
 <script src="../../src/virtualEventLoop.js"></script>
 
-<h1 click:get="https://example.com/bob/sideisy/bob?hello=sunshine&sunshine=hello#sunshine">hello sunshine</h1>
+<h1 click:get_self="https://example.com/bob/sideisy/bob?hello=sunshine&sunshine=hello#sunshine" unload:log>hello
+  sunshine</h1>
 
 <script type="module">
-    import {GETAttr} from "../src/FormData/AjaxAttr.js";
+  import {FormData_GET} from "../src/FormData/FormData_GET.js";
 
-    customEventFilters.define("get", GETAttr);
+  customEventFilters.define("get", FormData_GET);
+  customEventFilters.define("log", function (e) {
+    return console.log(e.type), e;
+  })
+  //att!! intercepting native window.open(...) method for testing purposes
+  window.open = (...args) => console.log(...args);
 
-    //att!! intercepting native window.open(...) method for testing purposes
-    window.open = (...args) => console.log(...args);
-    const h1 = document.querySelector("h1");
-    h1.click();
+  document.querySelector("h1").click();
 </script>

@@ -29,38 +29,6 @@ function openForm(href, target, enctype, nameValues) {
   form.remove();
 }
 
-function formDataToEncodedUri(formData, base, href) {
-  const url = new URL(href, base);
-  if (!formData)
-    return url;
-  for (let [k, v] of formData.entries()) {
-    if (!(v instanceof String) && typeof v !== "string")
-      throw TypeError("FormData with File/Blob entities cannot be encoded to uriComponent here.");
-    url.searchParams.set(k, v);
-  }
-  return url;
-}
-
-export function GetFormData(e, [type = "json"]) {
-  const formData = e.detail;
-  const url = formDataToEncodedUri(formData, location, this.value);
-  doFetchAndEvents(this.ownerElement, url, null, "GET", type);
-}
-
-export function GETAttr(e, [returnType = "self"]) {
-  const entries = e.detail;                                //todo e.detail should probably be converted into the full e??
-  const url = new URL(this.value, location);
-  if (entries)
-    for (let [k, v] of entries)
-      url.searchParams.set(k, v);
-  if (returnType === "text" || returnType === "json")
-    doFetchAndEvents(this.ownerElement, url, null, "GET", returnType);
-  else if (returnType === "history")
-    history.pushState({}, null, url), window.dispatchEvent(new Event("popstate"));
-  else if (["self", "blank", "parent", "top"].includes(returnType))
-    open(url, "_" + returnType);
-}
-
 function POSTFormDataAttr(e, returnType) {             //formdata is only useful for POST
   const entries = e.detail;
   const url = new URL(this.value);
