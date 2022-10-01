@@ -18,7 +18,7 @@
   import {DOM_FormData_Lazy} from "../src/FormData/DOM_FormData.js";
 
   customEventFilters.define("formdata", DOM_FormData_Lazy);
-  customEventFilters.define("dispatch", function (data, [eventName]) {
+  customEventFilters.define("dispatch", function (data, _, eventName) {
     const event = new CustomEvent(eventName, data);
     this.ownerElement.dispatchEvent(event);
     return event;

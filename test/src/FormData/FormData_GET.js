@@ -33,7 +33,7 @@ function reactToUrl(attr, returnType, url, eventType) {
     window.open(url, "_" + returnType);
 }
 
-export function FormData_GET(data, [returnType = "json"], eventType) {
+export function FormData_GET(data, eventType, returnType = "json") {
   //1. get the formData. Fallback is the ownerElement being a <form> element.
   //2. turn the formData into a URL. Fallback is the location of the document.
   const formData =
@@ -46,7 +46,7 @@ export function FormData_GET(data, [returnType = "json"], eventType) {
   reactToUrl(this, returnType, url, eventType);
 }
 
-export function JSON_GET(ar, [returnType = "self"], eventType) {
+export function JSON_GET(ar, eventType, returnType = "self") {
   const url = new URL(this.value, location);
   if(ar instanceof Event)
     ar = ar.detail;

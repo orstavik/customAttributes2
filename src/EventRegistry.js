@@ -256,7 +256,7 @@ class EventRegistry {
   callFilterImpl(filter, at, event) {
     try {
       for (let {Definition, suffix, prefix} of customEventFilters.getFilterFunctions(filter) || []) {
-        event = Definition.call(at, event, suffix, prefix);
+        event = Definition.call(at, event, prefix, ...suffix);
         if (event === undefined)
           return;
       }

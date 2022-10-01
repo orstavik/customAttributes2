@@ -16,11 +16,11 @@
 </div>
 
 <script type="module">
-  customEventFilters.define("co", function (e, [name])  {
+  customEventFilters.define("co", function (e, _, name)  {
     //in filters, we wish to dispatch via the virtual event loop directly, I think.
     customEvents.dispatch(new Event(name), this.ownerElement);
   });
-  customEventFilters.define("at", function (e,[attr]){
+  customEventFilters.define("at", function (e,_, attr){
     this.ownerElement.hasAttribute(attr) ?
       this.ownerElement.removeAttribute(attr) :
       this.ownerElement.setAttribute(attr);
