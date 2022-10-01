@@ -1,3 +1,15 @@
+/**
+  <h1 click:filterA_one_two>
+  <script>
+    customEventFilters.define("filterA", function filter(e, prefix, one, two){
+      prefix==="filterA"
+      one === "one"
+      two === "two"
+      ...
+    });
+  </script>
+ */
+
 class EventFilterRegistry {
   define(prefix, Function) {
     if (/^(async |)(\(|[^([]+=)/.test(Function.toString()))
@@ -41,14 +53,6 @@ class EventFilterRegistry {
     }
     return this.#lists[filter] = res;
   }
-  //todo
-  // 3. passive? This should probably be a special first filter ":passive". This will add a special event listener with the passive argument set to true on the target node. This would also need to be cleaned up.
 }
 
 window.customEventFilters = new EventFilterRegistry();
-
-//todo do we want the output of the function to be the thing that the next function works with?
-// This kind of filtering from the functions. It would map with the .chain(..).ing(..).monad(..).thing.
-// The monad would return the same object. This is not what this chaining function does.
-// There is clarity in having fixed arguments. You don't need to worry too much about what comes before or after.
-// but if we don't do the before and after, then we can have a situation of lots of mutations, and that leads to confusion and errors down the line.

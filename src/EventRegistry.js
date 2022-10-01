@@ -231,6 +231,10 @@ class EventRegistry {
                   attr.ownerElement.removeAttribute(attr.name);
               }                                                                 //todo 1.
             }
+            //todo
+            // passive? This should probably be a special first filter ":passive".
+            // This will add a special event listener with the passive argument set to true on the target node.
+            // This would also need to be cleaned up.
           }
         }
         if (event.defaultAction) {
