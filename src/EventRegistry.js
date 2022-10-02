@@ -37,20 +37,21 @@ class NativeBubblingEvent extends Attr {
     customEvents.dispatch(e, e.composedPath()[0]);
   };
 
-  upgrade(prefix) {
-    this.ownerElement.addEventListener(this._prefix = prefix, NativeBubblingEvent.#reroute);
+  upgrade() {
+    this.ownerElement.addEventListener(this.prefix, NativeBubblingEvent.#reroute);
   }
 
   destructor() {
     for (let o of this.ownerElement.attributes)
-      if (this.constructor === o.constructor && o !== this && this._prefix === o._prefix)
+      if (this.constructor === o.constructor && o !== this && this.prefix === o.prefix)
         return;
-    this.ownerElement.removeEventListener(this._prefix, NativeBubblingEvent.#reroute);
+    this.ownerElement.removeEventListener(this.prefix, NativeBubblingEvent.#reroute);
   }
 }
 
 class NativeDocumentOnlyEvent extends Attr {
-  upgrade(prefix) {
+  upgrade() {
+    const prefix = this.prefix;
     const owner = new WeakRef(this);
     const reroute = function (e) {
       const target = owner.deref();
@@ -63,7 +64,8 @@ class NativeDocumentOnlyEvent extends Attr {
 }
 
 class NativeWindowOnlyEvent extends Attr {
-  upgrade(prefix) {
+  upgrade() {
+    const prefix = this.prefix;
     const owner = new WeakRef(this);
     const reroute = function (e) {
       const target = owner.deref();
@@ -77,17 +79,15 @@ class NativeWindowOnlyEvent extends Attr {
 
 //todo
 class PassiveNativeBubblingEvent extends NativeBubblingEvent {
-  upgrade(prefix) {
-    super.upgrade(prefix);
-    this._passiveListener = function () {
-    };
-    this.ownerElement.addEventListener(prefix, this._passiveListener);
+  upgrade() {
+    super.upgrade();
+    this.ownerElement.addEventListener(this.prefix, this._passiveListener = () => 1);
   }
 
   destructor() {
     //todo the destructor is safe, no? There will not be any possibility of removing the attribute from the element without
     // the destructor being called? Yes, it is safe for this purpose, but the element can be removed from the DOM without the destructor being called.
-    this.ownerElement.addEventListener(this._prefix, this._passiveListener);
+    this.ownerElement.addEventListener(this.prefix, this._passiveListener);
     super.destructor();
   }
 }
@@ -124,16 +124,23 @@ class EventRegistry {
   #unknownEvents = {};
 
   define(prefix, Definition) {
-    const overlapDefinition = this.prefixOverlaps(prefix);
-    if (overlapDefinition)
-      throw `The customEvent "${prefix}" is already defined as "${overlapDefinition}".`;
-    this.#upgradeUnknownEvents(prefix, this[prefix] = Definition);
+    if (this[prefix])
+      throw `The customEvent "${prefix}" is already defined.`;
+    this[prefix] = Definition;
+    for (let at of this.#unknownEvents[prefix] || []) {
+      try {
+        this.#upgradeAttribute(at, Definition);
+      } catch (error) {
+        customEvents.dispatch(new ErrorEvent("EventError", {error}), at.ownerElement);
+      }
+    }
+    delete this.#unknownEvents[prefix];
   }
 
   upgrade(...attrs) {
     for (let at of attrs) {
       const Definition = this[at.prefix] ??= getNativeEventDefinition(at.prefix);
-      Definition?
+      Definition ?
         this.#upgradeAttribute(at, Definition) :
         (this.#unknownEvents[at.prefix] ??= new UnsortedWeakArray()).push(at);
     }
@@ -145,27 +152,11 @@ class EventRegistry {
   #upgradeAttribute(at, Definition) {
     Object.setPrototypeOf(at, Definition.prototype);
     try {
-      at.upgrade?.(at.prefix, ...at.suffix);
+      at.upgrade?.();
       at.changeCallback?.();
     } catch (error) {
       customEvents.dispatch(new ErrorEvent("EventError", {error}), at.ownerElement);
     }
-  }
-
-  prefixOverlaps(newPrefix) {
-    for (let oldPrefix in this)
-      if (this[oldPrefix] && (newPrefix.startsWith(oldPrefix) || oldPrefix.startsWith(newPrefix)))
-        return oldPrefix;
-  }
-
-  #upgradeUnknownEvents(prefix, Definition) {
-    for (let event in this.#unknownEvents)
-      if (event.startsWith(prefix)) {
-        this[event] = Definition;
-        delete this.#upgradeUnknownEvents[event];
-        for (let at of this.#unknownEvents[event]) //todo try catch here
-          this.#upgradeAttribute(at, this[event]);
-      }
   }
 
   //todo this should be in an EventLoop class actually. And this class could also hold the callFilter methods.
