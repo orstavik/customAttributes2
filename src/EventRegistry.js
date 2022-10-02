@@ -135,8 +135,7 @@ class EventRegistry {
       at.upgrade?.(prefix, suffix); //todo make this ...suffix
       at.changeCallback?.();
     } catch (error) {
-      at.ownerElement.dispatchEvent(new ErrorEvent("error", {error}));
-      //any error that occurs during upgrade must be queued in the event loop.
+      customEvents.dispatch(new ErrorEvent("EventError", {error}), at.ownerElement);
     }
   }
 
@@ -207,7 +206,7 @@ class EventRegistry {
 
   callFilterImpl(filter, at, event) {
     try {
-      for (let {Definition, suffix, prefix} of customEventFilters.getFilterFunctions(filter) || []) {
+      for (let {Definition, prefix, suffix} of customEventFilters.getFilterFunctions(filter) || []) {
         event = Definition.call(at, event, prefix, ...suffix);
         if (event === undefined)
           return;

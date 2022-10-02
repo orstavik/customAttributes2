@@ -1,13 +1,13 @@
 /**
-  <h1 click:filterA_one_two>
-  <script>
-    customEventFilters.define("filterA", function filter(e, prefix, one, two){
+ <h1 click:filterA_one_two>
+ <script>
+ customEventFilters.define("filterA", function filter(e, prefix, one, two){
       prefix==="filterA"
       one === "one"
       two === "two"
       ...
     });
-  </script>
+ </script>
  */
 
 class EventFilterRegistry {
@@ -27,14 +27,13 @@ class EventFilterRegistry {
 
   #findAndBind(name) {
     if (this[name])
-      return {Definition: this[name], prefix: name, suffix: ""};
-    for (let prefix in this) {
-      if (name.startsWith(prefix)) {
-        let suffix = name.substring(prefix.length);
-        if (suffix[0] === '_') suffix = suffix.substring(1).split("_");
-        return {Definition: this[prefix], prefix, suffix};
-      }
-    }
+      return {Definition: this[name], prefix: name, suffix: []};
+    const prefix = Object.keys(this).find(prefix => name.startsWith(prefix))
+    if (!prefix)
+      return;
+    let suffix = name.substring(prefix.length);
+    suffix = suffix[0] === '_' ? suffix.substring(1).split("_") : [suffix];
+    return {Definition: this[prefix], prefix, suffix};
   }
 
   #lists = {};
