@@ -75,7 +75,7 @@ function getNativeEventDefinition(prefix) {
     `on${prefix}` in HTMLElement.prototype ? NativeBubblingEvent :
       `on${prefix}` in window ? NativeWindowOnlyEvent :
         `on${prefix}` in Document.prototype && NativeDocumentOnlyEvent;
-  return Definition && {Definition, prefix, suffix: ""};
+  return Definition && {Definition, prefix, suffix: []};
 }
 
 class UnsortedWeakArray extends Array {
@@ -100,29 +100,31 @@ class EventRegistry {
 
   #unknownEvents = [];
 
-  static makeSuffixDefinition(aCustomAttrDefinition, prefix, suffix) {
-    if (suffix[0] === "_")
-      suffix = suffix.substring(1).split("_");
-    return {Definition: aCustomAttrDefinition, prefix, suffix};
+  static parseSuffix(suffix) {
+    return suffix === "" ? [] : suffix[0] === "_" ? suffix.substring(1).split("_") : [suffix];
   }
 
   define(prefix, Class) {
     const overlapDefinition = this.prefixOverlaps(prefix);
     if (overlapDefinition)
       throw `The customEvent "${prefix}" is already defined as "${overlapDefinition}".`;
-    this[prefix] = {prefix, suffix: "", Definition: Class};
+    this[prefix] = {prefix, suffix: [], Definition: Class};
     this.#upgradeUnknownEvents(prefix, Class);
   }
 
   suffixDefinition(name) {
     const prefix = Object.keys(this).find(prefix => this[prefix] && name.startsWith(prefix));
-    return prefix && EventRegistry.makeSuffixDefinition(this[prefix].Definition, prefix, name.substring(prefix.length));
+    if (prefix)
+      return {
+        Definition: this[prefix].Definition,
+        prefix,
+        suffix: EventRegistry.parseSuffix(name.substring(prefix.length))
+      };
   }
 
   upgrade(...attrs) {
     for (let at of attrs) {
-      this[at.event] ??= getNativeEventDefinition(at.event) ||
-        this.suffixDefinition(at.event);
+      this[at.event] ??= getNativeEventDefinition(at.event) || this.suffixDefinition(at.event);
       this[at.event] ?
         this.#upgradeAttribute(at, this[at.event]) :
         (this.#unknownEvents[at.event] ??= new UnsortedWeakArray()).push(at);
@@ -132,7 +134,7 @@ class EventRegistry {
   #upgradeAttribute(at, {Definition, suffix, prefix}) {
     Object.setPrototypeOf(at, Definition.prototype);
     try {
-      at.upgrade?.(prefix, suffix); //todo make this ...suffix
+      at.upgrade?.(prefix, ...suffix);
       at.changeCallback?.();
     } catch (error) {
       customEvents.dispatch(new ErrorEvent("EventError", {error}), at.ownerElement);
@@ -148,9 +150,9 @@ class EventRegistry {
   #upgradeUnknownEvents(prefix, Definition) {
     for (let event in this.#unknownEvents)
       if (event.startsWith(prefix)) {
-        this[event] = EventRegistry.makeSuffixDefinition(Definition, prefix, event.substring(prefix.length));
+        this[event] = {Definition, prefix, suffix: EventRegistry.parseSuffix(event.substring(prefix.length))};
         delete this.#upgradeUnknownEvents[event];
-        for (let at of this.#unknownEvents[event])
+        for (let at of this.#unknownEvents[event]) //todo try catch here
           this.#upgradeAttribute(at, this[event]);
       }
   }
