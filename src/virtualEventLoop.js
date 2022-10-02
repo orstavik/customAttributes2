@@ -24,8 +24,9 @@ function deprecate(name) {
     if (this.hasAttribute(name)) {
       const at = getAttrNodeOG.call(this, name);
       const oldValue = at.value;
-      // if (oldValue !== undefined && value !== undefined) //todo uncomment this when we have the test set, it should work.
-        at.value = value;
+      if (oldValue === value)
+        return;
+      at.value = value;
       at.changeCallback?.(oldValue);
     } else {
       const at = documentCreateAttributeOG.call(document, name);

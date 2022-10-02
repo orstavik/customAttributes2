@@ -1,3 +1,43 @@
+/**
+ <h1 click:filterA_one_two>
+ <script>
+ customEventFilters.define("filterA", function filter(e, prefix, one, two){
+      prefix==="filterA"
+      one === "one"
+      two === "two"
+      ...
+    });
+ </script>
+ */
+
+class EventFilterRegistry {
+  define(prefix, Function) {
+    if (/^(async |)(\(|[^([]+=)/.test(Function.toString()))
+      throw `Arrow functions cannot be bound as customEventFilters.`;
+    const usedFilterName = Object.keys(this).find(name => this[name] === Function);
+    if (usedFilterName === prefix)
+      return console.warn(`Defining the event filter "${prefix}" multiple times.`);
+    if (usedFilterName)
+      throw `Function: "${Function.name}" is already defined as event filter "${usedFilterName}".`;
+    const overlapDefinition = Object.keys(this).find(old => prefix.startsWith(old) || old.startsWith(prefix));
+    if (overlapDefinition)
+      throw `The eventFilter prefix: "${prefix}" is already defined as "${overlapDefinition}".`;
+    this[prefix] = Function;
+  }
+
+  getFilterFunctions(filters) {
+    const res = [];
+    for (let [prefix, ...suffix] of filters) {
+      if (!this[prefix])
+        return [];
+      res.push({Definition: this[prefix], prefix, suffix});
+    }
+    return res;
+  }
+}
+
+window.customEventFilters = new EventFilterRegistry();
+
 Object.defineProperties(Attr.prototype, {
   "event": {
     get: function () {
@@ -11,19 +51,21 @@ Object.defineProperties(Attr.prototype, {
     get: function () {
       return this.event.split("_").slice(1);
     }
-  }, "filterFunction": { //todo split this into prefix/suffix too
+  }, "filterFunction": { //todo add the customEventFilters.
     get: function () {
       const res = this.name.split("::")[0].substring(this.event.length);
-      if (res.length > 1)
-        return res.substring(1);
+      const res2 = res.substring(1).split(":").map(f => f.split("_"));
+      return customEventFilters.getFilterFunctions(res2);
     }
-  }, "defaultAction": {  //todo split this into prefix/suffix too
+  }, "defaultAction": {  //todo
     get: function () {
-      return this.name.split("::")[1];
+      let da = this.name.split("::")[1] || "";
+      da = da.split(":").map(f => f.split("_"));
+      return customEventFilters.getFilterFunctions(da);
     }
   }, "allFunctions": {
     get: function () {
-      return (this.name.split(":")).slice(1).filter(a => a).join(":");
+      return [...this.filterFunction, ...this.defaultAction];
     }
   }
 });
@@ -170,11 +212,11 @@ class EventRegistry {
         for (let t = target; t; t = t.assignedSlot || t.parentElement || t.parentNode?.host) {
           for (let attr of t.attributes) {
             if (attr.prefix === event.type) {
-              if (!event.defaultPrevented || !attr.defaultAction) {            //todo 1.
-                if (attr.defaultAction && event.defaultAction)
+              if (!event.defaultPrevented || !attr.defaultAction.length) {            //todo 1.
+                if (attr.defaultAction.length && event.defaultAction)
                   continue;
                 const res = this.callFilterImpl(attr.filterFunction, attr, event);
-                if (res !== undefined && attr.defaultAction)
+                if (res !== undefined && attr.defaultAction.length)
                   event.defaultAction = {attr, res};
               }                                                                 //todo 1.
             }
@@ -192,9 +234,9 @@ class EventRegistry {
     }
   }
 
-  callFilterImpl(filter, at, event) {
+  callFilterImpl(filters, at, event) {
     try {
-      for (let {Definition, prefix, suffix} of customEventFilters.getFilterFunctions(filter) || []) {
+      for (let {Definition, prefix, suffix} of filters) {
         event = Definition.call(at, event, prefix, ...suffix);
         if (event === undefined)
           return;
