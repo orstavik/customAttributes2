@@ -30,33 +30,30 @@ Object.defineProperties(Attr.prototype, {
 });
 
 class NativeBubblingEvent extends Attr {
-  static #reroute = function (e) {
-    //todo if this no longer has an ownerElement, then it should be removed?
+  upgrade() {
+    this._listener = this.listener.bind(this);
+    this.ownerElement.addEventListener(this.prefix, this._listener);
+  }
+
+  listener(e) {
     // e.preventDefault(); // if dispatchEvent propagates sync, native defaultActions can still be used.
     e.stopImmediatePropagation();
     customEvents.dispatch(e, e.composedPath()[0]);
-  };
-
-  upgrade() {
-    this.ownerElement.addEventListener(this.prefix, NativeBubblingEvent.#reroute);
   }
 
   destructor() {
-    for (let o of this.ownerElement.attributes)
-      if (this.constructor === o.constructor && o !== this && this.prefix === o.prefix)
-        return;
-    this.ownerElement.removeEventListener(this.prefix, NativeBubblingEvent.#reroute);
+    this.ownerElement.removeEventListener(this.prefix, this._listener);
   }
 }
 
 class NativeDocumentOnlyEvent extends Attr {
   upgrade() {
     const prefix = this.prefix;
-    const owner = new WeakRef(this);
+    const attr = new WeakRef(this);
     const reroute = function (e) {
-      const target = owner.deref();
-      target ?
-        customEvents.dispatch(e, target) :
+      const at = attr.deref();
+      at && at.ownerElement ?                                         //todo we have a GC leak here.
+        customEvents.dispatch(e, at) :
         document.removeEventListener(prefix, reroute);
     }
     document.addEventListener(prefix, reroute);
@@ -66,11 +63,11 @@ class NativeDocumentOnlyEvent extends Attr {
 class NativeWindowOnlyEvent extends Attr {
   upgrade() {
     const prefix = this.prefix;
-    const owner = new WeakRef(this);
+    const attr = new WeakRef(this);
     const reroute = function (e) {
-      const target = owner.deref();
-      target && target.ownerElement ?
-        customEvents.dispatch(e, target) :
+      const at = attr.deref();
+      at && at.ownerElement ?                                       //todo we have a GC leak here.
+        customEvents.dispatch(e, at) :
         window.removeEventListener(prefix, reroute);
     }
     window.addEventListener(prefix, reroute);
