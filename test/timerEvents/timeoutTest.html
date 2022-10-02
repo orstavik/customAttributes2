@@ -16,14 +16,14 @@
     return e;
   });
   customEvents.define("timeout", class TimeoutAttr extends Attr {
-    upgrade() {
+    upgrade(prefix, suffix) {
       //todo here we can check to see if the element has a value at startup and then do from there.
       //todo but, for this to be freezable, from inside a shadowRoot, then we need a meta element for this one..
       this.value = "a" + Date.now();
       setTimeout(() => {
         this.ownerElement.setAttribute(this.name, "z" + Date.now());
-        customEvents.dispatch(new Event(this.constructor.prefix), this);
-      }, this.constructor.suffix);
+        customEvents.dispatch(new Event(prefix), this);
+      }, suffix);
     }
 
     changeCallback(oldValue) {
