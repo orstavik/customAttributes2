@@ -25,40 +25,6 @@ Object.defineProperties(Attr.prototype, {
   }
 });
 
-class NativeBubblingAttribute extends Attr {
-  // static #reroute = function (e) {
-  //   // e.preventDefault(); // if dispatchEvent propagates sync, native defaultActions can still be used.
-  //   e.stopImmediatePropagation();
-  //   customEvents.dispatch(e, e.composedPath()[0]);
-  // };
-  //
-  // upgrade() {
-  //   this.ownerElement.addEventListener(this.constructor.prefix, NativeBubblingAttribute.#reroute);
-  // }
-  //
-  // destructor() {
-  //   for (let o of this.ownerElement.attributes)
-  //     if (this.constructor === o.constructor && o !== this)
-  //       return;
-  //   this.ownerElement.removeEventListener(this.constructor.prefix, NativeBubblingAttribute.#reroute);
-  // }
-  //
-  static subclass(prefix) {
-    if (!(`on${prefix}` in HTMLElement.prototype && `on${prefix}` in window))
-      return;
-    return {prefix, suffix: "", Definition: NativeBubblingEvent};
-    // return class NativeBubblingAttributeImpl extends NativeBubblingAttribute {
-    //   static get prefix() {
-    //     return prefix;
-    //   }
-    //
-    //   static get suffix() {
-    //     return "";
-    //   }
-    // };
-  }
-}
-
 class NativeBubblingEvent extends Attr {
   static #reroute = function (e) {
     // e.preventDefault(); // if dispatchEvent propagates sync, native defaultActions can still be used.
@@ -66,7 +32,7 @@ class NativeBubblingEvent extends Attr {
     customEvents.dispatch(e, e.composedPath()[0]);
   };
 
-  upgrade(prefix) { //todo make suffix ...variadic
+  upgrade(prefix) {
     this.ownerElement.addEventListener(this._prefix = prefix, NativeBubblingEvent.#reroute);
   }
 
@@ -96,7 +62,7 @@ class NativeWindowOnlyEvent extends Attr {
     const owner = new WeakRef(this);
     const reroute = function (e) {
       const target = owner.deref();
-      target && target.ownerElement ?   //remove the attribute from the dom or from the ownerElement, then it is lost.
+      target && target.ownerElement ?
         customEvents.dispatch(e, target) :
         window.removeEventListener(prefix, reroute);
     }
@@ -104,53 +70,12 @@ class NativeWindowOnlyEvent extends Attr {
   }
 }
 
-//
-// class NativeDomEvent extends Attr{
-//   static #reroute = function (e) {
-//     // e.preventDefault(); // if dispatchEvent propagates sync, native defaultActions can still be used.
-//     e.stopImmediatePropagation();
-//     customEvents.dispatch(e, e.composedPath()[0]);
-//   };
-//
-//   upgrade(prefix) {
-//     this.prefix = prefix;
-//     this.ownerElement.addEventListener(prefix, NativeDomEvent.#reroute);
-//   }
-//
-//   destructor() {
-//     // for (let o of this.ownerElement.attributes)
-//     //   if (this.constructor === o.constructor && o !== this)
-//     //     return;
-//     this.ownerElement.removeEventListener(this.prefix, NativeDomEvent.#reroute);
-//   }
-// }
-
-class NativeNonBubblingAttribute extends Attr {
-  static subclass(prefix) {
-    if (!(`on${prefix}` in window) || `on${prefix}` in HTMLElement.prototype)
-      return;
-    return {prefix, suffix: "", Definition: NativeWindowOnlyEvent};
-    //   return class NativeNonBubblingAttributeImpl extends Attr {
-    //
-    //     static #rerouter = function reroute(e) {
-    //       customEvents.dispatch(e);
-    //       if (!customEvents.count(e.type))
-    //         window.removeEventListener(this.prefix, this.#rerouter);
-    //     }.bind(this);
-    //
-    //     upgrade() {
-    //       window.addEventListener(this.constructor.prefix, this.constructor.#rerouter);
-    //     }
-    //
-    //     static get prefix() {
-    //       return prefix;
-    //     }
-    //
-    //     static get suffix() {
-    //       return "";
-    //     }
-    //   };
-  }
+function getNativeEventDefinition(prefix) {
+  const Definition =
+    `on${prefix}` in HTMLElement.prototype ? NativeBubblingEvent :
+      `on${prefix}` in window ? NativeWindowOnlyEvent :
+        `on${prefix}` in Document.prototype && NativeDocumentOnlyEvent;
+  return Definition && {Definition, prefix, suffix: ""};
 }
 
 class UnsortedWeakArray extends Array {
@@ -204,9 +129,7 @@ class EventRegistry {
   upgrade(...attrs) {
     for (let at of attrs) {
       (this.#allAttributes[at.event] ??= new UnsortedWeakArray()).push(at);
-      this[at.event] ??=
-        NativeBubblingAttribute.subclass(at.event) ||
-        NativeNonBubblingAttribute.subclass(at.event) ||
+      this[at.event] ??= getNativeEventDefinition(at.event) ||
         this.suffixDefinition(at.event);
       this[at.event] ?
         this.#upgradeAttribute(at, this[at.event]) :
@@ -230,10 +153,6 @@ class EventRegistry {
     }
   }
 
-  // count(name) {              //todo this doesn't work.
-  //   return this.#allAttributes[name].length;
-  // }
-  //
   prefixOverlaps(newPrefix) {
     for (let oldPrefix in this)
       if (this[oldPrefix] && (newPrefix.startsWith(oldPrefix) || oldPrefix.startsWith(newPrefix)))
@@ -289,17 +208,11 @@ class EventRegistry {
           if (attr.once)
             attr.ownerElement.removeAttribute(attr.name);//todo 1.
         }
-        //broadcast and single-attribute propagation
+        //single-attribute propagation
       } else if (target instanceof Attr) {
-        // const attributes = target instanceof Attr ? [target] : this.#allAttributes[event.type];
-        // for (let attr of attributes) {
-        // if (!attr.ownerElement.isConnected)   //todo do we want this? or do we not want this? elements off the dom feels wrong.
-        //   continue;
-        const attr = target;
-        this.callFilterImpl(attr.allFunctions, attr, event);
-        if (attr.once)
-          attr.ownerElement.removeAttribute(attr.name);
-        // }
+        this.callFilterImpl(target.allFunctions, target, event);
+        if (target.once)
+          target.ownerElement.removeAttribute(target.name);
       }
       this.#eventLoop.shift();
     }

@@ -1,5 +1,11 @@
 <test-html test="onlineTest.html">
   <script expected>[["online", {}]]</script>
 </test-html>
+<test-html test="readystatechange.html">
+  <script expected>[
+    ["readystatechange", "interactive"],
+    ["readystatechange", "complete"]
+  ]</script>
+</test-html>
 <!-- Note!! You must load the test-html component at the end -->
 <script src="https://cdn.jsdelivr.net/gh/orstavik/TestHTML@v1.0.3/TestHTML.js"></script>
