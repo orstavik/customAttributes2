@@ -98,48 +98,47 @@ function getNativeEventDefinition(prefix) {
   return Definition;
 }
 
-class UnsortedWeakArray extends Array {
-  push(el) {
-    super.push(new WeakRef(el));
+class UnsortedWeakArray {
+  push(event, el) {
+    (this[event] ??= []).push(new WeakRef(el));
   }
 
-  * [Symbol.iterator]() {
-    for (let i = 0; i < this.length; i++) {
-      let ref = this[i];
+  * attributes(event) {
+    const ar = this[event] || [];
+    for (let i = 0; i < ar.length; i++) {
+      let ref = ar[i];
       const res = ref.deref();
       if (res === undefined) {           //or if res.ownerElement === null, then it has been removed from the DOM.
-        this[i--] = this[this.length - 1];
-        this.pop();
+        ar[i--] = ar[ar.length - 1];
+        ar.pop();
       } else
         yield res;
     }
+    delete this[event];
   }
 }
 
 class EventRegistry {
 
-  #unknownEvents = {};
+  #unknownEvents = new UnsortedWeakArray();
 
   define(prefix, Definition) {
     if (this[prefix])
       throw `The customEvent "${prefix}" is already defined.`;
     this[prefix] = Definition;
-    for (let at of this.#unknownEvents[prefix] || []) {
+    for (let at of this.#unknownEvents.attributes(prefix)) {
       try {
         this.#upgradeAttribute(at, Definition);
       } catch (error) {
         customEvents.dispatch(new ErrorEvent("EventError", {error}), at.ownerElement);
       }
     }
-    delete this.#unknownEvents[prefix];
   }
 
   upgrade(...attrs) {
     for (let at of attrs) {
       const Definition = this[at.prefix] ??= getNativeEventDefinition(at.prefix);
-      Definition ?
-        this.#upgradeAttribute(at, Definition) :
-        (this.#unknownEvents[at.prefix] ??= new UnsortedWeakArray()).push(at);
+      Definition ? this.#upgradeAttribute(at, Definition) : this.#unknownEvents.push(at.prefix, at);
     }
   }
 
