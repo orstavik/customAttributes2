@@ -1,8 +1,7 @@
 Object.defineProperties(Attr.prototype, {
   "event": {
     get: function () {
-      const parts = this.name.split(":");
-      return parts[0] || parts[1];
+      return (this.name.split(":"))[0];
     }
   }, "prefix": {
     get: function () {
@@ -12,19 +11,19 @@ Object.defineProperties(Attr.prototype, {
     get: function () {
       return this.event.split("_").slice(1);
     }
-  }, "filterFunction": {
+  }, "filterFunction": { //todo split this into prefix/suffix too
     get: function () {
       const res = this.name.split("::")[0].substring(this.event.length);
       if (res.length > 1)
         return res.substring(1);
     }
-  }, "defaultAction": {
+  }, "defaultAction": {  //todo split this into prefix/suffix too
     get: function () {
       return this.name.split("::")[1];
     }
   }, "allFunctions": {
     get: function () {
-      return !this.defaultAction ? this.filterFunction : !this.filterFunction ? this.defaultAction : this.filterFunction + ":" + this.defaultAction;
+      return (this.name.split(":")).slice(1).filter(a => a).join(":");
     }
   }
 });
@@ -181,10 +180,9 @@ class EventRegistry {
             }
           }
         }
-        if (event.defaultAction) {
+        if (event.defaultAction && !event.defaultPrevented) {
           const {attr, res} = event.defaultAction;
-          if (!event.defaultPrevented)                                                        //todo 1.
-            this.callFilterImpl(attr.defaultAction, attr, res);
+          this.callFilterImpl(attr.defaultAction, attr, res);
         }
         //single-attribute propagation
       } else if (target instanceof Attr) {
