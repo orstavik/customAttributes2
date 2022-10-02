@@ -1,15 +1,3 @@
-/**
- <h1 click:filterA_one_two>
- <script>
- customEventFilters.define("filterA", function filter(e, prefix, one, two){
-      prefix==="filterA"
-      one === "one"
-      two === "two"
-      ...
-    });
- </script>
- */
-
 class EventFilterRegistry {
   define(prefix, Function) {
     if (/^(async |)(\(|[^([]+=)/.test(Function.toString()))

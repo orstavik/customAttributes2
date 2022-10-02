@@ -18,3 +18,16 @@ The filterFunctions and defaultAction are the same type of functions. If a set o
 //Syntax:
 // normal sync reaction: "click:log:bob"
 // normal sync reaction+default action: (filter1:filter2) with default action(log:open): "click:filter1:filter2::log:open:"
+
+
+```html
+ <h1 click:filterA_one_two>
+ <script>
+ customEventFilters.define("filterA", function filter(e, prefix, one, two){
+      prefix==="filterA"
+      one === "one"
+      two === "two"
+      ...
+    });
+ </script>
+```
