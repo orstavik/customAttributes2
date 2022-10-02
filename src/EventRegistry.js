@@ -79,7 +79,7 @@ class NativeBubblingEvent extends Attr {
   listener(e) {
     // e.preventDefault(); // if dispatchEvent propagates sync, native defaultActions can still be used.
     e.stopImmediatePropagation();
-    customEvents.dispatch(e, e.composedPath()[0]);
+    eventLoop.dispatch(e, e.composedPath()[0]);
   }
 
   destructor() {
@@ -94,7 +94,7 @@ class NativeDocumentOnlyEvent extends Attr {
     const reroute = function (e) {
       const at = attr.deref();
       at && at.ownerElement ?                                         //todo we have a GC leak here.
-        customEvents.dispatch(e, at) :
+        eventLoop.dispatch(e, at) :
         document.removeEventListener(prefix, reroute);
     }
     document.addEventListener(prefix, reroute);
@@ -108,7 +108,7 @@ class NativeWindowOnlyEvent extends Attr {
     const reroute = function (e) {
       const at = attr.deref();
       at && at.ownerElement ?                                       //todo we have a GC leak here.
-        customEvents.dispatch(e, at) :
+        eventLoop.dispatch(e, at) :
         window.removeEventListener(prefix, reroute);
     }
     window.addEventListener(prefix, reroute);
@@ -171,7 +171,7 @@ class EventRegistry {
       try {
         this.#upgradeAttribute(at, Definition);
       } catch (error) {
-        customEvents.dispatch(new ErrorEvent("EventError", {error}), at.ownerElement);
+        eventLoop.dispatch(new ErrorEvent("EventError", {error}), at.ownerElement);
       }
     }
   }
@@ -183,22 +183,20 @@ class EventRegistry {
     }
   }
 
-  //todo
-  // If we add an event reaction, that should be passive, then we should add this as a
-  // 1. a special filter on the special native pointerdown and wheel? There are few passive possible events? This should be a special class actually..
   #upgradeAttribute(at, Definition) {
     Object.setPrototypeOf(at, Definition.prototype);
     try {
       at.upgrade?.();
       at.changeCallback?.();
     } catch (error) {
-      customEvents.dispatch(new ErrorEvent("EventError", {error}), at.ownerElement);
+      eventLoop.dispatch(new ErrorEvent("EventError", {error}), at.ownerElement);
     }
   }
+}
 
-  //todo this should be in an EventLoop class actually. And this class could also hold the callFilter methods.
-  //todo 1. the event loop class will make things a little simpler.
-  //todo 2. then we need to work with the defaultAction methods in the callFilter methods.
+window.customEvents = new EventRegistry();
+
+class EventLoop {
   #eventLoop = [];
 
   dispatch(event, target) {
@@ -207,34 +205,35 @@ class EventRegistry {
       return;
     while (this.#eventLoop.length) {
       const {target, event} = this.#eventLoop[0];
-      //bubble propagation
-      if (target instanceof Element) {  //todo there is a bug from the ElementObserver.js so that instanceof HTMLElement doesn't work.
-        for (let t = target; t; t = t.assignedSlot || t.parentElement || t.parentNode?.host) {
-          for (let attr of t.attributes) {
-            if (attr.prefix === event.type) {
-              if (!event.defaultPrevented || !attr.defaultAction.length) {            //todo 1.
-                if (attr.defaultAction.length && event.defaultAction)
-                  continue;
-                const res = this.callFilterImpl(attr.filterFunction, attr, event);
-                if (res !== undefined && attr.defaultAction.length)
-                  event.defaultAction = {attr, res};
-              }                                                                 //todo 1.
-            }
-          }
-        }
-        if (event.defaultAction && !event.defaultPrevented) {
-          const {attr, res} = event.defaultAction;
-          this.callFilterImpl(attr.defaultAction, attr, res);
-        }
-        //single-attribute propagation
-      } else if (target instanceof Attr) {
-        this.callFilterImpl(target.allFunctions, target, event);
-      }
+      if (target instanceof Element)   //todo there is a bug from the ElementObserver.js so that instanceof HTMLElement doesn't work.
+        EventLoop.bubble(target, event);
+      else if (target instanceof Attr)
+        EventLoop.callFilterImpl(target.allFunctions, target, event);
       this.#eventLoop.shift();
     }
   }
 
-  callFilterImpl(filters, at, event) {
+  static bubble(target, event) {
+    for (let t = target; t; t = t.assignedSlot || t.parentElement || t.parentNode?.host) {
+      for (let attr of t.attributes) {
+        if (attr.prefix === event.type) {
+          if (!event.defaultPrevented || !attr.defaultAction.length) {            //todo 1.
+            if (attr.defaultAction.length && event.defaultAction)
+              continue;
+            const res = EventLoop.callFilterImpl(attr.filterFunction, attr, event);
+            if (res !== undefined && attr.defaultAction.length)
+              event.defaultAction = {attr, res};
+          }                                                                 //todo 1.
+        }
+      }
+    }
+    if (event.defaultAction && !event.defaultPrevented) {
+      const {attr, res} = event.defaultAction;
+      EventLoop.callFilterImpl(attr.defaultAction, attr, res);
+    }
+  }
+
+  static callFilterImpl(filters, at, event) {
     try {
       for (let {Definition, prefix, suffix} of filters) {
         event = Definition.call(at, event, prefix, ...suffix);
@@ -242,11 +241,11 @@ class EventRegistry {
           return;
       }
     } catch (error) {
-      customEvents.dispatch(new ErrorEvent("FilterError", {error}), at.ownerElement);
+      eventLoop.dispatch(new ErrorEvent("FilterError", {error}), at.ownerElement);
       return;
     }
     return event;
   }
 }
 
-window.customEvents = new EventRegistry();
+window.eventLoop = new EventLoop();

@@ -25,7 +25,7 @@
       this.value = "a" + Date.now();
       setTimeout(() => {
         this.ownerElement.setAttribute(this.name, "z" + Date.now());
-        customEvents.dispatch(new Event(this.prefix), this);
+        eventLoop.dispatch(new Event(this.prefix), this);
       }, this.suffix);
     }
 

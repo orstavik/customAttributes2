@@ -18,7 +18,7 @@
 <script type="module">
   customEventFilters.define("co", function (e, _, name)  {
     //in filters, we wish to dispatch via the virtual event loop directly, I think.
-    customEvents.dispatch(new Event(name), this.ownerElement);
+    eventLoop.dispatch(new Event(name), this.ownerElement);
   });
   customEventFilters.define("at", function (e,_, attr){
     this.ownerElement.hasAttribute(attr) ?

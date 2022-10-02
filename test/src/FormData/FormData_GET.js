@@ -17,10 +17,10 @@ async function fetchAndEvent(attr, url, returnType, eventType) {
       throw `Failed to fetch "${url.href}": ${response.status} ${response.statusText}.`
     //todo here it is possible to manage res.status 3xx. For example.
     const detail = await response[returnType]();
-    customEvents.dispatch(new CustomEvent(eventType, {detail}), attr.ownerElement);
+    eventLoop.dispatch(new CustomEvent(eventType, {detail}), attr.ownerElement);
   } catch (err) {
     const target = attr.ownerElement.isConnected ? attr.ownerElement : document.documentElement;//todo move this logic to the propagation algorithm??
-    customEvents.dispatch(new ErrorEvent("error", {error: `${attr.name}: ${err}`}), target);
+    eventLoop.dispatch(new ErrorEvent("error", {error: `${attr.name}: ${err}`}), target);
   }
 }
 
