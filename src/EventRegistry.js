@@ -4,6 +4,14 @@ Object.defineProperties(Attr.prototype, {
       const parts = this.name.split(":");
       return parts[0] || parts[1];
     }
+  }, "prefix": {
+    get: function () {
+      return this.event.split("_")[0];
+    }
+  }, "suffix": {
+    get: function () {
+      return this.event.split("_").slice(1);
+    }
   }, "filterFunction": {
     get: function () {
       const res = this.name.split("::")[0].substring(this.event.length);
@@ -23,6 +31,7 @@ Object.defineProperties(Attr.prototype, {
 
 class NativeBubblingEvent extends Attr {
   static #reroute = function (e) {
+    //todo if this no longer has an ownerElement, then it should be removed?
     // e.preventDefault(); // if dispatchEvent propagates sync, native defaultActions can still be used.
     e.stopImmediatePropagation();
     customEvents.dispatch(e, e.composedPath()[0]);
@@ -66,12 +75,30 @@ class NativeWindowOnlyEvent extends Attr {
   }
 }
 
+//todo
+class PassiveNativeBubblingEvent extends NativeBubblingEvent {
+  upgrade(prefix) {
+    super.upgrade(prefix);
+    this._passiveListener = function () {
+    };
+    this.ownerElement.addEventListener(prefix, this._passiveListener);
+  }
+
+  destructor() {
+    //todo the destructor is safe, no? There will not be any possibility of removing the attribute from the element without
+    // the destructor being called? Yes, it is safe for this purpose, but the element can be removed from the DOM without the destructor being called.
+    this.ownerElement.addEventListener(this._prefix, this._passiveListener);
+    super.destructor();
+  }
+}
+
 function getNativeEventDefinition(prefix) {
   const Definition =
+    // prefix === "passivewheel" ? PassiveNativeBubblingEvent :  //todo
     `on${prefix}` in HTMLElement.prototype ? NativeBubblingEvent :
       `on${prefix}` in window ? NativeWindowOnlyEvent :
         `on${prefix}` in Document.prototype && NativeDocumentOnlyEvent;
-  return Definition && {Definition, prefix, suffix: []};
+  return Definition;
 }
 
 class UnsortedWeakArray extends Array {
@@ -94,43 +121,31 @@ class UnsortedWeakArray extends Array {
 
 class EventRegistry {
 
-  #unknownEvents = [];
+  #unknownEvents = {};
 
-  static parseSuffix(suffix) {
-    return suffix === "" ? [] : suffix[0] === "_" ? suffix.substring(1).split("_") : [suffix];
-  }
-
-  define(prefix, Class) {
+  define(prefix, Definition) {
     const overlapDefinition = this.prefixOverlaps(prefix);
     if (overlapDefinition)
       throw `The customEvent "${prefix}" is already defined as "${overlapDefinition}".`;
-    this[prefix] = {prefix, suffix: [], Definition: Class};
-    this.#upgradeUnknownEvents(prefix, Class);
-  }
-
-  suffixDefinition(name) {
-    const prefix = Object.keys(this).find(prefix => this[prefix] && name.startsWith(prefix));
-    if (prefix)
-      return {
-        Definition: this[prefix].Definition,
-        prefix,
-        suffix: EventRegistry.parseSuffix(name.substring(prefix.length))
-      };
+    this.#upgradeUnknownEvents(prefix, this[prefix] = Definition);
   }
 
   upgrade(...attrs) {
     for (let at of attrs) {
-      this[at.event] ??= getNativeEventDefinition(at.event) || this.suffixDefinition(at.event);
-      this[at.event] ?
-        this.#upgradeAttribute(at, this[at.event]) :
-        (this.#unknownEvents[at.event] ??= new UnsortedWeakArray()).push(at);
+      const Definition = this[at.prefix] ??= getNativeEventDefinition(at.prefix);
+      Definition?
+        this.#upgradeAttribute(at, Definition) :
+        (this.#unknownEvents[at.prefix] ??= new UnsortedWeakArray()).push(at);
     }
   }
 
-  #upgradeAttribute(at, {Definition, suffix, prefix}) {
+  //todo
+  // If we add an event reaction, that should be passive, then we should add this as a
+  // 1. a special filter on the special native pointerdown and wheel? There are few passive possible events? This should be a special class actually..
+  #upgradeAttribute(at, Definition) {
     Object.setPrototypeOf(at, Definition.prototype);
     try {
-      at.upgrade?.(prefix, ...suffix);
+      at.upgrade?.(at.prefix, ...at.suffix);
       at.changeCallback?.();
     } catch (error) {
       customEvents.dispatch(new ErrorEvent("EventError", {error}), at.ownerElement);
@@ -146,7 +161,7 @@ class EventRegistry {
   #upgradeUnknownEvents(prefix, Definition) {
     for (let event in this.#unknownEvents)
       if (event.startsWith(prefix)) {
-        this[event] = {Definition, prefix, suffix: EventRegistry.parseSuffix(event.substring(prefix.length))};
+        this[event] = Definition;
         delete this.#upgradeUnknownEvents[event];
         for (let at of this.#unknownEvents[event]) //todo try catch here
           this.#upgradeAttribute(at, this[event]);
@@ -168,7 +183,7 @@ class EventRegistry {
       if (target instanceof Element) {  //todo there is a bug from the ElementObserver.js so that instanceof HTMLElement doesn't work.
         for (let t = target; t; t = t.assignedSlot || t.parentElement || t.parentNode?.host) {
           for (let attr of t.attributes) {
-            if (attr.event === event.type) {
+            if (attr.prefix === event.type) {
               if (!event.defaultPrevented || !attr.defaultAction) {            //todo 1.
                 if (attr.defaultAction && event.defaultAction)
                   continue;
@@ -177,10 +192,6 @@ class EventRegistry {
                   event.defaultAction = {attr, res};
               }                                                                 //todo 1.
             }
-            //todo
-            // passive? This should probably be a special first filter ":passive".
-            // This will add a special event listener with the passive argument set to true on the target node.
-            // This would also need to be cleaned up.
           }
         }
         if (event.defaultAction) {
