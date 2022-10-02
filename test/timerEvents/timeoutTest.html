@@ -5,7 +5,7 @@
 <script src="../../src/virtualEventLoop.js"></script>
 
 
-<h1 :timeout50:log:bob>hello :timeout50:log:bob</h1>
+<h1 timeout50:log:bob:once>hello :timeout50:log:bob</h1>
 <script>
   customEventFilters.define("log", function (e) {
     console.log(e.type);
@@ -14,6 +14,9 @@
   customEventFilters.define("bob", function (e) {
     console.log("bob");
     return e;
+  });
+  customEventFilters.define("once", function (e) {
+    return this.ownerElement.removeAttribute(this.name), e;
   });
   customEvents.define("timeout", class TimeoutAttr extends Attr {
     upgrade(prefix, suffix) {

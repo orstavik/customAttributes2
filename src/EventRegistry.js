@@ -1,16 +1,12 @@
 Object.defineProperties(Attr.prototype, {
-  "once": {
-    get: function () {
-      return this.name[0] === ":";
-    }
-  }, "event": {
+  "event": {
     get: function () {
       const parts = this.name.split(":");
       return parts[0] || parts[1];
     }
   }, "filterFunction": {
     get: function () {
-      const res = this.name.split("::")[0].substring(this.once + this.event.length);
+      const res = this.name.split("::")[0].substring(this.event.length);
       if (res.length > 1)
         return res.substring(1);
     }
@@ -179,8 +175,6 @@ class EventRegistry {
                 const res = this.callFilterImpl(attr.filterFunction, attr, event);
                 if (res !== undefined && attr.defaultAction)
                   event.defaultAction = {attr, res};
-                if (!attr.defaultAction && attr.once)
-                  attr.ownerElement.removeAttribute(attr.name);
               }                                                                 //todo 1.
             }
             //todo
@@ -193,14 +187,10 @@ class EventRegistry {
           const {attr, res} = event.defaultAction;
           if (!event.defaultPrevented)                                                        //todo 1.
             this.callFilterImpl(attr.defaultAction, attr, res);
-          if (attr.once)
-            attr.ownerElement.removeAttribute(attr.name);//todo 1.
         }
         //single-attribute propagation
       } else if (target instanceof Attr) {
         this.callFilterImpl(target.allFunctions, target, event);
-        if (target.once)
-          target.ownerElement.removeAttribute(target.name);
       }
       this.#eventLoop.shift();
     }

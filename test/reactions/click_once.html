@@ -4,7 +4,7 @@
 <script src="../../src/EventFilterRegistry.js"></script>
 <script src="../../src/virtualEventLoop.js"></script>
 
-<h1 :click:shift:on="sayHi">hello on-click_shift</h1>
+<h1 click:shift:on:bonce="sayHi">hello on-click_shift</h1>
 
 <script type="module">
   function runMethods(at, e, target = at.ownerElement) {
@@ -22,16 +22,19 @@
     }
   }
 
-  customEventFilters.define("on", function(e){
-    runMethods(this, e);
+  customEventFilters.define("on", function (e) {
+    return runMethods(this, e), e;
   });
-  customEventFilters.define("shift", function(e){
-    if(e.shiftKey)      return e;
+  customEventFilters.define("shift", function (e) {
+    if (e.shiftKey) return e;
+  });
+  customEventFilters.define("bonce", function (e) {
+    return this.ownerElement.removeAttribute(this.name), e;
   });
 
   const h1 = document.querySelector("h1");
   h1.sayHi = function (e) {
-    console.log("Hello sunshine "+ e.type);
+    console.log("Hello sunshine " + e.type);
   }.bind(h1);
   h1.dispatchEvent(new PointerEvent("click", {shiftKey: true}));
   h1.dispatchEvent(new PointerEvent("click", {shiftKey: true}));

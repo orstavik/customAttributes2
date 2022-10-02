@@ -15,10 +15,6 @@ The event is either a native event (such as `click`), or a custom event that tri
 
 The filterFunctions and defaultAction are the same type of functions. If a set of defaultAction functions are declared, then  essentially the same, a set of functions declared using `customEventFilters.define("prefix", DefinitionFunction);`.
 
-## `once`
-
-If the custom attribute is prefixed with `:`, then it will only be run once.
-
 //Syntax:
 // normal sync reaction: "click:log:bob"
 // normal sync reaction+default action: (filter1:filter2) with default action(log:open): "click:filter1:filter2::log:open:"
