@@ -99,7 +99,6 @@ class UnsortedWeakArray extends Array {
 class EventRegistry {
 
   #unknownEvents = [];
-  #allAttributes = {};
 
   static makeSuffixDefinition(aCustomAttrDefinition, prefix, suffix) {
     if (suffix[0] === "_")
@@ -115,12 +114,6 @@ class EventRegistry {
     this.#upgradeUnknownEvents(prefix, Class);
   }
 
-  getName(Class) {
-    for (let name in this)
-      if (this[name] === Class)
-        return name;
-  }
-
   suffixDefinition(name) {
     const prefix = Object.keys(this).find(prefix => this[prefix] && name.startsWith(prefix));
     return prefix && EventRegistry.makeSuffixDefinition(this[prefix].Definition, prefix, name.substring(prefix.length));
@@ -128,27 +121,21 @@ class EventRegistry {
 
   upgrade(...attrs) {
     for (let at of attrs) {
-      (this.#allAttributes[at.event] ??= new UnsortedWeakArray()).push(at);
       this[at.event] ??= getNativeEventDefinition(at.event) ||
         this.suffixDefinition(at.event);
       this[at.event] ?
         this.#upgradeAttribute(at, this[at.event]) :
-        this.#unknownEvents.push(at.event);
+        (this.#unknownEvents[at.event] ??= new UnsortedWeakArray()).push(at);
     }
   }
 
   #upgradeAttribute(at, {Definition, suffix, prefix}) {
     Object.setPrototypeOf(at, Definition.prototype);
     try {
-      at.upgrade?.(prefix, suffix);
+      at.upgrade?.(prefix, suffix); //todo make this ...suffix
       at.changeCallback?.();
     } catch (error) {
-      at.ownerElement.dispatchEvent(new ErrorEvent("error", {
-        error,
-        bubbles: true,
-        composed: true,
-        cancelable: true
-      }));
+      at.ownerElement.dispatchEvent(new ErrorEvent("error", {error}));
       //any error that occurs during upgrade must be queued in the event loop.
     }
   }
@@ -160,11 +147,11 @@ class EventRegistry {
   }
 
   #upgradeUnknownEvents(prefix, Definition) {
-    for (let event of this.#unknownEvents)
+    for (let event in this.#unknownEvents)
       if (event.startsWith(prefix)) {
         this[event] = EventRegistry.makeSuffixDefinition(Definition, prefix, event.substring(prefix.length));
         delete this.#upgradeUnknownEvents[event];
-        for (let at of this.#allAttributes[event])
+        for (let at of this.#unknownEvents[event])
           this.#upgradeAttribute(at, this[event]);
       }
   }
