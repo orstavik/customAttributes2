@@ -11,7 +11,36 @@
   <script expected>["only sunshine"]</script>
 </test-html>
 <test-html test="no-submit-native.html">
-  <script expected>["submit","only sunshine"]</script>
+  <script expected>["submit", "only sunshine"]</script>
+</test-html>
+<test-html test="stop-click_strong.html">
+  <script expected>[
+    "stopa",
+    "stopb2",
+    "unstoppable",
+    "nonstop",
+    "stopa2",
+    "stopb2",
+    "unstoppable",
+    "unstoppable"
+  ]</script>
+</test-html>
+<test-html test="stop-click_weak.html">
+  <script expected>[
+    "stopa",
+    "stopb2",
+    "unstoppable",
+    "",
+    "nonstop",
+    "stopa2",
+    "stopb2",
+    "unstoppable",
+    "",
+    "stop",
+    "stopa2",
+    "stopb2",
+    "unstoppable"
+  ]</script>
 </test-html>
 
 

@@ -1,0 +1,54 @@
+<script src="https://cdn.jsdelivr.net/gh/orstavik/parse@v1.0.2/parse.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
+<script src="../../src/EventFilterRegistry.js"></script>
+<script src="../../src/EventRegistry.js"></script>
+<script src="../../src/virtualEventLoop.js"></script>
+
+<div click:log_unstoppable>
+  <div click:stop:log_stop2>
+    <div click:stop_b:log_stopb2>
+      <div click:stop_a:log_stopa2>
+        <div id="stopa" click:stop_a:log_stopa>
+          stop_a
+        </div>
+        <div id="nonstop" click:log_nonstop>
+          no stop
+        </div>
+        <div id="stop" click:stop:log_stop>
+          universal stop
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script type="module">
+  //another method of doing stopPropagation.
+  //keys block later stops with same key, stop with no key blocks all subsequent stops.
+  function makeStopStrong() {
+    const eventKeys = new WeakMap();
+    return function (e, _, key) {
+      let keys = eventKeys.get(e);
+      if (!key)                       //global stop
+        return eventKeys.set(e, []), undefined;
+      else if (keys?.length === 0)    //globally stopped
+        return;
+      else if (keys?.indexOf(key) >= 0) //locally stopped
+        return;
+      else if (!keys)
+        eventKeys.set(e, [key]);
+      else
+        keys.push(key);
+      return e;
+    }
+  }
+
+  customEventFilters.define("stop", makeStopStrong());
+  customEventFilters.define("log", function (e, prefix, value) {
+    return console.log(value), e;
+  });
+  document.getElementById("stopa").click();
+  document.getElementById("nonstop").click();
+  document.getElementById("stop").click();
+</script>
