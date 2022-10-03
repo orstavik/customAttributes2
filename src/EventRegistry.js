@@ -26,32 +26,26 @@ class EventFilterRegistry {
 
 window.customEventFilters = new EventFilterRegistry();
 
+function parse(attr){
+  return attr.name.split("::").map(s=>s.split(":").map(s=>s.split("_")));
+}
+
 Object.defineProperties(Attr.prototype, {
-  "event": {
+  "prefix": {
     get: function () {
-      return (this.name.split(":"))[0];
-    }
-  }, "prefix": {
-    get: function () {
-      return this.event.split("_")[0];
+      return parse(this)[0][0][0];
     }
   }, "suffix": {
     get: function () {
-      return this.event.split("_").slice(1);
+      return parse(this)[0][0].slice(1);
     }
   }, "filterFunction": { //todo add the customEventFilters.
     get: function () {
-      const res = this.name.split("::")[0].substring(this.event.length);
-      const res2 = res.substring(1).split(":").map(f => f.split("_"));
-      return customEventFilters.getFilterFunctions(res2);
+      return customEventFilters.getFilterFunctions(parse(this)[0].slice(1) || []);
     }
   }, "defaultAction": {  //todo
     get: function () {
-      let da = this.name.split("::")[1];
-      if (!da)
-        return [];
-      da = da.split(":").map(f => f.split("_"));
-      return customEventFilters.getFilterFunctions(da);
+      return customEventFilters.getFilterFunctions(parse(this)[1] || []);
     }
   }, "allFunctions": {
     get: function () {
