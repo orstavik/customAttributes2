@@ -26,8 +26,8 @@ class EventFilterRegistry {
 
 window.customEventFilters = new EventFilterRegistry();
 
-function parse(attr){
-  return attr.name.split("::").map(s=>s.split(":").map(s=>s.split("_")));
+function parse(attr) {
+  return attr.name.split("::").map(s => s.split(":").map(s => s.split("_")));
 }
 
 Object.defineProperties(Attr.prototype, {
@@ -39,11 +39,11 @@ Object.defineProperties(Attr.prototype, {
     get: function () {
       return parse(this)[0][0].slice(1);
     }
-  }, "filterFunction": { //todo add the customEventFilters.
+  }, "filterFunction": {
     get: function () {
       return customEventFilters.getFilterFunctions(parse(this)[0].slice(1) || []);
     }
-  }, "defaultAction": {  //todo
+  }, "defaultAction": {
     get: function () {
       return customEventFilters.getFilterFunctions(parse(this)[1] || []);
     }
@@ -189,13 +189,11 @@ class EventLoop {
     for (let t = target; t; t = t.assignedSlot || t.parentElement || t.parentNode?.host) {
       for (let attr of t.attributes) {
         if (attr.prefix === event.type) {
-          if (!event.defaultPrevented || !attr.defaultAction.length) {
-            if (attr.defaultAction.length && event.defaultAction)
-              continue;
-            const res = EventLoop.callFilterImpl(attr.filterFunction, attr, event);
-            if (res !== undefined && attr.defaultAction.length)
-              event.defaultAction = {attr, res};
-          }
+          if (attr.defaultAction.length && (event.defaultAction || event.defaultPrevented))
+            continue;
+          const res = EventLoop.callFilterImpl(attr.filterFunction, attr, event);
+          if (res !== undefined && attr.defaultAction.length)
+            event.defaultAction = {attr, res};
         }
       }
     }
@@ -206,15 +204,15 @@ class EventLoop {
   }
 
   static callFilterImpl(filters, at, event) {
-    try {
-      for (let {Definition, prefix, suffix} of filters) {
+    for (let {Definition, prefix, suffix} of filters) {
+      try {
         event = Definition.call(at, event, prefix, ...suffix);
-        if (event === undefined)
-          return;
+      } catch (error) {
+        eventLoop.dispatch(new ErrorEvent("FilterError", {error}), at.ownerElement);
+        return;
       }
-    } catch (error) {
-      eventLoop.dispatch(new ErrorEvent("FilterError", {error}), at.ownerElement);
-      return;
+      if (event === undefined)
+        return;
     }
     return event;
   }
