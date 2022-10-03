@@ -47,7 +47,9 @@ Object.defineProperties(Attr.prototype, {
     }
   }, "defaultAction": {  //todo
     get: function () {
-      let da = this.name.split("::")[1] || "";
+      let da = this.name.split("::")[1];
+      if (!da)
+        return [];
       da = da.split(":").map(f => f.split("_"));
       return customEventFilters.getFilterFunctions(da);
     }
@@ -81,7 +83,7 @@ class NativeDocumentOnlyEvent extends Attr {
     const attr = new WeakRef(this);
     const reroute = function (e) {
       const at = attr.deref();
-      at && at.ownerElement ?                                         //todo we have a GC leak here.
+      at && at.ownerElement ? //todo GC leak here. If the element is removed from the dom, but not yet GC, then this callback will still trigger.
         eventLoop.dispatch(e, at) :
         document.removeEventListener(prefix, reroute);
     }
@@ -119,49 +121,37 @@ class PassiveNativeBubblingEvent extends NativeBubblingEvent {
 }
 
 function getNativeEventDefinition(prefix) {
-  const Definition =
-    // prefix === "passivewheel" ? PassiveNativeBubblingEvent :  //todo
-    `on${prefix}` in HTMLElement.prototype ? NativeBubblingEvent :
-      `on${prefix}` in window ? NativeWindowOnlyEvent :
-        `on${prefix}` in Document.prototype && NativeDocumentOnlyEvent;
-  return Definition;
+  // prefix === "passivewheel" ? PassiveNativeBubblingEvent :  //todo
+  return `on${prefix}` in HTMLElement.prototype ? NativeBubblingEvent :
+    `on${prefix}` in window ? NativeWindowOnlyEvent :
+      `on${prefix}` in Document.prototype && NativeDocumentOnlyEvent;
 }
 
-class UnsortedWeakArray {
-  push(event, el) {
-    (this[event] ??= []).push(new WeakRef(el));
+class WeakArrayDict {
+  push(key, value) {
+    (this[key] ??= []).push(new WeakRef(value));
   }
 
-  * attributes(event) {
-    const ar = this[event] || [];
-    for (let i = 0; i < ar.length; i++) {
-      let ref = ar[i];
-      const res = ref.deref();
-      if (res === undefined) {           //or if res.ownerElement === null, then it has been removed from the DOM.
-        ar[i--] = ar[ar.length - 1];
-        ar.pop();
-      } else
-        yield res;
+  * values(key) {
+    for (let ref of this[key] || []) {
+      const v = ref.deref();
+      if (v?.ownerElement) //if no .ownerElement, the attribute has been removed from DOM but not yet GC.
+        yield v;
     }
-    delete this[event];
+    delete this[key];
   }
 }
 
 class EventRegistry {
 
-  #unknownEvents = new UnsortedWeakArray();
+  #unknownEvents = new WeakArrayDict();
 
   define(prefix, Definition) {
     if (this[prefix])
       throw `The customEvent "${prefix}" is already defined.`;
     this[prefix] = Definition;
-    for (let at of this.#unknownEvents.attributes(prefix)) {
-      try {
-        this.#upgradeAttribute(at, Definition);
-      } catch (error) {
-        eventLoop.dispatch(new ErrorEvent("EventError", {error}), at.ownerElement);
-      }
-    }
+    for (let at of this.#unknownEvents.values(prefix))
+      this.#upgradeAttribute(at, Definition);
   }
 
   upgrade(...attrs) {
@@ -193,7 +183,7 @@ class EventLoop {
       return;
     while (this.#eventLoop.length) {
       const {target, event} = this.#eventLoop[0];
-      if (target instanceof Element)   //todo there is a bug from the ElementObserver.js so that instanceof HTMLElement doesn't work.
+      if (target instanceof Element)   //a bug in the ElementObserver.js causes "instanceof HTMLElement" to fail.
         EventLoop.bubble(target, event);
       else if (target instanceof Attr)
         EventLoop.callFilterImpl(target.allFunctions, target, event);
@@ -205,13 +195,13 @@ class EventLoop {
     for (let t = target; t; t = t.assignedSlot || t.parentElement || t.parentNode?.host) {
       for (let attr of t.attributes) {
         if (attr.prefix === event.type) {
-          if (!event.defaultPrevented || !attr.defaultAction.length) {            //todo 1.
+          if (!event.defaultPrevented || !attr.defaultAction.length) {
             if (attr.defaultAction.length && event.defaultAction)
               continue;
             const res = EventLoop.callFilterImpl(attr.filterFunction, attr, event);
             if (res !== undefined && attr.defaultAction.length)
               event.defaultAction = {attr, res};
-          }                                                                 //todo 1.
+          }
         }
       }
     }
