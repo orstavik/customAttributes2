@@ -18,7 +18,7 @@
   customEventFilters.define("once", function (e) {
     return this.ownerElement.removeAttribute(this.name), e;
   });
-  customEvents.define("timeout", class TimeoutAttr extends Attr {
+  customEvents.define("timeout", class TimeoutAttr extends CustomAttr {
     upgrade() {
       //todo here we can check to see if the element has a value at startup and then do from there.
       //todo but, for this to be freezable, from inside a shadowRoot, then we need a meta element for this one..

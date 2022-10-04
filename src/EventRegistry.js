@@ -30,31 +30,29 @@ function parse(attr) {
   return attr.name.split("::").map(s => s.split(":").map(s => s.split("_")));
 }
 
-Object.defineProperties(Attr.prototype, {
-  "prefix": {
-    get: function () {
-      return parse(this)[0][0][0];
-    }
-  }, "suffix": {
-    get: function () {
-      return parse(this)[0][0].slice(1);
-    }
-  }, "filterFunction": {
-    get: function () {
-      return customEventFilters.getFilterFunctions(parse(this)[0].slice(1) || []);
-    }
-  }, "defaultAction": {
-    get: function () {
-      return customEventFilters.getFilterFunctions(parse(this)[1] || []);
-    }
-  }, "allFunctions": {
-    get: function () {
-      return [...this.filterFunction, ...this.defaultAction];
-    }
+class CustomAttr extends Attr {
+  get prefix() {
+    return parse(this)[0][0][0];
   }
-});
 
-class NativeBubblingEvent extends Attr {
+  get suffix() {
+    return parse(this)[0][0].slice(1);
+  }
+
+  get filterFunction() {
+    return customEventFilters.getFilterFunctions(parse(this)[0].slice(1) || []);
+  }
+
+  get defaultAction() {
+    return customEventFilters.getFilterFunctions(parse(this)[1] || []);
+  }
+
+  get allFunctions() {
+    return [...this.filterFunction, ...this.defaultAction];
+  }
+}
+
+class NativeBubblingEvent extends CustomAttr {
   upgrade() {
     this._listener = this.listener.bind(this);
     this.ownerElement.addEventListener(this.prefix, this._listener);
@@ -71,7 +69,7 @@ class NativeBubblingEvent extends Attr {
   }
 }
 
-class NativeDocumentOnlyEvent extends Attr {
+class NativeDocumentOnlyEvent extends CustomAttr {
   upgrade() {
     const prefix = this.prefix;
     const attr = new WeakRef(this);
@@ -85,7 +83,7 @@ class NativeDocumentOnlyEvent extends Attr {
   }
 }
 
-class NativeWindowOnlyEvent extends Attr {
+class NativeWindowOnlyEvent extends CustomAttr {
   upgrade() {
     const prefix = this.prefix;
     const attr = new WeakRef(this);
@@ -152,7 +150,13 @@ class EventRegistry {
     for (let at of attrs) {
       const prefix = at.name.split(/_|:/)[0];
       const Definition = this[prefix] ??= getNativeEventDefinition(prefix);
-      Definition ? this.#upgradeAttribute(at, Definition) : this.#unknownEvents.push(prefix, at);
+      if (Definition)                                           //1. upgrade to a defined CustomAttribute
+        this.#upgradeAttribute(at, Definition)
+      else {
+        if (at.name.indexOf(":") > 0)                           //2. upgrade to the generic CustomAttribute, as it enables event listeners.
+          Object.setPrototypeOf(at, CustomAttr.prototype);      //   this enables reactions to events with the given name.
+        this.#unknownEvents.push(prefix, at);                   //
+      }
     }
   }
 
@@ -160,8 +164,8 @@ class EventRegistry {
     Object.setPrototypeOf(at, Definition.prototype);
     try {
       at.upgrade?.();
-      Object.setPrototypeOf(at, Attr.prototype);
     } catch (error) {
+      Object.setPrototypeOf(at, CustomAttr.prototype);
       eventLoop.dispatch(new ErrorEvent("EventError", {error}), at.ownerElement);
     }
     try {
