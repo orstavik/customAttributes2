@@ -13,42 +13,60 @@ class EventFilterRegistry {
     this[prefix] = Function;
   }
 
+  #cache = {};
+  #empty = [];
+
   getFilterFunctions(filters) {
+    if (!filters)
+      return this.#empty;
+    if (this.#cache[filters])
+      return this.#cache[filters];
     const res = [];
-    for (let [prefix, ...suffix] of filters) {
-      if (!this[prefix])
+    for (let [prefix, ...suffix] of filters.split(":").map(str => str.split("_"))) {
+      if (!prefix)  //ignore empty
+        continue;
+      const Definition = this[prefix];
+      if (!Definition)
         return [];
-      res.push({Definition: this[prefix], prefix, suffix});
+      res.push({Definition, prefix, suffix});
     }
-    return res;
+    return this.#cache[filters] = res;
   }
 }
 
 window.customEventFilters = new EventFilterRegistry();
 
-function parse(attr) {
-  return attr.name.split("::").map(s => s.split(":").map(s => s.split("_")));
-}
-
+//Some CustomAttr lookups are used frequently!
+//1. the prefix is checked every time the attribute is passed by for an event in the DOM.
+//2. the suffix is used only once per attribute.
+//3. The filterFunction(), defaultAction() and allFunctions() are used every time they are called.
 class CustomAttr extends Attr {
-  get prefix() {
-    return parse(this)[0][0][0];
-  }
-
   get suffix() {
-    return parse(this)[0][0].slice(1);
+    return this.name.match(/_?([^:]+)/)[1].split("_").slice(1);
   }
 
-  get filterFunction() {
-    return customEventFilters.getFilterFunctions(parse(this)[0].slice(1) || []);
+  get filterFunction() {  //checked for many listeners for same type of event
+    const value = this.name.substring(this.name.indexOf(":")).split("::")[0];
+    Object.defineProperty(this, "filterFunction", {get: function(){return value;}});
+    return value;
   }
 
-  get defaultAction() {
-    return customEventFilters.getFilterFunctions(parse(this)[1] || []);
+  get defaultAction() {  //checked for many listeners for same type of event
+    const value = this.name.split("::")[1];
+    Object.defineProperty(this, "defaultAction", {get: function(){return value;}});
+    return value;
   }
 
-  get allFunctions() {
-    return [...this.filterFunction, ...this.defaultAction];
+  get allFunctions() {   //checked for many listeners for same type of event
+    const value = this.name.substring(this.name.indexOf(":"));
+    Object.defineProperty(this, "allFunctions", {get: function(){return value;}});
+    return value;
+  }
+
+  static prefix(attr) {
+    const value = attr.name.match(/_?([^_:]+)/)[1];
+    Object.defineProperty(attr, "prefix", {get: function(){return value;}}); //we should restrict .name and all other properties from being redefined.
+    return value;
   }
 }
 
@@ -148,7 +166,7 @@ class EventRegistry {
 
   upgrade(...attrs) {
     for (let at of attrs) {
-      const prefix = at.name.split(/_|:/)[0];
+      const prefix = CustomAttr.prefix(at);
       const Definition = this[prefix] ??= getNativeEventDefinition(prefix);
       if (Definition)                                           //1. upgrade to a defined CustomAttribute
         this.#upgradeAttribute(at, Definition)
@@ -182,6 +200,8 @@ class EventLoop {
   #eventLoop = [];
 
   dispatch(event, target) {
+    if(event.type[0] === "_")
+      throw new Error(`eventLoop.dispatch(..) doesn't accept events beginning with "_": ${event.type}.`);
     this.#eventLoop.push({target, event});
     if (this.#eventLoop.length > 1)
       return;
@@ -198,15 +218,16 @@ class EventLoop {
   static bubble(target, event) {
     for (let t = target; t; t = t.assignedSlot || t.parentElement || t.parentNode?.host) {
       for (let attr of t.attributes) {
-        if (attr.prefix === event.type) {
-          if (attr.defaultAction.length && (event.defaultAction || event.defaultPrevented))
+        if (attr.prefix === event.type) {//todo attr.name.startsWith(event.type+":") || attr.name.startsWith(event.type+"_") instead??
+          if (attr.defaultAction && (event.defaultAction || event.defaultPrevented))
             continue;
           const res = EventLoop.callFilterImpl(attr.filterFunction, attr, event);
-          if (res !== undefined && attr.defaultAction.length)
+          if (res !== undefined && attr.defaultAction)
             event.defaultAction = {attr, res};
         }
       }
     }
+    //todo run _global listeners here??
     if (event.defaultAction && !event.defaultPrevented) {
       const {attr, res} = event.defaultAction;
       EventLoop.callFilterImpl(attr.defaultAction, attr, res);
@@ -214,7 +235,7 @@ class EventLoop {
   }
 
   static callFilterImpl(filters, at, event) {
-    for (let {Definition, prefix, suffix} of filters) {
+    for (let {Definition, prefix, suffix} of customEventFilters.getFilterFunctions(filters)) {
       try {
         event = Definition.call(at, event, prefix, ...suffix);
       } catch (error) {
