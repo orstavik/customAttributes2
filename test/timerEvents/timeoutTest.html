@@ -23,10 +23,10 @@
       //todo here we can check to see if the element has a value at startup and then do from there.
       //todo but, for this to be freezable, from inside a shadowRoot, then we need a meta element for this one..
       this.value = "a" + Date.now();
-      setTimeout(() => {
+      this._timer = setTimeout(() => {
         this.ownerElement.setAttribute(this.name, "z" + Date.now());
-        eventLoop.dispatch(new Event(this.prefix), this);
-      }, this.suffix);
+        eventLoop.dispatch(new Event(this.event), this);
+      }, this.suffix[0]);
     }
 
     changeCallback(oldValue) {
@@ -36,6 +36,7 @@
 
     destructor() {
       console.log("destructing");
+      clearTimeout(this._timer);
     }
   });
 </script>

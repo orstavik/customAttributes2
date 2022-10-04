@@ -11,7 +11,7 @@ A custom attribute is added as any other attribute to an element. The customAttr
 2. ...filterFunctions (`one:two`)
 3. ...defaultAction functions (`alpha:beta`)
 
-The event is either a native event (such as `click`), or a custom event that triggers a new event. Custom events are declared using `customEvents.declare("prefix", DefinitionClass);` 
+The event is either a native event (such as `click`), or a custom event that triggers a new event. Custom events are declared using `customEvents.declare("type", DefinitionClass);` 
 
 The filterFunctions and defaultAction are the same type of functions. If a set of defaultAction functions are declared, then  essentially the same, a set of functions declared using `customEventFilters.define("prefix", DefinitionFunction);`.
 
