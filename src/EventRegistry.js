@@ -150,8 +150,9 @@ class EventRegistry {
 
   upgrade(...attrs) {
     for (let at of attrs) {
-      const Definition = this[at.prefix] ??= getNativeEventDefinition(at.prefix);
-      Definition ? this.#upgradeAttribute(at, Definition) : this.#unknownEvents.push(at.prefix, at);
+      const prefix = at.name.split(/_|:/)[0];
+      const Definition = this[prefix] ??= getNativeEventDefinition(prefix);
+      Definition ? this.#upgradeAttribute(at, Definition) : this.#unknownEvents.push(prefix, at);
     }
   }
 
@@ -159,6 +160,11 @@ class EventRegistry {
     Object.setPrototypeOf(at, Definition.prototype);
     try {
       at.upgrade?.();
+      Object.setPrototypeOf(at, Attr.prototype);
+    } catch (error) {
+      eventLoop.dispatch(new ErrorEvent("EventError", {error}), at.ownerElement);
+    }
+    try {
       at.changeCallback?.();
     } catch (error) {
       eventLoop.dispatch(new ErrorEvent("EventError", {error}), at.ownerElement);
