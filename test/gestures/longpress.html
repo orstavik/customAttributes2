@@ -1,0 +1,37 @@
+<script src="https://cdn.jsdelivr.net/gh/orstavik/parse@v1.0.2/parse.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
+<script src="../../src/EventFilterRegistry.js"></script>
+<script src="../../src/EventRegistry.js"></script>
+<script src="../../src/virtualEventLoop.js"></script>
+
+
+<h1 longpress_200:log>hello longpress</h1>
+<script>
+  customEvents.define("longpress", class LongPress extends CustomAttr {
+    upgrade() {
+      const minDuration = parseInt(this.suffix[0]);
+      customEventFilters.define("longpress1", function (e) {
+        this.ownerElement.setAttribute("mouseup:longpress2", performance.now());
+        this.ownerElement.removeAttribute("mousedown:longpress1");
+      });
+      customEventFilters.define("longpress2", function (e) {
+        this.ownerElement.setAttribute("mousedown:longpress1");
+        const duration = performance.now() - parseFloat(this.value);
+        if(duration > minDuration)
+          eventLoop.dispatch(new CustomEvent("longpress", {detail: duration}), this.ownerElement);
+        this.ownerElement.removeAttribute("mouseup:longpress2");
+      })
+      this.ownerElement.setAttribute("mousedown:longpress1");
+    }
+
+    destructor() {
+
+    }
+  })
+  customEventFilters.define("log", function (e) {
+    console.log(e.type, e.detail >= 250);
+  });
+  const h1 = document.querySelector("h1");
+  h1.dispatchEvent(new MouseEvent("mousedown"));
+  setTimeout(_ => h1.dispatchEvent(new MouseEvent("mouseup")), 250);
+</script>
