@@ -235,7 +235,7 @@ class EventLoop {
       return;
     while (this.#eventLoop.length) {
       const {target, event} = this.#eventLoop[0];
-      if (target instanceof Element)   //a bug in the ElementObserver.js causes "instanceof HTMLElement" to fail.
+      if (!target || target instanceof Element)   //a bug in the ElementObserver.js causes "instanceof HTMLElement" to fail.
         EventLoop.bubble(target, event);
       else if (target instanceof Attr)
         EventLoop.callFilterImpl(target.allFunctions, target, event);
@@ -246,7 +246,7 @@ class EventLoop {
   static bubble(target, event) {
     for (let t = target; t; t = t.assignedSlot || t.parentElement || t.parentNode?.host) {
       for (let attr of t.attributes) {
-        if (attr.event === event.type) {//todo attr.name.startsWith(event.type+":") || attr.name.startsWith(event.type+"_") instead??
+        if (attr.event === event.type) {
           if (attr.defaultAction && (event.defaultAction || event.defaultPrevented))
             continue;
           const res = EventLoop.callFilterImpl(attr.filterFunction, attr, event);
@@ -255,9 +255,10 @@ class EventLoop {
         }
       }
     }
+    const prevented = event.defaultPrevented;          //global listeners can't call .preventDefault()
     for (let attr of customEvents.globalListeners(event.type))
       EventLoop.callFilterImpl(attr.allFunctions, attr, event);
-    if (event.defaultAction && !event.defaultPrevented) {
+    if (event.defaultAction && !prevented) {
       const {attr, res} = event.defaultAction;
       EventLoop.callFilterImpl(attr.defaultAction, attr, res);
     }

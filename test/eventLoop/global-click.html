@@ -12,4 +12,6 @@
     return console.log(val), e;
   });
   document.querySelector("h1").click();
+  console.log("..");
+  eventLoop.dispatch(new MouseEvent("click"));
 </script>
