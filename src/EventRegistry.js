@@ -66,7 +66,7 @@ class CustomAttr extends Attr {
   }
 
   get allFunctions() {   //checked for many listeners for same type of event
-    const value = this.name.substring(this.name.indexOf(":"));
+    const value = this.name.split(":").slice(1)?.join(":");
     Object.defineProperty(this, "allFunctions", {
       get: function () {
         return value;
@@ -94,6 +94,7 @@ class CustomAttr extends Attr {
 
 class NativeBubblingEvent extends CustomAttr {
   upgrade() {
+    //todo this is not going to work for the global native event listeners. We need a different strategy for the global handlers actually.
     this._listener = this.listener.bind(this);
     this.ownerElement.addEventListener(this.type, this._listener);
   }
