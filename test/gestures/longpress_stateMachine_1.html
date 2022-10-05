@@ -22,7 +22,7 @@
 
       const main = this;
       customEventFilters.define("transition", function (data, _, oldState, newState) {
-        main.transition(oldState, newState);
+        main.transition(newState);
         return data;
       });
 
@@ -35,7 +35,7 @@
           const transition = ["transition", oldState, newState].join("_");
           const array = states[oldState][newState];
           for (let attr of array) {
-            const lastFilter = attr.split(":").slice(1).map(a=>a.split("_"));
+            const lastFilter = attr.split(":").slice(1).map(a => a.split("_"));
             for (let [filter] of lastFilter) {
               try {
                 customEventFilters.define(filter, this.constructor[filter]);
@@ -48,13 +48,13 @@
         }
       }
       this._transitions = res;
-      this.transition(undefined, Object.keys(states)[0]);
+      this.transition(Object.keys(states)[0]);
     }
 
-    transition(oldState, newState) {
+    transition(newState) {
       for (let attr of this._transitions[newState])
         this.ownerElement.setAttribute(attr, "");
-      oldState = this._state;
+      const oldState = this._state;
       if (oldState)
         for (let attr of this._transitions[oldState])
           this.ownerElement.removeAttribute(attr);
