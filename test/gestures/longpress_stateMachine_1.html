@@ -12,38 +12,31 @@
   class StateMachineAttr extends CustomAttr {
 
     upgrade() {
-      const seenEvents = new WeakSet();
-      customEventFilters.define("seen", function (e) {
-        if (seenEvents.has(e))
-          return;
-        seenEvents.add(e);
-        return e;
-      });
+      this._seenEvents = new WeakSet();
 
-      const main = this;
-      customEventFilters.define("transition", function (data, _, newState) {
-        main.transition(newState);
-        return data;
-      });
-
-      const states = this.constructor.fsm(this.type, ...this.suffix);
-      for (let [oldState, array] of Object.entries(states)) {
-        for (let attr of array) {
-          const lastFilter = attr.split(":").slice(1).map(a => a.split("_"));
-          for (let [filter] of lastFilter) {
-            try {
-              customEventFilters.define(filter, this.constructor[filter]);
-            } catch (err) {
-              console.log(err);
-            }
+      this._transitions = this.constructor.fsm(this.type, ...this.suffix);
+      for (let attr of Object.values(this._transitions).flat(2)) {
+        const lastFilter = attr.split(":").slice(1).map(a => a.split("_"));
+        for (let [filter] of lastFilter) {
+          try {
+            //todo here we need to check if there is such a definition.
+            customEventFilters.define(filter, this[filter].bind(this));
+          } catch (err) {
+            console.log(err);
           }
         }
       }
-      this._transitions = states;
-      this.transition(Object.keys(states)[0]);
+      this.transition(0, 0, Object.keys(this._transitions)[0]);
     }
 
-    transition(newState) {
+    seen(e) {
+      if (this._seenEvents.has(e))
+        return;
+      this._seenEvents.add(e);
+      return e;
+    }
+
+    transition(e, _, newState) {
       for (let attr of this._transitions[newState])
         this.ownerElement.setAttribute(attr, "");
       const oldState = this._state;
@@ -51,6 +44,7 @@
         for (let attr of this._transitions[oldState])
           this.ownerElement.removeAttribute(attr);
       this._state = newState;
+      return e;
     }
   }
 
@@ -59,36 +53,37 @@
 
     upgrade() {
       super.upgrade();
+      this._minDuration = parseInt(this.suffix[0]);
     }
 
-    static activate(e) {
-      return LongPress._mousedown = e;
+    activate(e) {
+      return this._mousedown = e;
     }
 
-    static reset(e) {
-      delete LongPress._mousedown;
+    reset(e) {
+      delete this._mousedown;
       return e;
     }
 
-    static longpress(duration) {
+    longpress(duration) {
       eventLoop.dispatch(new CustomEvent("longpress", {detail: duration}), this.ownerElement);
       return duration;
     }
 
-    static checkduration(e, _, minDuration) {
-      const duration = e.timeStamp - LongPress._mousedown.timeStamp;
-      if (duration > parseInt(minDuration))
+    checkduration(e) {
+      const duration = e.timeStamp - this._mousedown.timeStamp;
+      if (duration > this._minDuration)
         return duration;
     }
 
-    static fsm(_, minDuration) {
+    static fsm() {
       return {
         start: [
           `mousedown:seen:activate:transition_active`
         ],
         active: [
           "_mousedown:seen:reset:transition_start",
-          `_mouseup:seen:checkduration_${minDuration}:longpress:transition_start`,
+          `_mouseup:seen:checkduration:longpress:transition_start`,
         ]
       }
     }
