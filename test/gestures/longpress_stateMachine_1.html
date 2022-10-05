@@ -27,26 +27,19 @@
       });
 
       const states = this.constructor.fsm(this.type, ...this.suffix);
-      const res = {};
-      for (let oldState in states) {
-        for (let newState in states[oldState]) {
-          res[oldState] = [];
-          //make a transition
-          const array = states[oldState][newState];
-          for (let attr of array) {
-            const lastFilter = attr.split(":").slice(1).map(a => a.split("_"));
-            for (let [filter] of lastFilter) {
-              try {
-                customEventFilters.define(filter, this.constructor[filter]);
-              } catch (err) {
-                console.log(err);
-              }
+      for (let [oldState, array] of Object.entries(states)) {
+        for (let attr of array) {
+          const lastFilter = attr.split(":").slice(1).map(a => a.split("_"));
+          for (let [filter] of lastFilter) {
+            try {
+              customEventFilters.define(filter, this.constructor[filter]);
+            } catch (err) {
+              console.log(err);
             }
-            res[oldState].push(`${attr}:transition_${newState}`);
           }
         }
       }
-      this._transitions = res;
+      this._transitions = states;
       this.transition(Object.keys(states)[0]);
     }
 
@@ -90,15 +83,13 @@
 
     static fsm(_, minDuration) {
       return {
-        start: {
-          active: [`mousedown:seen:activate`]
-        },
-        active: {
-          start: [
-            "_mousedown:seen:reset",
-            `_mouseup:seen:checkduration_${minDuration}:longpress`,
-          ]
-        }
+        start: [
+          `mousedown:seen:activate:transition_active`
+        ],
+        active: [
+          "_mousedown:seen:reset:transition_start",
+          `_mouseup:seen:checkduration_${minDuration}:longpress:transition_start`,
+        ]
       }
     }
   });
