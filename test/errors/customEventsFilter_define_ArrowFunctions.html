@@ -36,6 +36,9 @@
   }
   const asyncArrow3 = async ({_bob = "=> {...omg"}) => console.log("one", _bob);
 
+  const boundFunction = (function () {
+  }).bind({});
+
   const hello = "hello";
 
   class Bob {
@@ -62,15 +65,19 @@
     let str = Function.toString();
     if (str.startsWith("async "))
       str = str.substring(6);
-    if(str.startsWith("(")) //arrow with: (...what,{ever="=>omg"})=>
+    if (str.startsWith("(")) //arrow with: (...what,{ever="=>omg"})=>
       return true;
-    if(/^[^([]+=/.test(str)) //arrow with single argument: _whatEver =>
+    if (/^[^([]+=/.test(str)) //arrow with single argument: _whatEver =>
       return true;
     return false;
   }
 
   function isArrowFunctionRegex(Function) {
     return /^(async\s+|)(\(|[^([]+=)/.test(Function.toString());
+  }
+
+  function isBoundFunction(Function) {
+    return Function.toString() === "function () { [native code] }";
   }
 
   for (let [name, Function] of Object.entries({
@@ -84,14 +91,11 @@
     arrow,
     arrow2,
     arrow3,
-    asyncArrow
+    asyncArrow,
+    boundFunction
   })) {
-    let success = false;
-    try {
-      customEventFilters.define(name, Function);
-    } catch (err) {
-      success = true;
-    }
-    console.log(name, isArrowFunction(Function), isArrowFunctionRegex(Function), success);
+    customEventFilters.define(name, Function);
+    const [{Definition, boundOrNot, prefix, suffix}] = customEventFilters.getFilterFunctions(`${name}_1`);
+    console.log(name, isArrowFunction(Function), isArrowFunctionRegex(Function), isBoundFunction(Function), boundOrNot);
   }
 </script>

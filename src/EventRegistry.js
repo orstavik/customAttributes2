@@ -1,16 +1,21 @@
 class EventFilterRegistry {
   define(type, Function) {
-    if (/^(async |)(\(|[^([]+=)/.test(Function.toString()))
-      throw `Arrow functions cannot be bound as customEventFilters.`;
-    const usedFilterName = Object.keys(this).find(name => this[name] === Function);
-    if (usedFilterName === type)
-      return console.warn(`Defining the event filter "${type}" multiple times.`);
-    if (usedFilterName)
-      throw `Function: "${Function.name}" is already defined as event filter "${usedFilterName}".`;
-    const overlapDefinition = Object.keys(this).find(old => type.startsWith(old) || old.startsWith(type));
-    if (overlapDefinition)
-      throw `The eventFilter type: "${type}" is already defined as "${overlapDefinition}".`;
-    this[type] = Function;
+    // if (EventFilterRegistry.isArrowOrNative(Function))
+    //   throw `Arrow functions cannot be bound as customEventFilters.`;
+    // const usedFilterName = Object.keys(this).find(name => this[name] === Function);
+    // if (type in this)
+    //   return console.warn(`Defining the event filter "${type}" multiple times.`);
+    // if (usedFilterName)
+    //   throw `Function: "${Function.name}" is already defined as event filter "${usedFilterName}".`;
+    // const overlapDefinition = Object.keys(this).find(old => type.startsWith(old) || old.startsWith(type));
+    if (type in this)
+      throw `The eventFilter type: "${type}" is already defined.`;
+    this[type] = {Function, boundOrNot: EventFilterRegistry.isArrowOrNative(Function)};
+  }
+
+  static isArrowOrNative(Function) {
+    const str = Function.toString();
+    return /^(async |)(\(|[^([]+=)/.test(str) || str === "function () { [native code] }";
   }
 
   #cache = {};
@@ -28,7 +33,8 @@ class EventFilterRegistry {
       const Definition = this[prefix];
       if (!Definition)
         return [];
-      res.push({Definition, prefix, suffix});
+      const {Function, boundOrNot} = Definition;
+      res.push({Definition: Function, prefix, suffix, boundOrNot});
     }
     return this.#cache[filters] = res;
   }
@@ -203,7 +209,8 @@ class EventRegistry {
         this.#globals.push(type, at);                           //4. register globals
     }
   }
-  globalListeners(type){
+
+  globalListeners(type) {
     return this.#globals.values(type);
   }
 
@@ -266,9 +273,11 @@ class EventLoop {
   }
 
   static callFilterImpl(filters, at, event) {
-    for (let {Definition, prefix, suffix} of customEventFilters.getFilterFunctions(filters)) {
+    for (let {Definition, prefix, suffix, boundOrNot} of customEventFilters.getFilterFunctions(filters)) {
       try {
-        event = Definition.call(at, event, prefix, ...suffix);
+        event = boundOrNot ?
+          Definition(event, prefix, ...suffix) :  //todo should we allow for this type of filters? filters with an established this? this is a good idea!
+          Definition.call(at, event, prefix, ...suffix);
       } catch (error) {
         eventLoop.dispatch(new ErrorEvent("FilterError", {error}), at.ownerElement);
         return;
