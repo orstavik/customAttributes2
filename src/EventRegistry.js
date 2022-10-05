@@ -46,7 +46,7 @@ class CustomAttr extends Attr {
   }
 
   get filterFunction() {  //checked for many listeners for same type of event
-    const value = this.name.substring(this.name.indexOf(":")).split("::")[0];
+    const value = this.name.split("::")[0].split(":").slice(1)?.join(":");
     Object.defineProperty(this, "filterFunction", {
       get: function () {
         return value;
