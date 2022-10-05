@@ -21,7 +21,7 @@
       });
 
       const main = this;
-      customEventFilters.define("transition", function (data, _, oldState, newState) {
+      customEventFilters.define("transition", function (data, _, newState) {
         main.transition(newState);
         return data;
       });
@@ -32,7 +32,7 @@
         for (let newState in states[oldState]) {
           res[oldState] = [];
           //make a transition
-          const transition = ["transition", oldState, newState].join("_");
+          const transition = ["transition", newState].join("_");
           const array = states[oldState][newState];
           for (let attr of array) {
             const lastFilter = attr.split(":").slice(1).map(a => a.split("_"));
