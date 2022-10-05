@@ -32,7 +32,6 @@
         for (let newState in states[oldState]) {
           res[oldState] = [];
           //make a transition
-          const transition = ["transition", newState].join("_");
           const array = states[oldState][newState];
           for (let attr of array) {
             const lastFilter = attr.split(":").slice(1).map(a => a.split("_"));
@@ -43,7 +42,7 @@
                 console.log(err);
               }
             }
-            res[oldState].push(attr + ":" + transition);
+            res[oldState].push(`${attr}:transition_${newState}`);
           }
         }
       }
