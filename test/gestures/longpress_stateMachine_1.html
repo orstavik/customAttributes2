@@ -1,4 +1,4 @@
-script src="https://cdn.jsdelivr.net/gh/orstavik/parse@v1.0.2/parse.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/orstavik/parse@v1.0.2/parse.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
 <script src="../../src/EventFilterRegistry.js"></script>
 <script src="../../src/EventRegistry.js"></script>
@@ -43,8 +43,7 @@ script src="https://cdn.jsdelivr.net/gh/orstavik/parse@v1.0.2/parse.js"></script
                 console.log(err);
               }
             }
-            attr += ":" + transition;
-            res[oldState].push(attr);
+            res[oldState].push(attr + ":" + transition);
           }
         }
       }
@@ -55,9 +54,11 @@ script src="https://cdn.jsdelivr.net/gh/orstavik/parse@v1.0.2/parse.js"></script
     transition(oldState, newState) {
       for (let attr of this._transitions[newState])
         this.ownerElement.setAttribute(attr, "");
+      oldState = this._state;
       if (oldState)
         for (let attr of this._transitions[oldState])
           this.ownerElement.removeAttribute(attr);
+      this._state = newState;
     }
   }
 
