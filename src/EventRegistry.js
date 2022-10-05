@@ -95,7 +95,7 @@ class CustomAttr extends Attr {
 class NativeBubblingEvent extends CustomAttr {
   upgrade() {
     this._listener = this.listener.bind(this);
-    this.ownerElement.addEventListener(this.event, this._listener);
+    this.ownerElement.addEventListener(this.type, this._listener);
   }
 
   listener(e) {
@@ -105,7 +105,7 @@ class NativeBubblingEvent extends CustomAttr {
   }
 
   destructor() {
-    this.ownerElement.removeEventListener(this.event, this._listener);
+    this.ownerElement.removeEventListener(this.type, this._listener);
   }
 }
 
