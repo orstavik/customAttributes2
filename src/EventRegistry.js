@@ -45,7 +45,7 @@ class CustomAttr extends Attr {
     return this.name.match(/_?([^:]+)/)[1].split("_").slice(1);
   }
 
-  get filterFunction() {  //checked for many listeners for same type of event
+  get filterFunction() {
     const value = this.name.split("::")[0].split(":").slice(1)?.join(":");
     Object.defineProperty(this, "filterFunction", {
       get: function () {
@@ -55,7 +55,7 @@ class CustomAttr extends Attr {
     return value;
   }
 
-  get defaultAction() {  //checked for many listeners for same type of event
+  get defaultAction() {
     const value = this.name.split("::")[1];
     Object.defineProperty(this, "defaultAction", {
       get: function () {
@@ -65,7 +65,7 @@ class CustomAttr extends Attr {
     return value;
   }
 
-  get allFunctions() {   //checked for many listeners for same type of event
+  get allFunctions() {
     const value = this.name.split(":").slice(1)?.join(":");
     Object.defineProperty(this, "allFunctions", {
       get: function () {
@@ -77,17 +77,17 @@ class CustomAttr extends Attr {
 
   static eventAndType(attr) {
     const event = attr.name.match(/_?[^_:]+/)[0];
-    const type = event[0] === "_" ? event.substring(1) : event;//attr.name.match(/_?([^_:]+)/)[1];
+    const type = event[0] === "_" ? event.substring(1) : event;
     Object.defineProperty(attr, "event", {
       get: function () {
         return event;
       }
-    }); //we should restrict .name and all other properties from being redefined.
+    });
     Object.defineProperty(attr, "type", {
       get: function () {
         return type;
       }
-    }); //we should restrict .name and all other properties from being redefined.
+    });
     return {type, event};
   }
 }
