@@ -1,0 +1,112 @@
+script src="https://cdn.jsdelivr.net/gh/orstavik/parse@v1.0.2/parse.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
+<script src="../../src/EventFilterRegistry.js"></script>
+<script src="../../src/EventRegistry.js"></script>
+<script src="../../src/virtualEventLoop.js"></script>
+
+
+<h1 longpress_200:log>hello longpress</h1>
+<script>
+
+
+  class StateMachineAttr extends CustomAttr {
+
+    upgrade() {
+      const seenEvents = new WeakSet();
+      customEventFilters.define("seen", function (e) {
+        if (seenEvents.has(e))
+          return;
+        seenEvents.add(e);
+        return e;
+      });
+
+      const main = this;
+      customEventFilters.define("transition", function (data, _, oldState, newState) {
+        main.transition(oldState, newState);
+        return data;
+      });
+
+      const states = this.constructor.fsm(this.type, ...this.suffix);
+      const res = {};
+      for (let oldState in states) {
+        for (let newState in states[oldState]) {
+          res[oldState] = [];
+          //make a transition
+          const transition = ["transition", oldState, newState].join("_");
+          const array = states[oldState][newState];
+          for (let attr of array) {
+            const lastFilter = attr.split(":").slice(1).map(a=>a.split("_"));
+            for (let [filter] of lastFilter) {
+              try {
+                customEventFilters.define(filter, this.constructor[filter]);
+              } catch (err) {
+                console.log(err);
+              }
+            }
+            attr += ":" + transition;
+            res[oldState].push(attr);
+          }
+        }
+      }
+      this._transitions = res;
+      this.transition(undefined, Object.keys(states)[0]);
+    }
+
+    transition(oldState, newState) {
+      for (let attr of this._transitions[newState])
+        this.ownerElement.setAttribute(attr, "");
+      if (oldState)
+        for (let attr of this._transitions[oldState])
+          this.ownerElement.removeAttribute(attr);
+    }
+  }
+
+  customEvents.define("longpress", class LongPress extends StateMachineAttr {
+    static _mousedown;
+
+    upgrade() {
+      super.upgrade();
+    }
+
+    static activate(e) {
+      return LongPress._mousedown = e;
+    }
+
+    static reset(e) {
+      delete LongPress._mousedown;
+      return e;
+    }
+
+    static longpress(duration) {
+      eventLoop.dispatch(new CustomEvent("longpress", {detail: duration}), this.ownerElement);
+      return duration;
+    }
+
+    static checkduration(e, _, minDuration) {
+      const duration = e.timeStamp - LongPress._mousedown.timeStamp;
+      if (duration > parseInt(minDuration))
+        return duration;
+    }
+
+    static fsm(_, minDuration) {
+      return {
+        start: {
+          active: [`mousedown:seen:activate`]
+        },
+        active: {
+          start: [
+            "_mousedown:seen:reset",
+            `_mouseup:seen:checkduration_${minDuration}:longpress`,
+          ]
+        }
+      }
+    }
+  });
+  customEventFilters.define("log", function (e) {
+    console.log(e.type, e.detail >= 250);
+  });
+
+  const h1 = document.querySelector("h1");
+  h1.dispatchEvent(new MouseEvent("mousedown"));
+  setTimeout(_ => h1.dispatchEvent(new MouseEvent("mouseup", {bubbles: true})), 250);
+</script>
