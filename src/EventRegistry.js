@@ -10,14 +10,11 @@ class EventFilterRegistry {
     // const overlapDefinition = Object.keys(this).find(old => type.startsWith(old) || old.startsWith(type));
     if (type in this)
       throw `The eventFilter type: "${type}" is already defined.`;
-    this[type] = {Function, boundOrNot: EventFilterRegistry.isArrowOrNative(Function)};
+    const boundOrNot =
+      /^(async |)(\(|[^([]+=)/.test(Function.toString()) ||
+      Function.toString() === "function () { [native code] }";
+    this[type] = {Function, boundOrNot};
   }
-
-  static isArrowOrNative(Function) {
-    const str = Function.toString();
-    return /^(async |)(\(|[^([]+=)/.test(str) || str === "function () { [native code] }";
-  }
-
   #cache = {};
   #empty = [];
 
@@ -34,7 +31,7 @@ class EventFilterRegistry {
       if (!Definition)
         return [];
       const {Function, boundOrNot} = Definition;
-      res.push({Definition: Function, prefix, suffix, boundOrNot});
+      res.push({Function, prefix, suffix, boundOrNot});
     }
     return this.#cache[filters] = res;
   }
@@ -273,11 +270,11 @@ class EventLoop {
   }
 
   static callFilterImpl(filters, at, event) {
-    for (let {Definition, prefix, suffix, boundOrNot} of customEventFilters.getFilterFunctions(filters)) {
+    for (let {Function, prefix, suffix, boundOrNot} of customEventFilters.getFilterFunctions(filters)) {
       try {
         event = boundOrNot ?
-          Definition(event, prefix, ...suffix) :  //todo should we allow for this type of filters? filters with an established this? this is a good idea!
-          Definition.call(at, event, prefix, ...suffix);
+          Function(event, prefix, ...suffix) :
+          Function.call(at, event, prefix, ...suffix);
       } catch (error) {
         eventLoop.dispatch(new ErrorEvent("FilterError", {error}), at.ownerElement);
         return;

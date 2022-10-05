@@ -80,7 +80,7 @@
     return Function.toString() === "function () { [native code] }";
   }
 
-  for (let [name, Function] of Object.entries({
+  for (let [name, Definition] of Object.entries({
     anonymous,
     asyncAnonymous,
     normal,
@@ -94,8 +94,8 @@
     asyncArrow,
     boundFunction
   })) {
-    customEventFilters.define(name, Function);
-    const [{Definition, boundOrNot, prefix, suffix}] = customEventFilters.getFilterFunctions(`${name}_1`);
-    console.log(name, isArrowFunction(Function), isArrowFunctionRegex(Function), isBoundFunction(Function), boundOrNot);
+    customEventFilters.define(name, Definition);
+    const [{Function, boundOrNot, prefix, suffix}] = customEventFilters.getFilterFunctions(`${name}_1`);
+    console.log(name, isArrowFunction(Definition), isArrowFunctionRegex(Definition), isBoundFunction(Definition), boundOrNot);
   }
 </script>
