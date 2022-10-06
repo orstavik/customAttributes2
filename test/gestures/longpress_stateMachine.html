@@ -5,20 +5,26 @@
 <h1 longpress_200:log>hello longpress</h1>
 <script>
   class StateMachineAttr extends CustomAttr {
+    static #uid = 1;
 
     upgrade() {
       this._seenEvents = new WeakSet();
-
-      this._transitions = this.constructor.fsm(this.type, ...this.suffix);
-      for (let attr of Object.values(this._transitions).flat(2)) {
-        const lastFilter = attr.split(":").slice(1).map(a => a.split("_"));
-        for (let [filter] of lastFilter) {
-          try {
-            //todo here we need to check if there is such a definition.
-            customEventFilters.define(filter, this[filter].bind(this));
-          } catch (err) {
-            console.log(err);
-          }
+      const uid = StateMachineAttr.#uid++;
+      this._transitions = this.constructor.fsm();
+      for (let state in this._transitions) {
+        for (let i = 0; i < this._transitions[state].length; i++) {
+          this._transitions[state][i] = this._transitions[state][i]
+            .replaceAll(/:([^:_]+)/g, (full, prefix) => {
+              if (prefix in this) {
+                try {
+                  customEventFilters.define(prefix + uid, this[prefix].bind(this));
+                } catch (err) {
+                  console.log(err);
+                }
+                return full + uid;
+              }
+              return full;
+            });
         }
       }
       this.transition(0, 0, Object.keys(this._transitions)[0]);
