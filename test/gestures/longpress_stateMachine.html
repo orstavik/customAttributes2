@@ -12,6 +12,7 @@
       const uid = StateMachineAttr.#uid++;
       this._transitions = this.constructor.fsm();
       const toBeBound = new Set();
+      const toBeBoundStatic = new Set();
       for (let state in this._transitions) {
         for (let i = 0; i < this._transitions[state].length; i++) {
           this._transitions[state][i] = this._transitions[state][i]
@@ -20,17 +21,16 @@
                 toBeBound.add(prefix);
                 return full + uid;
               }
+              else if (prefix in this.constructor)
+                toBeBoundStatic.add(prefix);
               return full;
             });
         }
       }
-      for (let prefix of toBeBound) {
-        try {
-          customEventFilters.define(prefix + uid, this[prefix].bind(this));
-        } catch (err) {
-          console.log(err);
-        }
-      }
+      for (let prefix of toBeBound)
+        customEventFilters.define(prefix + uid, this[prefix].bind(this));
+      for (let prefix of toBeBoundStatic)
+        customEventFilters.define(prefix, this.constructor[prefix]);
       this.transition(0, 0, Object.keys(this._transitions)[0]);
     }
 
@@ -79,6 +79,11 @@
         return duration;
     }
 
+    static mouse(e) {
+      if (e instanceof MouseEvent)
+        return e;
+    }
+
     log(e) {
       return console.log(this._state), e;
     }
@@ -86,7 +91,7 @@
     static fsm() {
       return {
         start: [
-          `mousedown:seen:activate:transition_observe:log`
+          `mousedown:mouse:seen:activate:transition_observe:log`
         ],
         observe: [
           "_mousedown:seen:reset:transition_start:log",
