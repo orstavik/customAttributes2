@@ -4,7 +4,7 @@
 <script src="../../src/EventRegistry.js"></script>
 <script src="../../src/virtualEventLoop.js"></script>
 
-<form click:get_text="https://reqres.in/api/products/3" get:log action="http://foo.com" method="post">
+<form click:get_text="https://httpbin.org/anything?hello=sunshine" get:log action="http://foo.com" method="post">
   <div><input name="hello" type="text" value="asds"></div>
   <input name="sunshine" type="text" value="312312">
   <input type="submit">
@@ -16,7 +16,7 @@
 
   customEventFilters.define("get", FormData_GET);
   customEventFilters.define("log", function (e) {
-    console.log(e.detail);
+    console.log(e.detail.substring(0,100));
   });
 
   document.querySelector("form").click();

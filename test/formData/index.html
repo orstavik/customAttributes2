@@ -1,40 +1,40 @@
 <test-html test="openform-submit.html">
-    <script expected>[
-        "triggered navigation"
-    ]</script>
+  <script expected>[
+    "triggered navigation"
+  ]</script>
 </test-html>
 <test-html test="makeform-click.html">
-    <script expected>[
-        [["one", "hello sunshine"], ["two", "<div name=\"two\">2</div>"], ["three", "31;32;33"]]
-    ]</script>
+  <script expected>[
+    [["one", "hello sunshine"], ["two", "<div name=\"two\">2</div>"], ["three", "31;32;33"]]
+  ]</script>
 </test-html>
 <test-html test="FormData_GET_json.html">
-    <script expected>[
-        {"userId": 1, "id": 1, "title": "delectus aut autem", "completed": false}
-    ]</script>
+  <script expected>[
+    {"userId": 1, "id": 1, "title": "delectus aut autem", "completed": false}
+  ]</script>
 </test-html>
 <test-html test="FormData_GET_text.html">
-    <script expected>[
-        "{\"data\":{\"id\":3,\"name\":\"true red\",\"year\":2002,\"color\":\"#BF1932\",\"pantone_value\":\"19-1664\"},\"support\":{\"url\":\"https://reqres.in/#support-heading\",\"text\":\"To keep ReqRes free, contributions towards server costs are appreciated!\"}}"
-    ]</script>
+  <script expected>[
+    "{\n  \"args\": {\n    \"hello\": \"asds\", \n    \"sunshine\": \"312312\"\n  }, \n  \"data\": \"\", \n  \"files\": {}, \n  "
+  ]</script>
 </test-html>
 <test-html test="ajaxFormData.html">
-    <script expected>[
-        ["load", {"a": "A", "b": "B", "hello": "sunshine"}]
-    ]</script>
+  <script expected>[
+    ["load", {"a": "A", "b": "B", "hello": "sunshine"}]
+  ]</script>
 </test-html>
 <test-html test="get.html">
-    <script expected>[
-        ["https://bbc.com/", "_self"]
-    ]</script>
+  <script expected>[
+    ["https://bbc.com/", "_self"]
+  ]</script>
 </test-html>
 <test-html test="get_history.html">
-    <script expected>["script%3E", "#sunshine"]</script>
+  <script expected>["script%3E", "#sunshine"]</script>
 </test-html>
 <test-html test="get_json.html">
-    <script expected>[
-        ["1", ["https://httpbin.org/anything?hello=sunshine", "GET", {"hello": "sunshine"}, "", {}]]
-    ]</script>
+  <script expected>[
+    ["1", ["https://httpbin.org/anything?hello=sunshine", "GET", {"hello": "sunshine"}, "", {}]]
+  ]</script>
 </test-html>
 
 <!-- Note!! You must load the test-html component at the end -->
