@@ -1,0 +1,31 @@
+<script src="https://cdn.jsdelivr.net/gh/orstavik/parse@v1.0.2/parse.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
+<script src="../../src/EventFilterRegistry.js"></script>
+<script src="../../src/EventRegistry.js"></script>
+<script src="../../src/virtualEventLoop.js"></script>
+
+<style>
+    [checked]{
+        accent-color: yellow;
+    }
+</style>
+
+<label for="a">Hello
+<input id="a" type="checkbox" change:cssclass_checked/>
+</label>
+<script type="module">
+
+  customEventFilters.define("cssclass", function (e, _, attr) {
+    this.ownerElement.hasAttribute(attr) ?
+      this.ownerElement.removeAttribute(attr) :
+      this.ownerElement.setAttribute(attr);
+  });
+
+
+  const h1 = document.querySelector("h1");
+  const input = document.querySelector("input");
+
+  console.log(getComputedStyle(input).accentColor);
+  input.click();
+  console.log(getComputedStyle(input).accentColor);
+</script>
