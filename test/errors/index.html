@@ -3,6 +3,17 @@
     "The eventFilter type: \"co\" is already defined."
   ]</script>
 </test-html>
+<test-html test="upgradeChangeDestructor.html">
+  <script expected>[
+    ["upgrade","bob","bob","one_two","a b"],
+    ["changing",null,"a b"],
+    ["changing","a b","c d"],
+    ["upgrade","bob","bob","three_four","abc"],
+    ["changing",null,"abc"],
+    ["destructing","bob","bob","one_two","c d"],
+    ["destructing","bob","bob","three_four","abc"]
+  ]</script>
+</test-html>
 <test-html test="customEventsFilter_define_ArrowFunctions.html">
   <script expected>[
     ["anonymous", false, false, false, false],

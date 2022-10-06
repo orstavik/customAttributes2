@@ -1,0 +1,26 @@
+<script src="https://cdn.jsdelivr.net/gh/orstavik/parse@v1.0.2/parse.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
+<script src="../../src/EventRegistry.js"></script>
+
+
+<h1 bob_one_two="a b">hello bob</h1>
+<script>
+  customEvents.define("bob", class BobAttr extends CustomAttr {
+    upgrade() {
+      console.log("upgrade", this.event, this.type, this.suffix.join("_"), this.value);
+    }
+
+    changeCallback(oldValue) {
+      console.log("changing", oldValue, this.value);
+    }
+
+    destructor() {
+      console.log("destructing", this.event, this.type, this.suffix.join("_"), this.value);
+    }
+  });
+  const h1 = document.querySelector("h1");
+  h1.setAttribute("bob_one_two", "c d");
+  h1.setAttribute("bob_three_four", "abc");
+  h1.removeAttribute("bob_one_two");
+  h1.removeAttribute("bob_three_four");
+</script>
