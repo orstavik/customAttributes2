@@ -11,41 +11,42 @@
       this._seenEvents = new WeakSet();
       const uid = StateMachineAttr.#uid++;
       this._transitions = this.constructor.fsm();
+      const toBeBound = new Set();
       for (let state in this._transitions) {
         for (let i = 0; i < this._transitions[state].length; i++) {
           this._transitions[state][i] = this._transitions[state][i]
             .replaceAll(/:([^:_]+)/g, (full, prefix) => {
               if (prefix in this) {
-                try {
-                  customEventFilters.define(prefix + uid, this[prefix].bind(this));
-                } catch (err) {
-                  console.log(err);
-                }
+                toBeBound.add(prefix);
                 return full + uid;
               }
               return full;
             });
         }
       }
+      for (let prefix of toBeBound) {
+        try {
+          customEventFilters.define(prefix + uid, this[prefix].bind(this));
+        } catch (err) {
+          console.log(err);
+        }
+      }
       this.transition(0, 0, Object.keys(this._transitions)[0]);
     }
 
     seen(e) {
-      if (this._seenEvents.has(e))
-        return;
-      this._seenEvents.add(e);
-      return e;
+      return this._seenEvents.has(e) ? undefined : (this._seenEvents.add(e), e);
     }
 
     transition(e, _, newState) {
-      console.log(newState);
-      for (let attr of this._transitions[newState])
-        this.ownerElement.setAttribute(attr, "");
+      const el = this.ownerElement;
       const oldState = this._state;
+      this._state = newState;
       if (oldState)
         for (let attr of this._transitions[oldState])
-          this.ownerElement.removeAttribute(attr);
-      this._state = newState;
+          el.removeAttribute(attr);
+      for (let attr of this._transitions[newState])
+        el.setAttribute(attr, "");
       return e;
     }
   }
@@ -78,19 +79,23 @@
         return duration;
     }
 
+    log(e) {
+      return console.log(this._state), e;
+    }
+
     static fsm() {
       return {
         start: [
-          `mousedown:seen:activate:transition_observe`
+          `mousedown:seen:activate:transition_observe:log`
         ],
         observe: [
-          "_mousedown:seen:reset:transition_start",
-          `_mouseup:seen:reset:transition_start`,
-          "timeout_200:transition_active:once"
+          "_mousedown:seen:reset:transition_start:log",
+          `_mouseup:seen:reset:transition_start:log`,
+          "timeout_200:transition_active:log:once"
         ],
         active: [
-          "_mousedown:seen:reset:transition_start",
-          `_mouseup:seen:checkduration:longpress:transition_start`,
+          "_mousedown:seen:reset:transition_start:log",
+          `_mouseup:seen:checkduration:longpress:transition_start:log`,
         ]
       }
     }
