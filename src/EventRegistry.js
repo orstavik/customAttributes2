@@ -1,13 +1,5 @@
 class EventFilterRegistry {
   define(type, Function) {
-    // if (EventFilterRegistry.isArrowOrNative(Function))
-    //   throw `Arrow functions cannot be bound as customEventFilters.`;
-    // const usedFilterName = Object.keys(this).find(name => this[name] === Function);
-    // if (type in this)
-    //   return console.warn(`Defining the event filter "${type}" multiple times.`);
-    // if (usedFilterName)
-    //   throw `Function: "${Function.name}" is already defined as event filter "${usedFilterName}".`;
-    // const overlapDefinition = Object.keys(this).find(old => type.startsWith(old) || old.startsWith(type));
     if (type in this)
       throw `The eventFilter type: "${type}" is already defined.`;
     const boundOrNot =
@@ -324,7 +316,6 @@ function deprecate(name) {
         at.value = value;
       setAttributeNodeOG.call(this, at);
       customEvents.upgrade(at);
-      at.changeCallback?.(undefined);
     }
   };
 
