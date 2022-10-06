@@ -37,6 +37,7 @@
     }
 
     transition(e, _, newState) {
+      console.log(newState);
       for (let attr of this._transitions[newState])
         this.ownerElement.setAttribute(attr, "");
       const oldState = this._state;
@@ -79,7 +80,12 @@
     static fsm() {
       return {
         start: [
-          `mousedown:seen:activate:transition_active`
+          `mousedown:seen:activate:transition_observe`
+        ],
+        observe: [
+          "_mousedown:seen:reset:transition_start",
+          `_mouseup:seen:reset:transition_start`,
+          "timeout_200:transition_active:once"
         ],
         active: [
           "_mousedown:seen:reset:transition_start",
@@ -87,6 +93,18 @@
         ]
       }
     }
+  });
+  customEvents.define("timeout", class TimeoutAttr extends CustomAttr {
+    upgrade() {
+      this._timer = setTimeout(() => {
+        eventLoop.dispatch(new Event(this.event), this);
+      }, this.suffix[0]);
+    }
+  });
+
+  customEventFilters.define("once", function (e) {
+    this.ownerElement.removeAttribute(this.name);
+    return e;
   });
   customEventFilters.define("log", function (e) {
     console.log(e.type, e.detail >= 250);
