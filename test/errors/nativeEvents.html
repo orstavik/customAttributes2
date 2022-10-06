@@ -1,11 +1,17 @@
+<script src="https://cdn.jsdelivr.net/gh/orstavik/parse@v1.0.2/parse.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
 <script src="../../src/EventRegistry.js"></script>
 <script>
+
+  function hackSolutionForConstructionFrameHTMLElementIssue() {
+    return Object.getPrototypeOf(Object.getPrototypeOf(HTMLElement.prototype));
+  }
 
   const targets = {
     window,
     DocumentProto: Document.prototype,
     ElementProto: Element.prototype,
-    HtmlElementProto: HTMLElement.prototype
+    HtmlElementProto: hackSolutionForConstructionFrameHTMLElementIssue()
   };
   //1. get all the on<event> for the different types of targets.
   for (let target in targets)
@@ -47,7 +53,6 @@
     for (let event of typeToEvent[type]) {
       document.head.insertAdjacentHTML("beforeend", `<meta ${event}:filter>`);
       const attr = document.head.lastChild.attributes[0];
-      customEvents.upgrade(attr);
       console.log(attr.constructor.name, event);
       document.head.lastChild.remove();
     }
