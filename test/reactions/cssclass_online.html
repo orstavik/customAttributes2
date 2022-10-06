@@ -1,0 +1,30 @@
+<script src="https://cdn.jsdelivr.net/gh/orstavik/parse@v1.0.2/parse.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
+<script src="../../src/EventRegistry.js"></script>
+
+<style>
+  .online { color: green; }
+</style>
+
+<div online:log:cssclass_online:log offline:log:cssremoveclass_online:log>Network status</div>
+
+<script type="module">
+
+  customEventFilters.define("cssclass", function (e, _, css) {
+    this.ownerElement.classList.add(css);
+    return e;
+  });
+
+  customEventFilters.define("cssremoveclass", function (e, _, css) {
+    this.ownerElement.classList.remove(css);
+    return e;
+  });
+  customEventFilters.define("log", function(e){
+    console.log(getComputedStyle(this.ownerElement).color);
+    return e;
+  })
+
+  window.dispatchEvent(new Event("online"));
+  window.dispatchEvent(new Event("offline"));
+  window.dispatchEvent(new Event("online"));
+</script>

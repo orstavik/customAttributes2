@@ -1,0 +1,30 @@
+<script src="https://cdn.jsdelivr.net/gh/orstavik/parse@v1.0.2/parse.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
+<script src="../../src/EventRegistry.js"></script>
+
+<style>
+  .bob { color: orange; }
+</style>
+
+<div mouseenter:log:addcssclass_bob:log mouseleave:log:removecssclass_bob:log>world</div>
+
+<script type="module">
+
+  customEventFilters.define("addcssclass", function (e, _, css) {
+    this.ownerElement.classList.add(css);
+    return e;
+  });
+
+  customEventFilters.define("removecssclass", function (e, _, css) {
+    this.ownerElement.classList.remove(css);
+    return e;
+  });
+  customEventFilters.define("log", function(e){
+    console.log(getComputedStyle(this.ownerElement).color);
+    return e;
+  })
+
+  const div = document.querySelector("div");
+  div.dispatchEvent(new MouseEvent("mouseenter"));
+  div.dispatchEvent(new MouseEvent("mouseleave"));
+</script>
