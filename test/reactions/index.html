@@ -33,5 +33,13 @@
 <test-html test="re-click.html">
   <script expected>["hi click", "hi click"]</script>
 </test-html>
+<test-html test="hover.html">
+  <script expected>["rgb(0, 0, 0)", "rgb(255, 165, 0)"]</script>
+</test-html>
+<test-html test="checked.html">
+  <script expected>["auto", "rgb(255, 255, 0)"]</script>
+</test-html>  <test-html test="online.html">
+  <script expected>["rgb(0, 0, 0)", "rgb(0, 128, 0)", "rgb(0, 0, 0)"]</script>
+</test-html>
 <!-- Note!! You must load the test-html component at the end -->
 <script src="https://cdn.jsdelivr.net/gh/orstavik/TestHTML@v1.0.3/TestHTML.js"></script>
