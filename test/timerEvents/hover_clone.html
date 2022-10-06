@@ -1,0 +1,66 @@
+<script src="https://cdn.jsdelivr.net/gh/orstavik/parse@v1.0.2/parse.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
+<script src="../../src/EventRegistry.js"></script>
+
+<style>
+  span[hover="on"] { color: orange; }
+  div[hover="on"] { color: red; }
+</style>
+
+<span interval_40_2:log hover>
+  hello number two
+</span>
+
+<div interval_40_2:log hover>
+  hello sunshine
+</div>
+
+<script type="module">
+  customEvents.define("interval", class IntervalAttr extends CustomAttr {
+    upgrade() {
+      let countDown = parseInt(this.suffix[1]);
+      eventLoop.dispatch(new Event(this.type), this);
+      this._interval = setInterval( ()=> {
+        eventLoop.dispatch(new Event(this.type), this);
+        if(countDown-- === 1)            //todo countdown state is not reflected in the DOM.
+          clearInterval(this._interval);
+      }, this.suffix[0]);
+    }
+
+    destructor() {
+      clearInterval(this._interval);
+    }
+  });
+
+  customEvents.define("hover", class HoverAttr extends CustomAttr {
+    static #id = 1;
+    upgrade() {
+      this.value = "off";
+      const id = HoverAttr.#id++;
+      customEventFilters.define("hoveron" + id, e => this.value = "on");
+      customEventFilters.define("hoveroff"+ id, e => this.value = "off");
+      this.ownerElement.setAttribute("mouseenter:hoveron"+id);
+      this.ownerElement.setAttribute("mouseleave:hoveroff"+id);
+    }
+
+    destructor() {
+      this.removeAttribute("mouseenter:hoverOn1234");
+      this.removeAttribute("mouseleave:hoverOff1234");
+    }
+  });
+
+  customEventFilters.define("log", function (e) {
+    console.log(getComputedStyle(this.ownerElement).color);
+    console.log(this.ownerElement.tagName + "[hover]", this.ownerElement.getAttribute("hover"));
+    return e;
+  });
+
+  const span = document.querySelector("span");
+  const div = document.querySelector("div");
+  div.dispatchEvent(new MouseEvent("mouseenter"));
+  span.dispatchEvent(new MouseEvent("mouseenter"));
+  setTimeout(_=> {
+    span.dispatchEvent(new MouseEvent("mouseleave"));
+    div.dispatchEvent(new MouseEvent("mouseleave"));
+  }, 60);
+</script>
