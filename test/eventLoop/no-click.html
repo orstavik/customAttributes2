@@ -2,17 +2,14 @@
 <script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
 <script src="../../src/customAttributes.js"></script>
 
-<h1 click:no>
+<h1 click:no:log="only sunshine">
   <span click::log="Hello bug">hello</span>
 </h1>
 
-<script type="module">
-  customReactions.define("no", function (e) {
-    return e.preventDefault(), e;
-  });
+<script>
+  customReactions.define("no", e => (e.preventDefault(), e));
   customReactions.define("log", function (e) {
     return console.log(this.value), e;
   });
   document.querySelector("span").click();
-  setTimeout(_ => console.log("only sunshine"), 20);
 </script>
