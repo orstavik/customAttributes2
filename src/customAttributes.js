@@ -2,17 +2,17 @@ class ReactionRegistry {
   define(type, Function) {
     if (type in this)
       throw `The Reaction type: "${type}" is already defined.`;
-    const boundOrNot =
-      /^(async |)(\(|[^([]+=)/.test(Function.toString()) ||
-      Function.toString() === "function () { [native code] }";
+    const str = Function.toString();
+    const boundOrNot = str === "function () { [native code] }" || /^(async |)(\(|[^([]+=)/.test(str);
     this[type] = {Function, boundOrNot};
   }
+
   #cache = {};
-  #empty = [];
+  static #empty = Object.freeze([]);
 
   getReactions(reaction) {
     if (!reaction)
-      return this.#empty;
+      return ReactionRegistry.#empty;
     if (this.#cache[reaction])
       return this.#cache[reaction];
     const res = [];
