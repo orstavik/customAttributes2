@@ -1,11 +1,11 @@
 <script src="https://cdn.jsdelivr.net/gh/orstavik/parse@v1.0.2/parse.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
-<script src="../../src/EventRegistry.js"></script>
+<script src="../../src/customAttributes.js"></script>
 
 
 <h1 bob_one_two="a b">hello bob</h1>
 <script>
-  customEvents.define("bob", class BobAttr extends CustomAttr {
+  customAttributes.define("bob", class BobAttr extends CustomAttr {
     upgrade() {
       console.log("upgrade", this.event, this.type, this.suffix.join("_"), this.value);
     }

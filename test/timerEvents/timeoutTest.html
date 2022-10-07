@@ -1,6 +1,6 @@
 <script src="https://cdn.jsdelivr.net/gh/orstavik/parse@v1.0.2/parse.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
-<script src="../../src/EventRegistry.js"></script>
+<script src="../../src/customAttributes.js"></script>
 
 
 <h1 timeout_50:log:bob:once>hello :timeout50:log:bob</h1>
@@ -16,7 +16,7 @@
   customReactions.define("once", function (e) {
     return this.ownerElement.removeAttribute(this.name), e;
   });
-  customEvents.define("timeout", class TimeoutAttr extends CustomAttr {
+  customAttributes.define("timeout", class TimeoutAttr extends CustomAttr {
     upgrade() {
       //todo here we can check to see if the element has a value at startup and then do from there.
       //todo but, for this to be freezable, from inside a shadowRoot, then we need a meta element for this one..

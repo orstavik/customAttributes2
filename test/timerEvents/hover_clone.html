@@ -1,6 +1,6 @@
 <script src="https://cdn.jsdelivr.net/gh/orstavik/parse@v1.0.2/parse.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
-<script src="../../src/EventRegistry.js"></script>
+<script src="../../src/customAttributes.js"></script>
 
 <style>
   span[hover="on"] { color: orange; }
@@ -16,7 +16,7 @@
 </div>
 
 <script type="module">
-  customEvents.define("interval", class IntervalAttr extends CustomAttr {
+  customAttributes.define("interval", class IntervalAttr extends CustomAttr {
     upgrade() {
       let countDown = parseInt(this.suffix[1]);
       eventLoop.dispatch(new Event(this.type), this);
@@ -32,7 +32,7 @@
     }
   });
 
-  customEvents.define("hover", class HoverAttr extends CustomAttr {
+  customAttributes.define("hover", class HoverAttr extends CustomAttr {
     static #id = 1;
     upgrade() {
       this.value = "off";

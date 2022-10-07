@@ -1,11 +1,11 @@
 <script src="https://cdn.jsdelivr.net/gh/orstavik/parse@v1.0.2/parse.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
-<script src="../../src/EventRegistry.js"></script>
+<script src="../../src/customAttributes.js"></script>
 
 
 <h1 longpress_200:log>hello longpress</h1>
 <script>
-  customEvents.define("longpress", class LongPress extends CustomAttr {
+  customAttributes.define("longpress", class LongPress extends CustomAttr {
     upgrade() {
       const minDuration = parseInt(this.suffix[0]);
       customReactions.define("longpress1", function (e) {

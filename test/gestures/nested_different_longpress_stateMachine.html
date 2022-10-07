@@ -1,0 +1,119 @@
+<script src="https://cdn.jsdelivr.net/gh/orstavik/parse@v1.0.2/parse.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
+<script src="../../src/customAttributes.js"></script>
+
+<div longpress_300:log>
+  hello
+  <h1 longpress_500:log>
+    hello longpress 400ms
+  </h1>
+</div>
+<script>
+
+
+  // class StateMachineAttr extends CustomAttr {
+  //
+  //   static #id = 1;
+  //   upgrade() {
+  //     this._seenEvents = new WeakSet();
+  //     const id = StateMachineAttr.#id++;
+  //     this._transitions = this.constructor.fsm(this.type, ...this.suffix);
+  //     for (let attr of Object.values(this._transitions).flat(2)) {
+  //       const lastFilter = attr.split(":").slice(1).map(a => a.split("_"));
+  //       for (let [filter] of lastFilter) {
+  //         try {
+  //           //todo here we need to add the id to the filter names.
+  //           customReactions.define(filter, this[filter].bind(this));
+  //         } catch (err) {
+  //           console.log(err);
+  //         }
+  //       }
+  //     }
+  //     this.transition(0, 0, Object.keys(this._transitions)[0]);
+  //   }
+  //
+  //   seen(e) {
+  //     if (this._seenEvents.has(e))
+  //       return;
+  //     this._seenEvents.add(e);
+  //     return e;
+  //   }
+  //
+  //   transition(e, _, newState) {
+  //     console.log(newState);
+  //     for (let attr of this._transitions[newState])
+  //       this.ownerElement.setAttribute(attr, "");
+  //     const oldState = this._state;
+  //     if (oldState)
+  //       for (let attr of this._transitions[oldState])
+  //         this.ownerElement.removeAttribute(attr);
+  //     this._state = newState;
+  //     return e;
+  //   }
+  // }
+  //
+  // customAttributes.define("longpress", class LongPress extends StateMachineAttr {
+  //   static _mousedown;
+  //
+  //   upgrade() {
+  //     super.upgrade();
+  //     this._minDuration = parseInt(this.suffix[0]);
+  //   }
+  //
+  //   activate(e) {
+  //     return this._mousedown = e;
+  //   }
+  //
+  //   reset(e) {
+  //     delete this._mousedown;
+  //     return e;
+  //   }
+  //
+  //   longpress(duration) {
+  //     eventLoop.dispatch(new CustomEvent("longpress", {detail: duration}), this.ownerElement);
+  //     return duration;
+  //   }
+  //
+  //   checkduration(e) {
+  //     const duration = e.timeStamp - this._mousedown.timeStamp;
+  //     if (duration > this._minDuration)
+  //       return duration;
+  //   }
+  //
+  //   static fsm() {
+  //     return {
+  //       start: [
+  //         `mousedown:seen:activate:transition_observe`
+  //       ],
+  //       observe: [
+  //         "_mousedown:seen:reset:transition_start",
+  //         `_mouseup:seen:reset:transition_start`,
+  //         "timeout_200:transition_active:once"
+  //       ],
+  //       active: [
+  //         "_mousedown:seen:reset:transition_start",
+  //         `_mouseup:seen:checkduration:longpress:transition_start`,
+  //       ]
+  //     }
+  //   }
+  // });
+  // customAttributes.define("timeout", class TimeoutAttr extends CustomAttr {
+  //   upgrade() {
+  //     this._timer = setTimeout(() => {
+  //       eventLoop.dispatch(new Event(this.event), this);
+  //     }, this.suffix[0]);
+  //   }
+  // });
+  //
+  // customReactions.define("once", function (e) {
+  //   this.ownerElement.removeAttribute(this.name);
+  //   return e;
+  // });
+  // customReactions.define("log", function (e) {
+  //   console.log(e.type, this.ownerElement.tagName);
+  // });
+  //
+  // const h1 = document.querySelector("h1");
+  // h1.dispatchEvent(new MouseEvent("mousedown"));
+  // setTimeout(_ => h1.dispatchEvent(new MouseEvent("mouseup", {bubbles: true})), 400);
+</script>

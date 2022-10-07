@@ -169,7 +169,7 @@ class WeakArrayDict {
   }
 }
 
-class EventRegistry {
+class AttributeRegistry {
 
   #unknownEvents = new WeakArrayDict();
   #globals = new WeakArrayDict();
@@ -219,7 +219,7 @@ class EventRegistry {
   }
 }
 
-window.customEvents = new EventRegistry();
+window.customAttributes = new AttributeRegistry();
 
 class EventLoop {
   #eventLoop = [];
@@ -253,7 +253,7 @@ class EventLoop {
       }
     }
     const prevented = event.defaultPrevented;          //global listeners can't call .preventDefault()
-    for (let attr of customEvents.globalListeners(event.type))
+    for (let attr of customAttributes.globalListeners(event.type))
       EventLoop.callFilterImpl(attr.allFunctions, attr, event);
     if (event.defaultAction && !prevented) {
       const {attr, res} = event.defaultAction;
@@ -315,7 +315,7 @@ function deprecate(name) {
       if (value !== undefined)
         at.value = value;
       setAttributeNodeOG.call(this, at);
-      customEvents.upgrade(at);
+      customAttributes.upgrade(at);
     }
   };
 
@@ -325,4 +325,4 @@ function deprecate(name) {
   };
 })(Element.prototype, document.createAttribute);
 
-ElementObserver.end(el => customEvents.upgrade(...el.attributes));
+ElementObserver.end(el => customAttributes.upgrade(...el.attributes));
