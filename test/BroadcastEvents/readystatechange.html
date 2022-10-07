@@ -2,7 +2,7 @@
 <script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
 <script src="../../src/customAttributes.js"></script>
 
-<h1 readystatechange:log>hello online:log</h1>
+<h1 _readystatechange:log>hello online:log</h1>
 <script>
   customReactions.define("log", function(e){ console.log(e.type, document.readyState)});
   // document.body.requestFullscreen();

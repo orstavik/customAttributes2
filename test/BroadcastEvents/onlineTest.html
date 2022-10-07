@@ -2,8 +2,8 @@
 <script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
 <script src="../../src/customAttributes.js"></script>
 
-<h1 online:log>hello online:log</h1>
+<h1 _online:log>hello online:log</h1>
 <script>
-  customReactions.define("log", function(e){ console.log(e.type, this)});
+  customReactions.define("log", function(e){ console.log(e.type, this.name)});
   window.dispatchEvent(new Event("online"));
 </script>
