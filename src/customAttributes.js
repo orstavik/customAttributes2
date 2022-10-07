@@ -107,7 +107,7 @@ class NativeBubblingEvent extends CustomAttr {
 
 class NativeDocumentOnlyEvent extends CustomAttr {
   upgrade() {
-    const event = this.event;
+    const event = this.type;
     const attr = new WeakRef(this);
     const reroute = function (e) {
       const at = attr.deref();
@@ -121,15 +121,28 @@ class NativeDocumentOnlyEvent extends CustomAttr {
 
 class NativeWindowOnlyEvent extends CustomAttr {
   upgrade() {
-    const event = this.event;
+    const event = this.type;
+    const attr = new WeakRef(this);
+    const reroute = function (e) {
+      const at = attr.deref();
+      at && at.ownerElement ?                                       //todo we have a GC leak here.
+        eventLoop.dispatch(e) :
+        window.removeEventListener(event, reroute);
+    }
+    window.addEventListener(event, reroute);
+  }
+}
+
+class DOMContentLoadedEvent extends CustomAttr {
+  upgrade() {
     const attr = new WeakRef(this);
     const reroute = function (e) {
       const at = attr.deref();
       at && at.ownerElement ?                                       //todo we have a GC leak here.
         eventLoop.dispatch(e, at) :
-        window.removeEventListener(event, reroute);
+        window.removeEventListener("DOMContentLoaded", reroute);
     }
-    window.addEventListener(event, reroute);
+    window.addEventListener("DOMContentLoaded", reroute);
   }
 }
 
@@ -150,9 +163,10 @@ class PassiveNativeBubblingEvent extends NativeBubblingEvent {
 
 function getNativeEventDefinition(prefix) {
   // prefix === "passivewheel" ? PassiveNativeBubblingEvent :  //todo
-  return `on${prefix}` in HTMLElement.prototype ? NativeBubblingEvent :
-    `on${prefix}` in window ? NativeWindowOnlyEvent :
-      `on${prefix}` in Document.prototype && NativeDocumentOnlyEvent;
+  return prefix === "domcontentloaded" ? DOMContentLoadedEvent :
+    `on${prefix}` in HTMLElement.prototype ? NativeBubblingEvent :
+      `on${prefix}` in window ? NativeWindowOnlyEvent :
+        `on${prefix}` in Document.prototype && NativeDocumentOnlyEvent;
 }
 
 class WeakArrayDict {
@@ -161,11 +175,15 @@ class WeakArrayDict {
   }
 
   * values(key) {
+    let filtered = [];
     for (let ref of this[key] || []) {
       const v = ref.deref();
-      if (v?.ownerElement) //if no .ownerElement, the attribute has been removed from DOM but not yet GC.
+      if (v?.ownerElement) {//if no .ownerElement, the attribute has been removed from DOM but not yet GC.
+        filtered.push(ref);
         yield v;
+      }
     }
+    this[key] = filtered;
   }
 }
 
