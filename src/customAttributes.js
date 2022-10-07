@@ -34,15 +34,15 @@ window.customReactions = new ReactionRegistry();
 //Some CustomAttr lookups are used frequently!
 //1. the prefix is checked every time the attribute is passed by for an event in the DOM.
 //2. the suffix is used only once per attribute.
-//3. The filterFunction(), defaultAction() and allFunctions() are used every time they are called.
+//3. The reaction(), defaultAction() and allFunctions() are used every time they are called.
 class CustomAttr extends Attr {
   get suffix() {
     return this.name.match(/_?([^:]+)/)[1].split("_").slice(1);
   }
 
-  get filterFunction() {
+  get reaction() {
     const value = this.name.split("::")[0].split(":").slice(1)?.join(":");
-    Object.defineProperty(this, "filterFunction", {
+    Object.defineProperty(this, "reaction", {
       get: function () {
         return value;
       }
@@ -208,8 +208,8 @@ class AttributeRegistry {
       if (Definition)                                           //1. upgrade to a defined CustomAttribute
         this.#upgradeAttribute(at, Definition);
       else {
-        if (at.name.indexOf(":") > 0)                           //2. upgrade to the generic CustomAttribute, as it enables event listeners.
-          Object.setPrototypeOf(at, CustomAttr.prototype);      //   this enables reactions to events with the given name.
+        if (at.name.indexOf(":") > 0) //2. upgrade to the generic CustomAttribute, as it enables event listeners.
+          Object.setPrototypeOf(at, CustomAttr.prototype); // this enables reactions to events with the given name.
         this.#unknownEvents.push(type, at);                     //3. register unknown attrs
       }
       if (event[0] === "_")
@@ -264,7 +264,7 @@ class EventLoop {
         if (attr.event === event.type) {
           if (attr.defaultAction && (event.defaultAction || event.defaultPrevented))
             continue;
-          const res = EventLoop.callFilterImpl(attr.filterFunction, attr, event);
+          const res = EventLoop.callFilterImpl(attr.reaction, attr, event);
           if (res !== undefined && attr.defaultAction)
             event.defaultAction = {attr, res};
         }
