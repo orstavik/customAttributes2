@@ -9,8 +9,8 @@
   import {POST_json_formdata_Attr, POST_json_uriComponent_Attr} from "../src/FormData/AjaxAttr.js";
   import {JSON_GET} from "../src/FormData/FormData_GET.js";
 
-  customEventFilters.define("formdata", POST_json_formdata_Attr);
-  customEventFilters.define("uricomponents", POST_json_uriComponent_Attr);
+  customReactions.define("formdata", POST_json_formdata_Attr);
+  customReactions.define("uricomponents", POST_json_uriComponent_Attr);
 
   const log = {};
 
@@ -27,7 +27,7 @@
       console.log(...entries.sort());
   }
 
-  customEventFilters.define("log", doLog);
+  customReactions.define("log", doLog);
 
   document.querySelector("h2").dispatchEvent(new CustomEvent("submit", {detail: [["hello", "sunshine"]]}));
   document.querySelector("h3").dispatchEvent(new CustomEvent("submit", {detail: [["hello", "sunshine"]]}));

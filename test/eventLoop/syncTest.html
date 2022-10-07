@@ -4,10 +4,10 @@
 
 <h1>hello sunshine</h1>
 <script>
-  customEventFilters.define("hello", function (e) {
+  customReactions.define("hello", function (e) {
     return console.log(e.type), e;
   });
-  customEventFilters.define("sunshine", function (e) {
+  customReactions.define("sunshine", function (e) {
     return console.log("sunshine"), e;
   });
   const h1 = document.querySelector("h1");

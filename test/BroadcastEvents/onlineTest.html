@@ -4,6 +4,6 @@
 
 <h1 online:log>hello online:log</h1>
 <script>
-  customEventFilters.define("log", function(e){ console.log(e.type, this)});
+  customReactions.define("log", function(e){ console.log(e.type, this)});
   window.dispatchEvent(new Event("online"));
 </script>

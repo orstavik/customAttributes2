@@ -49,7 +49,7 @@
     return res;
   }
 
-  customEventFilters.define("attr", function attrReaction(e, _,atName, propName) {
+  customReactions.define("attr", function attrReaction(e, _,atName, propName) {
     const path = currentTargetAndUpLighterDomOnly(e.composedPath(), this.ownerElement);
     //remove elements between <slot> and document
     //filter away, so that if a parent element is a <slot>, then we must skip all the other elements up to and including that slot elements document.

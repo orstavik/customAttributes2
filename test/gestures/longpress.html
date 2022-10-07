@@ -8,10 +8,10 @@
   customEvents.define("longpress", class LongPress extends CustomAttr {
     upgrade() {
       const minDuration = parseInt(this.suffix[0]);
-      customEventFilters.define("longpress1", function (e) {
+      customReactions.define("longpress1", function (e) {
         this.ownerElement.setAttribute("mouseup:longpress2:once", performance.now());
       });
-      customEventFilters.define("longpress2", function (e) {
+      customReactions.define("longpress2", function (e) {
         this.ownerElement.setAttribute("mousedown:longpress1:once");
         const duration = performance.now() - parseFloat(this.value);
         if(duration > minDuration)
@@ -24,10 +24,10 @@
 
     }
   })
-  customEventFilters.define("log", function (e) {
+  customReactions.define("log", function (e) {
     console.log(e.type, e.detail >= 250);
   });
-  customEventFilters.define("once", function (e) {
+  customReactions.define("once", function (e) {
     this.ownerElement.removeAttribute(this.name);
   });
   const h1 = document.querySelector("h1");

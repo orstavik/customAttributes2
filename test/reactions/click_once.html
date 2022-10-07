@@ -20,13 +20,13 @@
     }
   }
 
-  customEventFilters.define("on", function (e) {
+  customReactions.define("on", function (e) {
     return runMethods(this, e), e;
   });
-  customEventFilters.define("shift", function (e) {
+  customReactions.define("shift", function (e) {
     if (e.shiftKey) return e;
   });
-  customEventFilters.define("bonce", function (e) {
+  customReactions.define("bonce", function (e) {
     return this.ownerElement.removeAttribute(this.name), e;
   });
 

@@ -64,11 +64,11 @@
     target.dispatchEvent(cloneEvent(e, e.type, this.ownerElement));
   }
 
-  customEventFilters.define("on", function (e) {
+  customReactions.define("on", function (e) {
     runMethods(this, e);
   });
 
-  customEventFilters.define("re", reAttr);
+  customReactions.define("re", reAttr);
 
   class WebComp extends HTMLElement {
     constructor() {

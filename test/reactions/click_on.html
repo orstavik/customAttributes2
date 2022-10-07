@@ -21,16 +21,16 @@
     }
   }
 
-  customEventFilters.define("on", function (e) {
+  customReactions.define("on", function (e) {
     runMethods(this, e);
   });
-  customEventFilters.define("ctrl", function (e) {
+  customReactions.define("ctrl", function (e) {
     if (e.ctrlKey) return e;
   });
-  customEventFilters.define("meta", function (e) {
+  customReactions.define("meta", function (e) {
     if (e.metaKey) return e;
   });
-  customEventFilters.define("alt", function (e) {
+  customReactions.define("alt", function (e) {
     if (e.altKey) return e;
   });
 

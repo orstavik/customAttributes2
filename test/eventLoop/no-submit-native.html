@@ -7,10 +7,10 @@
 </form>
 
 <script type="module">
-  customEventFilters.define("no", function (e) {
+  customReactions.define("no", function (e) {
     return e.preventDefault(), e;
   });
-  customEventFilters.define("log", function (e) {
+  customReactions.define("log", function (e) {
     return console.log(e.type), e;
   });
 

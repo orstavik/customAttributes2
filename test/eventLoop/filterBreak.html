@@ -5,11 +5,11 @@
 <h1 click:one:two:one>hello on-click_shift</h1>
 
 <script type="module">
-  customEventFilters.define("one", function(e){
+  customReactions.define("one", function(e){
     console.log("one");
     return e;
   });
-  customEventFilters.define("two", function(e){
+  customReactions.define("two", function(e){
     console.log("two");
   });
 

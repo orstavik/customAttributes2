@@ -37,8 +37,8 @@
     upgrade() {
       this.value = "off";
       const id = HoverAttr.#id++;
-      customEventFilters.define("hoveron" + id, e => this.value = "on");
-      customEventFilters.define("hoveroff"+ id, e => this.value = "off");
+      customReactions.define("hoveron" + id, e => this.value = "on");
+      customReactions.define("hoveroff"+ id, e => this.value = "off");
       this.ownerElement.setAttribute("mouseenter:hoveron"+id);
       this.ownerElement.setAttribute("mouseleave:hoveroff"+id);
     }
@@ -49,7 +49,7 @@
     }
   });
 
-  customEventFilters.define("log", function (e) {
+  customReactions.define("log", function (e) {
     console.log(getComputedStyle(this.ownerElement).color);
     console.log(this.ownerElement.tagName + "[hover]", this.ownerElement.getAttribute("hover"));
     return e;

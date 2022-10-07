@@ -7,7 +7,7 @@
 <script type="module">
   import {FormData_GET} from "../src/FormData/FormData_GET.js";
 
-  customEventFilters.define("get", FormData_GET);
+  customReactions.define("get", FormData_GET);
 
   console.log(location.href.substring(location.href.length - 9));
   window.addEventListener("popstate", e => console.log(location.href.substring(location.href.length - 9)));

@@ -1,7 +1,7 @@
-class EventFilterRegistry {
+class ReactionRegistry {
   define(type, Function) {
     if (type in this)
-      throw `The eventFilter type: "${type}" is already defined.`;
+      throw `The Reaction type: "${type}" is already defined.`;
     const boundOrNot =
       /^(async |)(\(|[^([]+=)/.test(Function.toString()) ||
       Function.toString() === "function () { [native code] }";
@@ -10,13 +10,13 @@ class EventFilterRegistry {
   #cache = {};
   #empty = [];
 
-  getFilterFunctions(filters) {
-    if (!filters)
+  getReactions(reaction) {
+    if (!reaction)
       return this.#empty;
-    if (this.#cache[filters])
-      return this.#cache[filters];
+    if (this.#cache[reaction])
+      return this.#cache[reaction];
     const res = [];
-    for (let [prefix, ...suffix] of filters.split(":").map(str => str.split("_"))) {
+    for (let [prefix, ...suffix] of reaction.split(":").map(str => str.split("_"))) {
       if (!prefix)  //ignore empty
         continue;
       const Definition = this[prefix];
@@ -25,11 +25,11 @@ class EventFilterRegistry {
       const {Function, boundOrNot} = Definition;
       res.push({Function, prefix, suffix, boundOrNot});
     }
-    return this.#cache[filters] = res;
+    return this.#cache[reaction] = res;
   }
 }
 
-window.customEventFilters = new EventFilterRegistry();
+window.customReactions = new ReactionRegistry();
 
 //Some CustomAttr lookups are used frequently!
 //1. the prefix is checked every time the attribute is passed by for an event in the DOM.
@@ -262,7 +262,7 @@ class EventLoop {
   }
 
   static callFilterImpl(filters, at, event) {
-    for (let {Function, prefix, suffix, boundOrNot} of customEventFilters.getFilterFunctions(filters)) {
+    for (let {Function, prefix, suffix, boundOrNot} of customReactions.getReactions(filters)) {
       try {
         event = boundOrNot ?
           Function(event, prefix, ...suffix) :

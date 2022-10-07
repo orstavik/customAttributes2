@@ -96,8 +96,8 @@
     asyncArrow,
     boundFunction
   })) {
-    customEventFilters.define(name, Definition);
-    const [{Function, boundOrNot, prefix, suffix}] = customEventFilters.getFilterFunctions(`${name}_1`);
+    customReactions.define(name, Definition);
+    const [{Function, boundOrNot, prefix, suffix}] = customReactions.getReactions(`${name}_1`);
     console.log(name, isArrowFunction(Definition), isArrowFunctionRegex(Definition), isBoundFunction(Definition), boundOrNot);
   }
 </script>

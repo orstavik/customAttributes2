@@ -10,16 +10,16 @@
 
 <script type="module">
 
-  customEventFilters.define("addcssclass", function (e, _, css) {
+  customReactions.define("addcssclass", function (e, _, css) {
     this.ownerElement.classList.add(css);
     return e;
   });
 
-  customEventFilters.define("removecssclass", function (e, _, css) {
+  customReactions.define("removecssclass", function (e, _, css) {
     this.ownerElement.classList.remove(css);
     return e;
   });
-  customEventFilters.define("log", function(e){
+  customReactions.define("log", function(e){
     console.log(getComputedStyle(this.ownerElement).color);
     return e;
   })

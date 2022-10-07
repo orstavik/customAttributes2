@@ -4,6 +4,6 @@
 
 <h1 readystatechange:log>hello online:log</h1>
 <script>
-  customEventFilters.define("log", function(e){ console.log(e.type, document.readyState)});
+  customReactions.define("log", function(e){ console.log(e.type, document.readyState)});
   // document.body.requestFullscreen();
 </script>

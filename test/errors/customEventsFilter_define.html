@@ -13,15 +13,15 @@
 
   const arrow = _ => console.log("arrow");
 
-  //1. we can define arrow functions as eventFilter
-  customEventFilters.define("arrow", arrow);
+  //1. we can define arrow functions as Reaction
+  customReactions.define("arrow", arrow);
 
-  customEventFilters.define("co", one);
-  customEventFilters.define("co2", one);
+  customReactions.define("co", one);
+  customReactions.define("co2", one);
 
   //2. cannot define the same filter name twice
   try {
-    customEventFilters.define("co", two);
+    customReactions.define("co", two);
   } catch (e) {
     console.log(e)
   }

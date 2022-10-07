@@ -28,9 +28,9 @@
         }
       }
       for (let prefix of toBeBound)
-        customEventFilters.define(prefix + uid, this[prefix].bind(this));
+        customReactions.define(prefix + uid, this[prefix].bind(this));
       for (let prefix of toBeBoundStatic)
-        customEventFilters.define(prefix, this.constructor[prefix]);
+        customReactions.define(prefix, this.constructor[prefix]);
       this.transition(0, 0, Object.keys(this._transitions)[0]);
     }
 
@@ -113,11 +113,11 @@
     }
   });
 
-  customEventFilters.define("once", function (e) {
+  customReactions.define("once", function (e) {
     this.ownerElement.removeAttribute(this.name);
     return e;
   });
-  customEventFilters.define("log", function (e) {
+  customReactions.define("log", function (e) {
     console.log(e.type, e.detail >= 250);
   });
 

@@ -9,14 +9,14 @@
 <input id="a" type="checkbox" change:log:attr_checked:log/>
 
 <script type="module">
-  customEventFilters.define("attr", function (e, _, attr) {
+  customReactions.define("attr", function (e, _, attr) {
     this.ownerElement.hasAttribute(attr) ?
       this.ownerElement.removeAttribute(attr) :
       this.ownerElement.setAttribute(attr);
     return e;
   });
 
-  customEventFilters.define("log", function (e) {
+  customReactions.define("log", function (e) {
     console.log(getComputedStyle(this.ownerElement).accentColor);
     return e;
   });

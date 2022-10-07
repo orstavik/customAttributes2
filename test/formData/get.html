@@ -7,7 +7,7 @@
 <script type="module">
   import {FormData_GET} from "../src/FormData/FormData_GET.js";
 
-  customEventFilters.define("get", FormData_GET);
+  customReactions.define("get", FormData_GET);
   //att!! intercepting native window.open(...) method for testing purposes
   window.open = (...args) => console.log(...args);
 

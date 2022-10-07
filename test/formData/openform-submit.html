@@ -7,8 +7,8 @@
 <script type="module">
   import {FormData_GET} from "../src/FormData/FormData_GET.js";
 
-  customEventFilters.define("open", FormData_GET);
-  customEventFilters.define("log", function (e) {
+  customReactions.define("open", FormData_GET);
+  customReactions.define("log", function (e) {
     return console.log("triggered navigation"), e;
   });
 

@@ -7,10 +7,10 @@
 </h1>
 
 <script type="module">
-  customEventFilters.define("no", function (e) {
+  customReactions.define("no", function (e) {
     return e.preventDefault(), e;
   });
-  customEventFilters.define("log", function (e) {
+  customReactions.define("log", function (e) {
     return console.log(this.value), e;
   });
   document.querySelector("span").click();

@@ -14,11 +14,11 @@
 </div>
 
 <script type="module">
-  customEventFilters.define("co", function (e, _, name)  {
+  customReactions.define("co", function (e, _, name)  {
     //in filters, we wish to dispatch via the virtual event loop directly, I think.
     eventLoop.dispatch(new Event(name), this.ownerElement);
   });
-  customEventFilters.define("at", function (e,_, attr){
+  customReactions.define("at", function (e,_, attr){
     this.ownerElement.hasAttribute(attr) ?
       this.ownerElement.removeAttribute(attr) :
       this.ownerElement.setAttribute(attr);

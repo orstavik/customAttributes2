@@ -7,11 +7,11 @@
 <script type="module">
   import {JSON_GET} from "../src/FormData/FormData_GET.js";
 
-  customEventFilters.define("get", JSON_GET);
+  customReactions.define("get", JSON_GET);
 
   const log = {};
 
-  customEventFilters.define("log", function (e) {
+  customReactions.define("log", function (e) {
     let k = this.value;
     let url = e.detail.url;
     let method = e.detail.method;

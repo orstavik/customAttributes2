@@ -12,9 +12,9 @@
   import {FormData_GET} from "../src/FormData/FormData_GET.js";
   import {DOM_FormData} from "../src/FormData/DOM_FormData.js";
 
-  customEventFilters.define("formdata", DOM_FormData);
-  customEventFilters.define("get", FormData_GET);
-  customEventFilters.define("log", function(e){
+  customReactions.define("formdata", DOM_FormData);
+  customReactions.define("get", FormData_GET);
+  customReactions.define("log", function(e){
     console.log(e.detail);
   });
 

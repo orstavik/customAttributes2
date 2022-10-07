@@ -7,8 +7,8 @@
 <script type="module">
   import {FormData_GET} from "../src/FormData/FormData_GET.js";
 
-  customEventFilters.define("load", FormData_GET);
-  customEventFilters.define("log", function(e){
+  customReactions.define("load", FormData_GET);
+  customReactions.define("log", function(e){
     console.log(e.type, e.detail.args);
     return e;
   });

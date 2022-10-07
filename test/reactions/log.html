@@ -13,10 +13,10 @@
 </main>
 
 <script type="module">
-  customEventFilters.define("sync", function (e) {
+  customReactions.define("sync", function (e) {
     return console.log("sync", this.ownerElement.tagName), e;
   });
-  customEventFilters.define("log", function (e) {
+  customReactions.define("log", function (e) {
     return console.log(this.value), e;
   });
 

@@ -41,8 +41,8 @@
     }
   }
 
-  customEventFilters.define("stop", makeStopWeak());
-  customEventFilters.define("log", function (e, prefix, value) {
+  customReactions.define("stop", makeStopWeak());
+  customReactions.define("log", function (e, prefix, value) {
     return console.log(value), e;
   });
   document.getElementById("stopa").click();

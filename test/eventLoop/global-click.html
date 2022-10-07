@@ -6,7 +6,7 @@
 <h2 _click:log_global>sunshine</h2>
 
 <script type="module">
-  customEventFilters.define("log", function (e, _, val) {
+  customReactions.define("log", function (e, _, val) {
     return console.log(val), e;
   });
   document.querySelector("h1").click();
