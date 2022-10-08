@@ -7,7 +7,7 @@
 <script>
   customAttributes.define("bob", class BobAttr extends CustomAttr {
     upgrade() {
-      console.log("upgrade", this.event, this.type, this.suffix.join("_"), this.value);
+      console.log("upgrade", this.type, this.suffix.join("_"), this.value);
     }
 
     changeCallback(oldValue) {
@@ -15,7 +15,7 @@
     }
 
     destructor() {
-      console.log("destructing", this.event, this.type, this.suffix.join("_"), this.value);
+      console.log("destructing", this.type, this.suffix.join("_"), this.value);
     }
   });
   const h1 = document.querySelector("h1");

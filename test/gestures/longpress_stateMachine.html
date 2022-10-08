@@ -108,7 +108,7 @@
   customAttributes.define("timeout", class TimeoutAttr extends CustomAttr {
     upgrade() {
       this._timer = setTimeout(() => {
-        eventLoop.dispatch(new Event(this.event), this);
+        eventLoop.dispatch(new Event(this.type), this);
       }, this.suffix[0]);
     }
   });

@@ -31,10 +31,6 @@ class ReactionRegistry {
 
 window.customReactions = new ReactionRegistry();
 
-//Some CustomAttr lookups are used frequently!
-//1. the prefix is checked every time the attribute is passed by for an event in the DOM.
-//2. the suffix is used only once per attribute.
-//3. The reaction(), defaultAction() and allFunctions() are used every time they are called.
 class CustomAttr extends Attr {
   get suffix() {
     return this.name.match(/_?([^:]+)/)[1].split("_").slice(1);
@@ -42,41 +38,26 @@ class CustomAttr extends Attr {
 
   get reaction() {
     const value = this.name.split("::")[0].split(":").slice(1)?.join(":");
-    Object.defineProperty(this, "reaction", {
-      get: function () {
-        return value;
-      }
-    });
+    Object.defineProperty(this, "reaction", {value, writable: false});
     return value;
   }
 
   get defaultAction() {
     const value = this.name.split("::")[1];
-    Object.defineProperty(this, "defaultAction", {
-      get: function () {
-        return value;
-      }
-    });
+    Object.defineProperty(this, "defaultAction", {value, writable: false});
     return value;
   }
 
   get allFunctions() {
     const value = this.name.split(":").slice(1)?.join(":");
-    Object.defineProperty(this, "allFunctions", {
-      get: function () {
-        return value;
-      }
-    });
+    Object.defineProperty(this, "allFunctions", {value, writable: false});
     return value;
   }
 
   static eventAndType(attr) {
-    const [event, type] = attr.name.match(/_?([^_:]+)/);
-    Object.defineProperties(attr, {
-      "event": {value: event, writable: false},
-      "type": {value: type, writable: false}
-    });
-    return {type, event};
+    const value = attr.name.match(/_?([^_:]+)/)[1];
+    Object.defineProperty(attr, "type", {value: value, writable: false});
+    return value;
   }
 }
 
@@ -186,7 +167,9 @@ class AttributeRegistry {
 
   upgrade(...attrs) {
     for (let at of attrs) {
-      const {event, type} = CustomAttr.eventAndType(at);
+      const type = CustomAttr.eventAndType(at);
+      if (at.name[0] === "_")
+        this.#globals.push(type, at);                           //1. register globals
       const Definition = this[type] ??= getNativeEventDefinition(type);
       if (Definition)                                           //1. upgrade to a defined CustomAttribute
         this.#upgradeAttribute(at, Definition);
@@ -195,8 +178,6 @@ class AttributeRegistry {
           Object.setPrototypeOf(at, CustomAttr.prototype); // this enables reactions to events with the given name.
         this.#unknownEvents.push(type, at);                     //3. register unknown attrs
       }
-      if (event[0] === "_")
-        this.#globals.push(type, at);                           //4. register globals
     }
   }
 
@@ -248,7 +229,7 @@ class EventLoop {
   static bubble(target, event) {
     for (let t = target; t; t = t.assignedSlot || t.parentElement || t.parentNode?.host) {
       for (let attr of t.attributes) {
-        if (attr.event === event.type) {
+        if (attr.type === event.type && attr.name[0] !== "_") {
           if (attr.defaultAction && (event.defaultAction || event.defaultPrevented))
             continue;
           const res = EventLoop.callFilterImpl(attr.reaction, attr, event);

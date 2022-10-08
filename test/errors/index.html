@@ -5,13 +5,13 @@
 </test-html>
 <test-html test="upgradeChangeDestructor.html">
   <script expected>[
-    ["upgrade", "bob", "bob", "one_two", "a b"],
+    ["upgrade", "bob", "one_two", "a b"],
     ["changing", null, "a b"],
     ["changing", "a b", "c d"],
-    ["upgrade", "bob", "bob", "three_four", "abc"],
+    ["upgrade", "bob", "three_four", "abc"],
     ["changing", null, "abc"],
-    ["destructing", "bob", "bob", "one_two", "c d"],
-    ["destructing", "bob", "bob", "three_four", "abc"]
+    ["destructing", "bob", "one_two", "c d"],
+    ["destructing", "bob", "three_four", "abc"]
   ]</script>
 </test-html>
 <test-html test="customReactions_define_ArrowFunctions.html">

@@ -23,7 +23,7 @@
       this.value = "a" + Date.now();
       this._timer = setTimeout(() => {
         this.ownerElement.setAttribute(this.name, "z" + Date.now());
-        eventLoop.dispatch(new Event(this.event), this);
+        eventLoop.dispatch(new Event(this.type), this);
       }, this.suffix[0]);
     }
 
