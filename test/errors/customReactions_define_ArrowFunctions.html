@@ -97,7 +97,7 @@
     boundFunction
   })) {
     customReactions.define(name, Definition);
-    const [{Function, boundOrNot, prefix, suffix}] = customReactions.getReactions(`${name}_1`);
-    console.log(name, isArrowFunction(Definition), isArrowFunctionRegex(Definition), isBoundFunction(Definition), boundOrNot);
+    const [{Function, bound, prefix, suffix}] = customReactions.getReactions(`${name}_1`);
+    console.log(name, isArrowFunction(Definition), isArrowFunctionRegex(Definition), isBoundFunction(Definition), bound);
   }
 </script>

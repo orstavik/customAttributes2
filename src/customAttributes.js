@@ -3,8 +3,8 @@ class ReactionRegistry {
     if (type in this)
       throw `The Reaction type: "${type}" is already defined.`;
     const str = Function.toString();
-    const boundOrNot = str === "function () { [native code] }" || /^(async |)(\(|[^([]+=)/.test(str);
-    this[type] = {Function, boundOrNot};
+    const bound = str === "function () { [native code] }" || /^(async |)(\(|[^([]+=)/.test(str);
+    this[type] = {Function, bound};
   }
 
   #cache = {};
@@ -22,8 +22,8 @@ class ReactionRegistry {
       const Definition = this[prefix];
       if (!Definition)
         return [];
-      const {Function, boundOrNot} = Definition;
-      res.push({Function, prefix, suffix, boundOrNot});
+      const {Function, bound} = Definition;
+      res.push({Function, prefix, suffix, bound});
     }
     return this.#cache[reaction] = res;
   }
@@ -168,8 +168,7 @@ class AttributeRegistry {
   upgrade(...attrs) {
     for (let at of attrs) {
       const type = CustomAttr.eventAndType(at);
-      if (at.name[0] === "_")
-        this.#globals.push(type, at);                           //1. register globals
+      at.name[0] === "_" && this.#globals.push(type, at);    //1. register globals
       const Definition = this[type] ??= getNativeEventDefinition(type);
       if (Definition)                                           //1. upgrade to a defined CustomAttribute
         this.#upgradeAttribute(at, Definition);
@@ -221,7 +220,7 @@ class EventLoop {
       if (!target || target instanceof Element)   //a bug in the ElementObserver.js causes "instanceof HTMLElement" to fail.
         EventLoop.bubble(target, event);
       else if (target instanceof Attr)
-        EventLoop.callFilterImpl(target.allFunctions, target, event);
+        EventLoop.#callReactions(target.allFunctions, target, event);
       this.#eventLoop.shift();
     }
   }
@@ -232,7 +231,7 @@ class EventLoop {
         if (attr.type === event.type && attr.name[0] !== "_") {
           if (attr.defaultAction && (event.defaultAction || event.defaultPrevented))
             continue;
-          const res = EventLoop.callFilterImpl(attr.reaction, attr, event);
+          const res = EventLoop.#callReactions(attr.reaction, attr, event);
           if (res !== undefined && attr.defaultAction)
             event.defaultAction = {attr, res};
         }
@@ -240,17 +239,17 @@ class EventLoop {
     }
     const prevented = event.defaultPrevented;          //global listeners can't call .preventDefault()
     for (let attr of customAttributes.globalListeners(event.type))
-      EventLoop.callFilterImpl(attr.allFunctions, attr, event);
+      EventLoop.#callReactions(attr.allFunctions, attr, event);
     if (event.defaultAction && !prevented) {
       const {attr, res} = event.defaultAction;
-      EventLoop.callFilterImpl(attr.defaultAction, attr, res);
+      EventLoop.#callReactions(attr.defaultAction, attr, res);
     }
   }
 
-  static callFilterImpl(filters, at, event) {
-    for (let {Function, prefix, suffix, boundOrNot} of customReactions.getReactions(filters)) {
+  static #callReactions(reactions, at, event) {
+    for (let {Function, prefix, suffix, bound} of customReactions.getReactions(reactions)) {
       try {
-        event = boundOrNot ?
+        event = bound ?
           Function(event, prefix, ...suffix) :
           Function.call(at, event, prefix, ...suffix);
       } catch (error) {
