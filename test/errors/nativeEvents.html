@@ -49,7 +49,11 @@
   console.log(`native events (count: ${allEvents.size}).`);
 
   //7. add problem events
-  typeToEvent["problems"] = ["domcontentloaded", "touchstart", "touchmove", "touchend", "touchcancel"];
+  typeToEvent["problems"] = [
+    "domcontentloaded",               //weirdo. No window.onDOMContentLoaded & camelcase letters. annoying.
+    "touchstart", "touchmove", "touchend", "touchcancel",  //no element.ontouchstart = handler. Annoying.
+    "fastwheel", "fastmousewheel", "fasttouchstart", "fasttouchmove"  //special event names for passive events.
+  ];
 
   for (let type in typeToEvent) {
     console.log(type, typeToEvent[type].length);

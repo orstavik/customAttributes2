@@ -83,7 +83,7 @@
     ["NativeBubblingEvent", "mouseout"],
     ["NativeBubblingEvent", "mouseover"],
     ["NativeBubblingEvent", "mouseup"],
-    ["NativePassiveEvent", "mousewheel"],
+    ["NativeBubblingEvent", "mousewheel"],
     ["NativeBubblingEvent", "pause"],
     ["NativeBubblingEvent", "play"],
     ["NativeBubblingEvent", "playing"],
@@ -108,7 +108,7 @@
     ["NativeBubblingEvent", "webkitanimationiteration"],
     ["NativeBubblingEvent", "webkitanimationstart"],
     ["NativeBubblingEvent", "webkittransitionend"],
-    ["NativePassiveEvent", "wheel"],
+    ["NativeBubblingEvent", "wheel"],
     ["NativeBubblingEvent", "auxclick"],
     ["NativeBubblingEvent", "gotpointercapture"],
     ["NativeBubblingEvent", "lostpointercapture"],
@@ -167,12 +167,16 @@
     ["NativeBubblingEvent", "copy"],
     ["NativeBubblingEvent", "cut"],
     ["NativeBubblingEvent", "paste"],
-    ["problems", 5],
+    ["problems", 9],
     ["NativeDCLEvent", "domcontentloaded"],
-    ["NativePassiveEvent", "touchstart"],
-    ["NativePassiveEvent", "touchmove"],
+    ["NativeBubblingEvent", "touchstart"],
+    ["NativeBubblingEvent", "touchmove"],
     ["NativeBubblingEvent", "touchend"],
-    ["NativeBubblingEvent", "touchcancel"]
+    ["NativeBubblingEvent", "touchcancel"],
+    ["NativePassiveEvent", "fastwheel"],
+    ["NativePassiveEvent", "fastmousewheel"],
+    ["NativePassiveEvent", "fasttouchstart"],
+    ["NativePassiveEvent", "fasttouchmove"]
   ]</script>
 </test-html>
 <!-- Note!! You must load the test-html component at the end -->

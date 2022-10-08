@@ -7,9 +7,7 @@ class ReactionRegistry {
     this[type] = {Function, boundOrNot};
   }
 
-  #cache = {
-    "prevent": {Function: e => (e.preventDefault(), e), boundOrNot: true}
-  };
+  #cache = {};
   static #empty = Object.freeze([]);
 
   getReactions(reaction) {
@@ -144,10 +142,12 @@ function getNativeGlobalAttrs(prefix, target = window) {
 
 const nativeCustomAttrs = {
   "domcontentloaded": NativeDCLEvent,
-  "wheel": NativePassiveEvent,
-  "mousewheel": NativePassiveEvent,
-  "touchstart": NativePassiveEvent,
-  "touchmove": NativePassiveEvent,
+  "fastwheel": NativePassiveEvent,
+  "fastmousewheel": NativePassiveEvent,
+  "fasttouchstart": NativePassiveEvent,
+  "fasttouchmove": NativePassiveEvent,
+  "touchstart": NativeBubblingEvent,
+  "touchmove": NativeBubblingEvent,
   "touchend": NativeBubblingEvent,
   "touchcancel": NativeBubblingEvent
 };
