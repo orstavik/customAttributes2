@@ -48,6 +48,9 @@
   const allEvents = new Set(Object.values(typeToEvent).flat(Infinity));
   console.log(`native events (count: ${allEvents.size}).`);
 
+  //7. add problem events
+  typeToEvent["problems"] = ["domcontentloaded", "touchstart", "touchmove", "touchend", "touchcancel"];
+
   for (let type in typeToEvent) {
     console.log(type, typeToEvent[type].length);
     for (let event of typeToEvent[type]) {

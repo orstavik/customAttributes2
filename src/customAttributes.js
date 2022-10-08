@@ -7,7 +7,9 @@ class ReactionRegistry {
     this[type] = {Function, boundOrNot};
   }
 
-  #cache = {};
+  #cache = {
+    "prevent": {Function: e => (e.preventDefault(), e), boundOrNot: true}
+  };
   static #empty = Object.freeze([]);
 
   getReactions(reaction) {
@@ -89,7 +91,6 @@ class CustomAttr extends Attr {
 
 class NativeBubblingEvent extends CustomAttr {
   upgrade() {
-    //todo this is not going to work for the global native event listeners. We need a different strategy for the global handlers actually.
     this._listener = this.listener.bind(this);
     this.ownerElement.addEventListener(this.type, this._listener);
   }
@@ -105,68 +106,57 @@ class NativeBubblingEvent extends CustomAttr {
   }
 }
 
-class NativeDocumentOnlyEvent extends CustomAttr {
+//todo untested passive behavior
+class NativePassiveEvent extends NativeBubblingEvent {
   upgrade() {
-    const event = this.type;
-    const attr = new WeakRef(this);
-    const reroute = function (e) {
-      const at = attr.deref();
-      at && at.ownerElement ? //todo GC leak here. If the element is removed from the dom, but not yet GC, then this callback will still trigger.
-        eventLoop.dispatch(e, at) :
-        document.removeEventListener(event, reroute);
+    this._listener = this.listener.bind(this);
+    const passive = !/:prevent:|:prevent$/.test(this.reaction);
+    this.ownerElement.addEventListener(this.type, this._listener, {passive});
+  }
+}
+
+class NativeDCLEvent extends CustomAttr {
+  static reroute(e) {
+    Object.defineProperty(e, "type", {value: "domcontentloaded"});
+    eventLoop.dispatch(e);
+    if (customAttributes.empty("domcontentloaded"))
+      document.removeEventListener("DOMContentLoaded", this.reroute);
+  }
+
+  upgrade() {
+    document.addEventListener("DOMContentLoaded", this.constructor.reroute);
+  }
+}
+
+function getNativeGlobalAttrs(prefix, target = window) {
+  return class NativeGlobalEvent extends CustomAttr {
+    static reroute(e) {
+      eventLoop.dispatch(e);
+      if (customAttributes.empty(prefix))
+        target.removeEventListener(prefix, this.reroute);
     }
-    document.addEventListener(event, reroute);
-  }
-}
 
-class NativeWindowOnlyEvent extends CustomAttr {
-  upgrade() {
-    const event = this.type;
-    const attr = new WeakRef(this);
-    const reroute = function (e) {
-      const at = attr.deref();
-      at && at.ownerElement ?                                       //todo we have a GC leak here.
-        eventLoop.dispatch(e) :
-        window.removeEventListener(event, reroute);
+    upgrade() {
+      target.addEventListener(prefix, this.constructor.reroute);
     }
-    window.addEventListener(event, reroute);
   }
 }
 
-class DOMContentLoadedEvent extends CustomAttr {
-  upgrade() {
-    const attr = new WeakRef(this);
-    const reroute = function (e) {
-      const at = attr.deref();
-      at && at.ownerElement ?                                       //todo we have a GC leak here.
-        eventLoop.dispatch(e, at) :
-        window.removeEventListener("DOMContentLoaded", reroute);
-    }
-    window.addEventListener("DOMContentLoaded", reroute);
-  }
-}
-
-//todo
-class PassiveNativeBubblingEvent extends NativeBubblingEvent {
-  upgrade() {
-    super.upgrade();
-    this.ownerElement.addEventListener(this.event, this._passiveListener = () => 1);
-  }
-
-  destructor() {
-    //todo the destructor is safe, no? There will not be any possibility of removing the attribute from the element without
-    // the destructor being called? Yes, it is safe for this purpose, but the element can be removed from the DOM without the destructor being called.
-    this.ownerElement.addEventListener(this.event, this._passiveListener);
-    super.destructor();
-  }
-}
+const nativeCustomAttrs = {
+  "domcontentloaded": NativeDCLEvent,
+  "wheel": NativePassiveEvent,
+  "mousewheel": NativePassiveEvent,
+  "touchstart": NativePassiveEvent,
+  "touchmove": NativePassiveEvent,
+  "touchend": NativeBubblingEvent,
+  "touchcancel": NativeBubblingEvent
+};
 
 function getNativeEventDefinition(prefix) {
-  // prefix === "passivewheel" ? PassiveNativeBubblingEvent :  //todo
-  return prefix === "domcontentloaded" ? DOMContentLoadedEvent :
+  return nativeCustomAttrs[prefix] ??=
     `on${prefix}` in HTMLElement.prototype ? NativeBubblingEvent :
-      `on${prefix}` in window ? NativeWindowOnlyEvent :
-        `on${prefix}` in Document.prototype && NativeDocumentOnlyEvent;
+      `on${prefix}` in window ? getNativeGlobalAttrs(prefix) :
+        `on${prefix}` in Document.prototype && getNativeGlobalAttrs(prefix, document);
 }
 
 class WeakArrayDict {
@@ -219,6 +209,10 @@ class AttributeRegistry {
 
   globalListeners(type) {
     return this.#globals.values(type);
+  }
+
+  empty(type) {//todo if elements with global a customAttr is removed in JS but not yet GCed, this will still run
+    return !this.#globals[type]?.length;
   }
 
   #upgradeAttribute(at, Definition) {
