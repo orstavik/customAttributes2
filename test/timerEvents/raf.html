@@ -1,0 +1,38 @@
+<script src="https://cdn.jsdelivr.net/gh/orstavik/parse@v1.0.2/parse.js"
+        xmlns:raf_5="http://www.w3.org/1999/xhtml"></script>
+<script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
+<script src="../../src/customAttributes.js"></script>
+
+<div raf_5:txt:log>
+  hello sunshine
+</div>
+
+<script>
+  customAttributes.define("raf", class RafAttr extends CustomAttr {
+    upgrade() {
+      this.count = parseInt(this.suffix[0]);
+      const func = () => {
+        if (--this.count < 0 || !this.ownerElement) {
+          this.ownerElement.removeAttribute(this.name);
+          return;
+        }
+        eventLoop.dispatch(new Event(this.type), this);
+        requestAnimationFrame(func);
+      };
+      requestAnimationFrame(func);
+    }
+  });
+
+  customReactions.define("txt", function (e) {
+    this.ownerElement.innerText += "!";
+    return e;
+  });
+
+  customReactions.define("log", function (e) {
+    console.log(this.ownerElement.innerText);
+    return e;
+  });
+</script>
+<!--  //todo countdown state is not reflected in the DOM.-->
+<!--  //todo the countDown state must be added to the element??-->
+<!--  //todo should the countDown state be reflected in the main document as a meta element too?-->
