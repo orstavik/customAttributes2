@@ -71,17 +71,10 @@ class CustomAttr extends Attr {
   }
 
   static eventAndType(attr) {
-    const event = attr.name.match(/_?[^_:]+/)[0];
-    const type = event[0] === "_" ? event.substring(1) : event;
-    Object.defineProperty(attr, "event", {
-      get: function () {
-        return event;
-      }
-    });
-    Object.defineProperty(attr, "type", {
-      get: function () {
-        return type;
-      }
+    const [event, type] = attr.name.match(/_?([^_:]+)/);
+    Object.defineProperties(attr, {
+      "event": {value: event, writable: false},
+      "type": {value: type, writable: false}
     });
     return {type, event};
   }
