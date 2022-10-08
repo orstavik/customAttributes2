@@ -2,28 +2,19 @@ class ReactionRegistry {
   define(type, Function) {
     if (type in this)
       throw `The Reaction type: "${type}" is already defined.`;
-    const str = Function.toString();
-    const bound = str === "function () { [native code] }" || /^(async |)(\(|[^([]+=)/.test(str);
-    this[type] = {Function, bound};
+    this[type] = Function;
   }
 
-  #cache = {};
-  static #empty = Object.freeze([]);
+  #cache = {"": Object.freeze([])};
 
   getReactions(reaction) {
-    if (!reaction)
-      return ReactionRegistry.#empty;
     if (this.#cache[reaction])
       return this.#cache[reaction];
     const res = [];
     for (let [prefix, ...suffix] of reaction.split(":").map(str => str.split("_"))) {
-      if (!prefix)  //ignore empty
-        continue;
-      const Definition = this[prefix];
-      if (!Definition)
-        return [];
-      const {Function, bound} = Definition;
-      res.push({Function, prefix, suffix, bound});
+      if (!prefix) continue;        //ignore empty strings thus enabling "one::two" to run as one sequence
+      if (!this[prefix]) return []; //one undefined reaction disables the entire chain reaction
+      res.push({Function: this[prefix], prefix, suffix});
     }
     return this.#cache[reaction] = res;
   }
@@ -82,8 +73,7 @@ class NativeBubblingEvent extends CustomAttr {
 class NativePassiveEvent extends NativeBubblingEvent {
   upgrade() {
     this._listener = this.listener.bind(this);
-    const passive = !/:prevent:|:prevent$/.test(this.reaction);
-    this.ownerElement.addEventListener(this.type, this._listener, {passive});
+    this.ownerElement.addEventListener(this.type, this._listener, {passive: true});
   }
 }
 
@@ -237,7 +227,7 @@ class EventLoop {
         }
       }
     }
-    const prevented = event.defaultPrevented;          //global listeners can't call .preventDefault()
+    const prevented = event.defaultPrevented;  //global listeners can't call .preventDefault()
     for (let attr of customAttributes.globalListeners(event.type))
       EventLoop.#callReactions(attr.allFunctions, attr, event);
     if (event.defaultAction && !prevented) {
@@ -247,14 +237,11 @@ class EventLoop {
   }
 
   static #callReactions(reactions, at, event) {
-    for (let {Function, prefix, suffix, bound} of customReactions.getReactions(reactions)) {
+    for (let {Function, prefix, suffix} of customReactions.getReactions(reactions)) {
       try {
-        event = bound ?
-          Function(event, prefix, ...suffix) :
-          Function.call(at, event, prefix, ...suffix);
+        event = Function.call(at, event, prefix, ...suffix);
       } catch (error) {
-        eventLoop.dispatch(new ErrorEvent("FilterError", {error}), at.ownerElement);
-        return;
+        return eventLoop.dispatch(new ErrorEvent("FilterError", {error}), at.ownerElement);
       }
       if (event === undefined)
         return;
@@ -265,27 +252,25 @@ class EventLoop {
 
 window.eventLoop = new EventLoop();
 
-function deprecate(name) {
-  return function deprecated() {
-    throw `${name}() is deprecated`;
-  }
+function deprecated() {
+  throw `${this}() is deprecated`;
 }
 
 (function (Element_proto, documentCreateAttributeOG,) {
   const removeAttrOG = Element_proto.removeAttribute;
   const getAttrNodeOG = Element_proto.getAttributeNode;
   const setAttributeNodeOG = Element_proto.setAttributeNode;
-  Element.prototype.hasAttributeNS = deprecate("Element.hasgetAttributeNS");
-  Element.prototype.getAttributeNS = deprecate("Element.getAttributeNS");
-  Element.prototype.setAttributeNS = deprecate("Element.setAttributeNS");
-  Element.prototype.removeAttributeNS = deprecate("Element.removeAttributeNS");
-  Element.prototype.getAttributeNode = deprecate("Element.getAttributeNode");
-  Element.prototype.setAttributeNode = deprecate("Element.setAttributeNode");
-  Element.prototype.removeAttributeNode = deprecate("Element.removeAttributeNode");
-  Element.prototype.getAttributeNodeNS = deprecate("Element.getAttributeNodeNS");
-  Element.prototype.setAttributeNodeNS = deprecate("Element.setAttributeNodeNS");
-  Element.prototype.removeAttributeNodeNS = deprecate("Element.removeAttributeNodeNS");
-  document.createAttribute = deprecate("document.createAttribute");
+  Element.prototype.hasAttributeNS = deprecated.bind("Element.hasgetAttributeNS");
+  Element.prototype.getAttributeNS = deprecated.bind("Element.getAttributeNS");
+  Element.prototype.setAttributeNS = deprecated.bind("Element.setAttributeNS");
+  Element.prototype.removeAttributeNS = deprecated.bind("Element.removeAttributeNS");
+  Element.prototype.getAttributeNode = deprecated.bind("Element.getAttributeNode");
+  Element.prototype.setAttributeNode = deprecated.bind("Element.setAttributeNode");
+  Element.prototype.removeAttributeNode = deprecated.bind("Element.removeAttributeNode");
+  Element.prototype.getAttributeNodeNS = deprecated.bind("Element.getAttributeNodeNS");
+  Element.prototype.setAttributeNodeNS = deprecated.bind("Element.setAttributeNodeNS");
+  Element.prototype.removeAttributeNodeNS = deprecated.bind("Element.removeAttributeNodeNS");
+  document.createAttribute = deprecated.bind("document.createAttribute");
 
   Element_proto.setAttribute = function (name, value) {
     if (this.hasAttribute(name)) {
