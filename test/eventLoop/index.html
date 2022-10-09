@@ -45,6 +45,16 @@
 <test-html test="global-click.html">
   <script expected>["local", "global", "..", "global"]</script>
 </test-html>
+<test-html test="passive_fast.html">
+  <script expected>[
+    ["wheel", "one"],
+    ["wheel", "one"],
+    ["wheel", "two"],
+    ["wheel", "two"],
+    ["wheel", "one"],
+    ["wheel", "two"]
+  ]</script>
+</test-html>
 
 
 <!-- Note!! You must load the test-html component at the end -->
