@@ -29,33 +29,32 @@ class CustomAttr extends Attr {
 
   get reaction() {
     const value = this.name.split("::")[0].split(":").slice(1)?.join(":");
-    Object.defineProperty(this, "reaction", {value, writable: false});
+    Object.defineProperty(this, "reaction", {value, writable: false, configurable: true});
     return value;
   }
 
   get defaultAction() {
     const value = this.name.split("::")[1];
-    Object.defineProperty(this, "defaultAction", {value, writable: false});
+    Object.defineProperty(this, "defaultAction", {value, writable: false, configurable: true});
     return value;
   }
 
   get allFunctions() {
     const value = this.name.split(":").slice(1)?.join(":");
-    Object.defineProperty(this, "allFunctions", {value, writable: false});
+    Object.defineProperty(this, "allFunctions", {value, writable: false, configurable: true});
     return value;
   }
 
   static eventAndType(attr) {
     const value = attr.name.match(/_?([^_:]+)/)[1];
-    Object.defineProperty(attr, "type", {value: value, writable: false});
+    Object.defineProperty(attr, "type", {value: value, writable: false, configurable: true});
     return value;
   }
 }
 
 class NativeBubblingEvent extends CustomAttr {
   upgrade() {
-    this._listener = this.listener.bind(this);
-    this.ownerElement.addEventListener(this.type, this._listener);
+    this.ownerElement.addEventListener(this.type, this._listener = this.listener.bind(this));
   }
 
   listener(e) {
@@ -69,11 +68,10 @@ class NativeBubblingEvent extends CustomAttr {
   }
 }
 
-//todo untested passive behavior
 class NativePassiveEvent extends NativeBubblingEvent {
   upgrade() {
-    this._listener = this.listener.bind(this);
-    this.ownerElement.addEventListener(this.type, this._listener, {passive: true});
+    Object.defineProperty(this, "type", {value: this.type.substring(4), writable: false, configurable: true});
+    this.ownerElement.addEventListener(this.type, this._listener = this.listener.bind(this), {passive: true});
   }
 }
 
