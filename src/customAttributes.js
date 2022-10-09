@@ -45,9 +45,9 @@ class CustomAttr extends Attr {
     return value;
   }
 
-  static eventAndType(attr) {
-    const value = attr.name.match(/_?([^_:]+)/)[1];
-    Object.defineProperty(attr, "type", {value: value, writable: false, configurable: true});
+  get type() {
+    const value = this.name.match(/_?([^_:]+)/)[1];
+    Object.defineProperty(this, "type", {value, writable: false, configurable: true});
     return value;
   }
 }
@@ -155,16 +155,15 @@ class AttributeRegistry {
 
   upgrade(...attrs) {
     for (let at of attrs) {
-      const type = CustomAttr.eventAndType(at);
-      at.name[0] === "_" && this.#globals.push(type, at);    //1. register globals
+      const type = at.name.match(/_?([^_:]+)/)[1];
       const Definition = this[type] ??= getNativeEventDefinition(type);
-      if (Definition)                                           //1. upgrade to a defined CustomAttribute
+      if (Definition)                                    //1. upgrade to a defined CustomAttribute
         this.#upgradeAttribute(at, Definition);
-      else {
-        if (at.name.indexOf(":") > 0) //2. upgrade to the generic CustomAttribute, as it enables event listeners.
-          Object.setPrototypeOf(at, CustomAttr.prototype); // this enables reactions to events with the given name.
-        this.#unknownEvents.push(type, at);                     //3. register unknown attrs
-      }
+      else if (at.name.indexOf(":") > 0)                 //2. upgrade unknown/generic customAttribute
+        Object.setPrototypeOf(at, CustomAttr.prototype);
+      if (!Definition)                                   //3. register unknown attrs
+        this.#unknownEvents.push(type, at);
+      at.name[0] === "_" && this.#globals.push(at.type, at);//* register globals
     }
   }
 
