@@ -20,8 +20,7 @@
               if (prefix in this) {
                 toBeBound.add(prefix);
                 return full + uid;
-              }
-              else if (prefix in this.constructor)
+              } else if (prefix in this.constructor)
                 toBeBoundStatic.add(prefix);
               return full;
             });
@@ -31,11 +30,43 @@
         customReactions.define(prefix + uid, this[prefix].bind(this));
       for (let prefix of toBeBoundStatic)
         customReactions.define(prefix, this.constructor[prefix]);
-      this.transition(0, 0, Object.keys(this._transitions)[0]);
+    }
+
+    changeCallback(newState) {
+      if (newState === undefined)
+        this.transition(0, 0, Object.keys(this._transitions)[0]);
     }
 
     seen(e) {
       return this._seenEvents.has(e) ? undefined : (this._seenEvents.add(e), e);
+    }
+
+    detail(e, _, uid) {
+      if (e.detail === uid)
+        return e;
+    }
+
+    observe(e) {
+      this.ownerElement.setAttribute("_eventgrab:detail_" + e.uid + ":reset");
+      return e;
+    }
+
+    reset(e) {
+      for (let attr of this.ownerElement.attributes)
+        if (attr.name.startsWith("_eventgrab:detail_"))
+          this.ownerElement.removeAttribute(attr.name);
+      return e;
+    }
+
+    grab(e) {
+      for (let attr of this.ownerElement.attributes) {
+        const uid = attr.name.match(/^_eventgrab:detail_(\d+)/)?.[1];
+        if (uid !== undefined) {
+          this.ownerElement.removeAttribute(attr.name);
+          eventLoop.dispatch(new CustomEvent("eventgrab", {detail: uid}));
+        }
+      }
+      return e;
     }
 
     transition(e, _, newState) {
@@ -64,6 +95,7 @@
     }
 
     reset(e) {
+      super.reset();
       delete this._mousedown;
       return e;
     }
@@ -91,12 +123,12 @@
     static fsm() {
       return {
         start: [
-          `mousedown:mouse:seen:activate:transition_observe:log`
+          `mousedown:mouse:seen:activate:observe:transition_observe:log`
         ],
         observe: [
           "_mousedown:seen:reset:transition_start:log",
           `_mouseup:seen:reset:transition_start:log`,
-          "timeout_200:transition_active:log:once"
+          "timeout_200:grab:transition_active:log:once"
         ],
         active: [
           "_mousedown:seen:reset:transition_start:log",

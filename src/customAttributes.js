@@ -293,3 +293,16 @@ function deprecated() {
 })(Element.prototype, document.createAttribute);
 
 ElementObserver.end(el => customAttributes.upgrade(...el.attributes));
+
+//Event.uid
+(function () {
+  let eventUid = 1;
+  const eventToUid = new WeakMap();
+  Object.defineProperty(Event.prototype, "uid", {
+    get: function () {
+      let uid = eventToUid.get(this);
+      uid === undefined && eventToUid.set(this, eventUid++);
+      return eventUid;
+    }
+  });
+})();
