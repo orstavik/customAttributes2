@@ -12,7 +12,7 @@ class ReactionRegistry {
       return this.#cache[reaction];
     const res = [];
     for (let [prefix, ...suffix] of reaction.split(":").map(str => str.split("_"))) {
-      if (!prefix) continue;        //ignore empty strings thus enabling "one::two" to run as one sequence
+      if (!prefix) continue;        //ignore empty strings enables "one::two" to run as one sequence
       if (!this[prefix]) return []; //one undefined reaction disables the entire chain reaction
       res.push({Function: this[prefix], prefix, suffix});
     }
@@ -145,7 +145,7 @@ class AttributeRegistry {
   #globals = new WeakArrayDict();
 
   define(prefix, Definition) {
-    if (this[prefix])
+    if (this.getDefinition(prefix))
       throw `The customAttribute "${prefix}" is already defined.`;
     this[prefix] = Definition;
     for (let at of this.#unknownEvents.values(prefix))
@@ -156,7 +156,7 @@ class AttributeRegistry {
   upgrade(...attrs) {
     for (let at of attrs) {
       const type = at.name.match(/_?([^_:]+)/)[1];
-      const Definition = this[type] ??= getNativeEventDefinition(type);
+      const Definition = this.getDefinition(type);
       if (Definition)                                    //1. upgrade to a defined CustomAttribute
         this.#upgradeAttribute(at, Definition);
       else if (at.name.indexOf(":") > 0)                 //2. upgrade unknown/generic customAttribute
@@ -165,6 +165,10 @@ class AttributeRegistry {
         this.#unknownEvents.push(type, at);
       at.name[0] === "_" && this.#globals.push(at.type, at);//* register globals
     }
+  }
+
+  getDefinition(type) {
+    return this[type] ??= getNativeEventDefinition(type);
   }
 
   globalListeners(type) {
@@ -181,12 +185,12 @@ class AttributeRegistry {
       at.upgrade?.();
     } catch (error) {
       Object.setPrototypeOf(at, CustomAttr.prototype);
-      eventLoop.dispatch(new ErrorEvent("EventError", {error}), at.ownerElement);
+      eventLoop.dispatch(new ErrorEvent("AttributeError", {error}), at.ownerElement);
     }
     try {
       at.changeCallback?.();
     } catch (error) {
-      eventLoop.dispatch(new ErrorEvent("EventError", {error}), at.ownerElement);
+      eventLoop.dispatch(new ErrorEvent("AttributeError", {error}), at.ownerElement);
     }
   }
 }
@@ -238,7 +242,7 @@ class EventLoop {
       try {
         event = Function.call(at, event, prefix, ...suffix);
       } catch (error) {
-        return eventLoop.dispatch(new ErrorEvent("FilterError", {error}), at.ownerElement);
+        return eventLoop.dispatch(new ErrorEvent("ReactionError", {error}), at.ownerElement);
       }
       if (event === undefined)
         return;
