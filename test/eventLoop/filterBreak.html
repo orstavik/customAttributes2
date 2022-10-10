@@ -2,16 +2,11 @@
 <script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
 <script src="../../src/customAttributes.js"></script>
 
-<h1 click:one:two:one>hello on-click_shift</h1>
+<h1 click:one:two:one>hello two return undefined</h1>
 
 <script type="module">
-  customReactions.define("one", function(e){
-    console.log("one");
-    return e;
-  });
-  customReactions.define("two", function(e){
-    console.log("two");
-  });
+  customReactions.define("one", e => (console.log("one"), e));
+  customReactions.define("two", e => console.log("two"));
 
   document.querySelector("h1").click();
 </script>
