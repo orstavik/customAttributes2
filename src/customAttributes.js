@@ -146,7 +146,7 @@ class AttributeRegistry {
 
   define(prefix, Definition) {
     if (this[prefix])
-      throw `The customEvent "${prefix}" is already defined.`;
+      throw `The customAttribute "${prefix}" is already defined.`;
     this[prefix] = Definition;
     for (let at of this.#unknownEvents.values(prefix))
       this.#upgradeAttribute(at, Definition);
