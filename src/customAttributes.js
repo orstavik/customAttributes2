@@ -52,6 +52,83 @@ class CustomAttr extends Attr {
   }
 }
 
+class WeakArrayDict {
+  push(key, value) {
+    (this[key] ??= []).push(new WeakRef(value));
+  }
+
+  * values(key) {
+    let filtered = [];
+    for (let ref of this[key] || []) {
+      const v = ref.deref();
+      if (v?.ownerElement) {//if no .ownerElement, the attribute has been removed from DOM but not yet GC.
+        filtered.push(ref);
+        yield v;
+      }
+    }
+    this[key] = filtered;
+  }
+}
+
+class AttributeRegistry {
+
+  #unknownEvents = new WeakArrayDict();
+  #globals = new WeakArrayDict();
+
+  define(prefix, Definition) {
+    if (this.getDefinition(prefix))
+      throw `The customAttribute "${prefix}" is already defined.`;
+    this[prefix] = Definition;
+    for (let at of this.#unknownEvents.values(prefix))
+      this.#upgradeAttribute(at, Definition);
+    delete this.#unknownEvents[prefix];
+  }
+
+  upgrade(...attrs) {
+    for (let at of attrs) {
+      const type = at.name.match(/_?([^_:]+)/)[1];
+      const Definition = this.getDefinition(type);
+      if (Definition)                                    //1. upgrade to a defined CustomAttribute
+        this.#upgradeAttribute(at, Definition);
+      else if (at.name.indexOf(":") > 0)                 //2. upgrade unknown/generic customAttribute
+        Object.setPrototypeOf(at, CustomAttr.prototype);
+      if (!Definition)                                   //3. register unknown attrs
+        this.#unknownEvents.push(type, at);
+      at.name[0] === "_" && this.#globals.push(at.type, at);//* register globals
+    }
+  }
+
+  getDefinition(type) {
+    return this[type];
+  }
+
+  globalListeners(type) {
+    return this.#globals.values(type);
+  }
+
+  //todo if elements with global a customAttr is removed in JS but not yet GCed, this will still run
+  globalEmpty(type) {
+    for (let _ of this.globalListeners(type))
+      return false;
+    return true;
+  }
+
+  #upgradeAttribute(at, Definition) {
+    Object.setPrototypeOf(at, Definition.prototype);
+    try {
+      at.upgrade?.();
+    } catch (error) {
+      Object.setPrototypeOf(at, CustomAttr.prototype);
+      eventLoop.dispatch(new ErrorEvent("AttributeError", {error}), at.ownerElement);
+    }
+    try {
+      at.changeCallback?.();
+    } catch (error) {
+      eventLoop.dispatch(new ErrorEvent("AttributeError", {error}), at.ownerElement);
+    }
+  }
+}
+
 class NativeBubblingEvent extends CustomAttr {
   upgrade() {
     this.ownerElement.addEventListener(this.type, this._listener = this.listener.bind(this));
@@ -111,102 +188,29 @@ class NativeEventDCL extends NativeEventDocument {
   }
 }
 
-const nativeCustomAttrs = {
-  "domcontentloaded": NativeEventDCL,
-  "fastwheel": NativePassiveEvent,
-  "fastmousewheel": NativePassiveEvent,
-  "fasttouchstart": NativePassiveEvent,
-  "fasttouchmove": NativePassiveEvent,
-  "touchstart": NativeBubblingEvent,
-  "touchmove": NativeBubblingEvent,
-  "touchend": NativeBubblingEvent,
-  "touchcancel": NativeBubblingEvent
-};
-
-function getNativeEventDefinition(prefix) {
-  return nativeCustomAttrs[prefix] ??=
-    `on${prefix}` in HTMLElement.prototype ? NativeBubblingEvent :
-    `on${prefix}` in window ? NativeEventWindow :
-      `on${prefix}` in Document.prototype && NativeEventDocument;
-}
-
-class WeakArrayDict {
-  push(key, value) {
-    (this[key] ??= []).push(new WeakRef(value));
-  }
-
-  * values(key) {
-    let filtered = [];
-    for (let ref of this[key] || []) {
-      const v = ref.deref();
-      if (v?.ownerElement) {//if no .ownerElement, the attribute has been removed from DOM but not yet GC.
-        filtered.push(ref);
-        yield v;
-      }
-    }
-    this[key] = filtered;
-  }
-}
-
-class AttributeRegistry {
-
-  #unknownEvents = new WeakArrayDict();
-  #globals = new WeakArrayDict();
-
-  define(prefix, Definition) {
-    if (this.getDefinition(prefix))
-      throw `The customAttribute "${prefix}" is already defined.`;
-    this[prefix] = Definition;
-    for (let at of this.#unknownEvents.values(prefix))
-      this.#upgradeAttribute(at, Definition);
-    delete this.#unknownEvents[prefix];
-  }
-
-  upgrade(...attrs) {
-    for (let at of attrs) {
-      const type = at.name.match(/_?([^_:]+)/)[1];
-      const Definition = this.getDefinition(type);
-      if (Definition)                                    //1. upgrade to a defined CustomAttribute
-        this.#upgradeAttribute(at, Definition);
-      else if (at.name.indexOf(":") > 0)                 //2. upgrade unknown/generic customAttribute
-        Object.setPrototypeOf(at, CustomAttr.prototype);
-      if (!Definition)                                   //3. register unknown attrs
-        this.#unknownEvents.push(type, at);
-      at.name[0] === "_" && this.#globals.push(at.type, at);//* register globals
-    }
-  }
+class PatchedAttributeRegistry extends AttributeRegistry {
+  #nativeCustomAttrs = {
+    "domcontentloaded": NativeEventDCL,
+    "fastwheel": NativePassiveEvent,
+    "fastmousewheel": NativePassiveEvent,
+    "fasttouchstart": NativePassiveEvent,
+    "fasttouchmove": NativePassiveEvent,
+    "touchstart": NativeBubblingEvent,
+    "touchmove": NativeBubblingEvent,
+    "touchend": NativeBubblingEvent,
+    "touchcancel": NativeBubblingEvent
+  };
 
   getDefinition(type) {
-    return this[type] ??= getNativeEventDefinition(type);
-  }
-
-  globalListeners(type) {
-    return this.#globals.values(type);
-  }
-
-  globalEmpty(type) {//todo if elements with global a customAttr is removed in JS but not yet GCed, this will still run
-    for (let _ of this.globalListeners(type))
-      return false;
-    return true;
-  }
-
-  #upgradeAttribute(at, Definition) {
-    Object.setPrototypeOf(at, Definition.prototype);
-    try {
-      at.upgrade?.();
-    } catch (error) {
-      Object.setPrototypeOf(at, CustomAttr.prototype);
-      eventLoop.dispatch(new ErrorEvent("AttributeError", {error}), at.ownerElement);
-    }
-    try {
-      at.changeCallback?.();
-    } catch (error) {
-      eventLoop.dispatch(new ErrorEvent("AttributeError", {error}), at.ownerElement);
-    }
+    return super.getDefinition(type) ||
+      (this.#nativeCustomAttrs[type] ??=
+        `on${type}` in HTMLElement.prototype ? NativeBubblingEvent :
+          `on${type}` in window ? NativeEventWindow :
+            `on${type}` in Document.prototype && NativeEventDocument);
   }
 }
 
-window.customAttributes = new AttributeRegistry();
+window.customAttributes = new PatchedAttributeRegistry();
 
 class EventLoop {
   #eventLoop = [];
