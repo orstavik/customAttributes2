@@ -5,14 +5,29 @@
     return e;
   }
 
+  function parentToggleAttr(e, prefix, suffix) {
+    suffix = suffix?.toUpperCase();
+    let el = this.ownerElement.parentElement;
+    while (el && suffix && el.tagName !== suffix)
+      el = el.parentElement;
+    if (!el)
+      return;
+    el.hasAttribute(prefix) ? el.removeAttribute(prefix) : el.setAttribute(prefix);
+    return e;
+  }
+
   function newEvent(e, prefix) {
     return eventLoop.dispatch(new Event(prefix), this.ownerElement), e;
   }
 
-  // function cloneEvent(e, prefix){
-  //   //todo the targeting here is broken, because we don't update the target and path properties on the event during in our eventLoop so far.
-  //   return eventLoop.dispatch(new e.constructor(prefix, e), e.target), e;
-  // }
+  function cloneEvent(e, prefix) {
+    //todo the targeting here is broken, because we don't update the target and path properties on the event during in our eventLoop so far.
+    return new e.constructor(prefix, e);
+  }
+
+  function dispatch(e, _, querySelector){
+    return eventLoop.dispatch(e, document.querySelector(querySelector)), e;
+  }
 
   function hasKey(e, prefix) {
     if (e[prefix + "Key"])
@@ -53,10 +68,14 @@
 
   window.lib = {
     toggleAttr,
+    parentToggleAttr,
     newEvent,
+    cloneEvent,
+    dispatch,
     hasKey,
     once,
     ownerCallback,
-    cssClass
+    cssClass,
+    toCamelCase
   };
 })();

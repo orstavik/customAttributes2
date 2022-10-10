@@ -1,95 +1,37 @@
 <script src="https://cdn.jsdelivr.net/gh/orstavik/parse@v1.0.2/parse.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
 <script src="../../src/customAttributes.js"></script>
+<script src="../../src/lib.js"></script>
 
 <web-comp></web-comp>
 <h2 click:on="sayHi">hello re-click</h2>
 
 <script type="module">
-
-  function runMethods(at, e, target = at.ownerElement) {
-    for (let method of at.value.split(" ")) {
-      try {
-        if (!(method in target))
-          throw `'.${method}' is not a function on element <${target.tagName}>. Is it a typo?`;
-        target[method](e);
-      } catch (err) {
-        const event = new ErrorEvent(err);
-        // event.defaultAction = _ => console.error(err);  //todo this is now wrong.. How can we do this?
-        target.dispatchEvent(event);
-      }
-    }
-  }
-
-  function getTargets(node) {
-    const res = [node];
-    let next = node;
-    while (next = next.getRootNode()?.host)
-      res.unshift(next);
-    return res;
-  }
-
-  function cloneEvent(e, type, relatedTarget = e.relatedTarget) {
-    const event = new e.constructor(type, e);
-    Object.defineProperty(event, "relatedTarget", {
-      get() {  //todo this leaks elements out of closed shadowDoms
-        return relatedTarget;
-      }
-    });
-    Object.defineProperty(event, "relatedTargetQueries", {
-      get() {
-        return getTargets(relatedTarget).map(el => el.tagName.toLowerCase() + (el.id ? "#" + el.id : ""));
-      }
-    });
-    return event;
-  }
-
-  function getRootsTopDown(target) {
-    const roots = [];
-    for (let root = target.getRootNode(); root; root = root.host?.getRootNode())
-      roots.unshift(root);
-    return roots;
-  }
-
-  function querySelectorInDocuments(roots, query) {
-    for (let topDownRoot of roots) {
-      const dialog = topDownRoot.querySelector(query);
-      if (dialog)
-        return dialog;
-    }
-  }
-
-  function reAttr(e) {
-    const target = querySelectorInDocuments(getRootsTopDown(this.ownerElement), this.value);
-    target.dispatchEvent(cloneEvent(e, e.type, this.ownerElement));
-  }
-
-  customReactions.define("on", function (e) {
-    runMethods(this, e);
-  });
-
-  customReactions.define("re", reAttr);
-
   class WebComp extends HTMLElement {
     constructor() {
       super();
       const shadow = this.attachShadow({mode: "open"});
       //language=HTML
       shadow.innerHTML = `
-        <h1 click:re="h2">hello</h1>
+        <h1 click:click:dispatch_h2>hello</h1>
         <h2>darkness</h2>
       `;
     }
   }
 
   customElements.define("web-comp", WebComp);
-  const h2 = document.querySelector("h2");
-  const shadowH1 = document.querySelector("web-comp").shadowRoot.children[0];
 
+  customReactions.defineAll({
+    "on": lib.ownerCallback,
+    "click": lib.cloneEvent,
+    "dispatch": lib.dispatch
+  });
+
+  const h2 = document.querySelector("h2");
   h2.sayHi = function (e) {
     console.log("hi " + e.type);
   };
-
   h2.click();
+  const shadowH1 = document.querySelector("web-comp").shadowRoot.children[0];
   shadowH1.click();
 </script>

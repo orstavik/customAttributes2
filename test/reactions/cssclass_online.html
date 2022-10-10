@@ -2,21 +2,20 @@
 <script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
 <script src="../../src/customAttributes.js"></script>
 <script src="../../src/lib.js"></script>
+<script src="../../src/testLib.js"></script>
 
 <style>
   .hasnet { color: green; }
 </style>
 
-<div _online:log:hasnet:log _offline:log:hasnet_off:log>Network status</div>
+<div _online:log_color:hasnet:log_color _offline:log_color:hasnet_off:log_color>Network status</div>
 
 <script type="module">
 
-  customReactions.define("hasnet", lib.cssClass);
-  customReactions.define("log", function(e){
-    console.log(getComputedStyle(this.ownerElement).color);
-    return e;
-  })
-
+  customReactions.defineAll({
+    "hasnet": lib.cssClass,
+    "log": testLib.logComputedStyle
+  });
   window.dispatchEvent(new Event("online"));
   window.dispatchEvent(new Event("offline"));
   window.dispatchEvent(new Event("online"));

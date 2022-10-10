@@ -2,28 +2,26 @@
 <script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
 <script src="../../src/customAttributes.js"></script>
 <script src="../../src/lib.js"></script>
+<script src="../../src/testLib.js"></script>
 
 <style>
-  [toggle\:open]:not([open]) > :not(h1) {
+  div:not([open]) > :not(h1) {
     display: none;
   }
 </style>
 
-<div toggle:open>
-  <h1 click:toggle>hello</h1>
+<div toggle:open:log_display>
+  <h1 click:log_display:toggle>hello</h1>
   <p>sunshine</p>
+  <p>world</p>
 </div>
 
 <script type="module">
   customReactions.defineAll({
     "open": lib.toggleAttr,
-    "toggle": lib.newEvent
+    "toggle": lib.newEvent,
+    "log": e => (console.log(getComputedStyle(document.querySelector("p")).display), e)
   });
 
-  const h1 = document.querySelector("h1");
-  const p = document.querySelector("p");
-
-  console.log(getComputedStyle(p).display);
-  h1.click();
-  console.log(getComputedStyle(p).display);
+  document.querySelector("h1").click();
 </script>

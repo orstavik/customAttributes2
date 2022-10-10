@@ -2,20 +2,17 @@
 <script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
 <script src="../../src/customAttributes.js"></script>
 <script src="../../src/lib.js"></script>
+<script src="../../src/testLib.js"></script>
 
 <style>
   [checked] {accent-color: yellow;}
 </style>
 
-<input id="a" type="checkbox" change:log:checked:log/>
+<input id="a" type="checkbox" change:log_accent-color:checked:log_accent-color/>
 
 <script type="module">
   customReactions.define("checked", lib.toggleAttr);
-
-  customReactions.define("log", function (e) {
-    console.log(getComputedStyle(this.ownerElement).accentColor);
-    return e;
-  });
+  customReactions.define("log", testLib.logComputedStyle);
 
   const input = document.querySelector("input");
   input.click();

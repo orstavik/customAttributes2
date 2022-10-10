@@ -2,20 +2,18 @@
 <script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
 <script src="../../src/customAttributes.js"></script>
 <script src="../../src/lib.js"></script>
+<script src="../../src/testLib.js"></script>
 
 <style>
   .bob { color: orange; }
 </style>
 
-<div mouseenter:log:bob_on:log mouseleave:log:bob_off:log>world</div>
+<div mouseenter:log_color:bob_on:log_color mouseleave:log_color:bob_off:log_color>world</div>
 
 <script type="module">
 
   customReactions.define("bob", lib.cssClass);
-  customReactions.define("log", function (e) {
-    console.log(getComputedStyle(this.ownerElement).color);
-    return e;
-  })
+  customReactions.define("log", testLib.logComputedStyle);
 
   const div = document.querySelector("div");
   div.dispatchEvent(new MouseEvent("mouseenter"));
