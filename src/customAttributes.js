@@ -68,6 +68,13 @@ class WeakArrayDict {
     }
     this[key] = filtered;
   }
+
+  //todo if elements with global a customAttr is removed in JS but not yet GCed, this will still run
+  empty(key) {
+    for (let _ of this.values(key))
+      return false;
+    return true;
+  }
 }
 
 class AttributeRegistry {
@@ -106,11 +113,8 @@ class AttributeRegistry {
     return this.#globals.values(type);
   }
 
-  //todo if elements with global a customAttr is removed in JS but not yet GCed, this will still run
   globalEmpty(type) {
-    for (let _ of this.globalListeners(type))
-      return false;
-    return true;
+    return this.#globals.empty(type);
   }
 
   #upgradeAttribute(at, Definition) {
@@ -129,88 +133,7 @@ class AttributeRegistry {
   }
 }
 
-class NativeBubblingEvent extends CustomAttr {
-  upgrade() {
-    this.ownerElement.addEventListener(this.type, this._listener = this.listener.bind(this));
-  }
-
-  listener(e) {
-    // e.preventDefault(); // if dispatchEvent propagates sync, native defaultActions can still be used.
-    e.stopImmediatePropagation();
-    eventLoop.dispatch(e, e.composedPath()[0]);
-  }
-
-  destructor() {
-    this.ownerElement.removeEventListener(this.type, this._listener);
-  }
-}
-
-class NativePassiveEvent extends NativeBubblingEvent {
-  upgrade() {
-    Object.defineProperty(this, "type", {value: this.type.substring(4), writable: false, configurable: true});
-    this.ownerElement.addEventListener(this.type, this._listener = this.listener.bind(this), {passive: true});
-  }
-}
-
-class NativeEventDocument extends CustomAttr {
-  reroute(e) {
-    //todo cleanup for troublesome GC of eventlisteners associated with removed elements.
-    if (customAttributes.globalEmpty(this.type))
-      this._listenerTarget.removeEventListener(this.type, this._reroute);
-    else
-      eventLoop.dispatch(e);
-  }
-
-  upgrade() {
-    if (this.name[0] !== "_")
-      throw new SyntaxError(`AttributeError: missing "_" for global-only event: "_${this.name}".`);
-    this._listenerTarget.addEventListener(this.type, this._reroute = this.reroute.bind(this));
-  }
-
-  destructor() {
-    this._listenerTarget.removeEventListener(this.type, this._reroute);
-  }
-
-  get _listenerTarget() {
-    return document;
-  }
-}
-
-class NativeEventWindow extends NativeEventDocument {
-  get _listenerTarget() {
-    return window;
-  }
-}
-
-class NativeEventDCL extends NativeEventDocument {
-  get type() {
-    return "DOMContentLoaded";
-  }
-}
-
-class PatchedAttributeRegistry extends AttributeRegistry {
-  #nativeCustomAttrs = {
-    "domcontentloaded": NativeEventDCL,
-    "fastwheel": NativePassiveEvent,
-    "fastmousewheel": NativePassiveEvent,
-    "fasttouchstart": NativePassiveEvent,
-    "fasttouchmove": NativePassiveEvent,
-    "touchstart": NativeBubblingEvent,
-    "touchmove": NativeBubblingEvent,
-    "touchend": NativeBubblingEvent,
-    "touchcancel": NativeBubblingEvent
-  };
-
-  getDefinition(type) {
-    return super.getDefinition(type) ||
-      (this.#nativeCustomAttrs[type] ??=
-        `on${type}` in HTMLElement.prototype ? NativeBubblingEvent :
-          `on${type}` in window ? NativeEventWindow :
-            `on${type}` in Document.prototype && NativeEventDocument);
-  }
-}
-
-window.customAttributes = new PatchedAttributeRegistry();
+window.customAttributes = new AttributeRegistry();
 
 class EventLoop {
   #eventLoop = [];
@@ -311,8 +234,6 @@ function deprecated() {
   };
 })(Element.prototype, document.createAttribute);
 
-ElementObserver.end(el => customAttributes.upgrade(...el.attributes));
-
 //Event.uid
 (function () {
   let eventUid = 1;
@@ -325,3 +246,89 @@ ElementObserver.end(el => customAttributes.upgrade(...el.attributes));
     }
   });
 })();
+
+ElementObserver.end(el => customAttributes.upgrade(...el.attributes));
+
+//** CustomAttribute registry with builtin support for the native HTML events.
+class NativeBubblingEvent extends CustomAttr {
+  upgrade() {
+    this.ownerElement.addEventListener(this.type, this._listener = this.listener.bind(this));
+  }
+
+  listener(e) {
+    // e.preventDefault(); // if dispatchEvent propagates sync, native defaultActions can still be used.
+    e.stopImmediatePropagation();
+    eventLoop.dispatch(e, e.composedPath()[0]);
+  }
+
+  destructor() {
+    this.ownerElement.removeEventListener(this.type, this._listener);
+  }
+}
+
+class NativePassiveEvent extends NativeBubblingEvent {
+  upgrade() {
+    Object.defineProperty(this, "type", {value: this.type.substring(4), writable: false, configurable: true});
+    this.ownerElement.addEventListener(this.type, this._listener = this.listener.bind(this), {passive: true});
+  }
+}
+
+class NativeEventDocument extends CustomAttr {
+  reroute(e) {
+    //todo cleanup for troublesome GC of eventlisteners associated with removed elements.
+    if (customAttributes.globalEmpty(this.type))
+      this._listenerTarget.removeEventListener(this.type, this._reroute);
+    else
+      eventLoop.dispatch(e);
+  }
+
+  upgrade() {
+    if (this.name[0] !== "_")
+      throw new SyntaxError(`AttributeError: missing "_" for global-only event: "_${this.name}".`);
+    this._listenerTarget.addEventListener(this.type, this._reroute = this.reroute.bind(this));
+  }
+
+  destructor() {
+    this._listenerTarget.removeEventListener(this.type, this._reroute);
+  }
+
+  get _listenerTarget() {
+    return document;
+  }
+}
+
+class NativeEventWindow extends NativeEventDocument {
+  get _listenerTarget() {
+    return window;
+  }
+}
+
+class NativeEventDCL extends NativeEventDocument {
+  get type() {
+    return "DOMContentLoaded";
+  }
+}
+
+class NativeEventsAttributeRegistry extends AttributeRegistry {
+  #nativeCustomAttrs = {
+    "domcontentloaded": NativeEventDCL,
+    "fastwheel": NativePassiveEvent,
+    "fastmousewheel": NativePassiveEvent,
+    "fasttouchstart": NativePassiveEvent,
+    "fasttouchmove": NativePassiveEvent,
+    "touchstart": NativeBubblingEvent,
+    "touchmove": NativeBubblingEvent,
+    "touchend": NativeBubblingEvent,
+    "touchcancel": NativeBubblingEvent
+  };
+
+  getDefinition(type) {
+    return super.getDefinition(type) ||
+      (this.#nativeCustomAttrs[type] ??=
+        `on${type}` in HTMLElement.prototype ? NativeBubblingEvent :
+          `on${type}` in window ? NativeEventWindow :
+            `on${type}` in Document.prototype && NativeEventDocument);
+  }
+}
+
+window.customAttributes = new NativeEventsAttributeRegistry();
