@@ -5,6 +5,11 @@ class ReactionRegistry {
     this[type] = Function;
   }
 
+  defineAll(defs){
+    for (let [type, Function] of Object.entries(defs))
+      this.define(type, Function);
+  }
+
   #cache = {"": Object.freeze([])};
 
   getReactions(reaction) {

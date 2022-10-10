@@ -1,27 +1,23 @@
 <script src="https://cdn.jsdelivr.net/gh/orstavik/parse@v1.0.2/parse.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
 <script src="../../src/customAttributes.js"></script>
+<script src="../../src/lib.js"></script>
 
 <style>
-  [toggle\:at_open]:not([open]) > :not(h1) {
+  [toggle\:open]:not([open]) > :not(h1) {
     display: none;
   }
 </style>
 
-<div toggle:at_open>
-  <h1 click:co_toggle>hello</h1>
+<div toggle:open>
+  <h1 click:toggle>hello</h1>
   <p>sunshine</p>
 </div>
 
 <script type="module">
-  customReactions.define("co", function (e, _, name)  {
-    //in filters, we wish to dispatch via the virtual event loop directly, I think.
-    eventLoop.dispatch(new Event(name), this.ownerElement);
-  });
-  customReactions.define("at", function (e,_, attr){
-    this.ownerElement.hasAttribute(attr) ?
-      this.ownerElement.removeAttribute(attr) :
-      this.ownerElement.setAttribute(attr);
+  customReactions.defineAll({
+    "open": lib.toggleAttr,
+    "toggle": lib.newEvent
   });
 
   const h1 = document.querySelector("h1");

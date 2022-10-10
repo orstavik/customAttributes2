@@ -1,24 +1,17 @@
 <script src="https://cdn.jsdelivr.net/gh/orstavik/parse@v1.0.2/parse.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
 <script src="../../src/customAttributes.js"></script>
+<script src="../../src/lib.js"></script>
 
 <style>
-  .online { color: green; }
+  .hasnet { color: green; }
 </style>
 
-<div _online:log:cssclass_online:log _offline:log:cssremoveclass_online:log>Network status</div>
+<div _online:log:hasnet:log _offline:log:hasnet_off:log>Network status</div>
 
 <script type="module">
 
-  customReactions.define("cssclass", function (e, _, css) {
-    this.ownerElement.classList.add(css);
-    return e;
-  });
-
-  customReactions.define("cssremoveclass", function (e, _, css) {
-    this.ownerElement.classList.remove(css);
-    return e;
-  });
+  customReactions.define("hasnet", lib.cssClass);
   customReactions.define("log", function(e){
     console.log(getComputedStyle(this.ownerElement).color);
     return e;

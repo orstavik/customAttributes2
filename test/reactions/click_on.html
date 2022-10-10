@@ -1,37 +1,18 @@
 <script src="https://cdn.jsdelivr.net/gh/orstavik/parse@v1.0.2/parse.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
 <script src="../../src/customAttributes.js"></script>
+<script src="../../src/lib.js"></script>
 
 <h1 click:on="sayHi" auxclick:ctrl:on="sayGoodbye" contextmenu:alt:meta:on="sayHi sayGoodbye sayHi">hello
   on-click_shift</h1>
 
 <script type="module">
-  function runMethods(at, e, target = at.ownerElement) {
-    for (let method of at.value.split(" ")) {
-      try {
-        if (!(method in target))
-          throw `'.${method}' is not a function on element <${target.tagName}>. Is it a typo?`;
-        target[method](e);
-      } catch (err) {
-        //todo this is now wrong
-        const event = new ErrorEvent(err);
-        event.defaultAction = _ => console.error(err);
-        window.dispatchEvent(event); //todo we need to queue it using nextTick. audioRatechange
-      }
-    }
-  }
 
-  customReactions.define("on", function (e) {
-    runMethods(this, e);
-  });
-  customReactions.define("ctrl", function (e) {
-    if (e.ctrlKey) return e;
-  });
-  customReactions.define("meta", function (e) {
-    if (e.metaKey) return e;
-  });
-  customReactions.define("alt", function (e) {
-    if (e.altKey) return e;
+  customReactions.defineAll({
+    "on": lib.ownerCallback,
+    "ctrl": lib.hasKey,
+    "meta": lib.hasKey,
+    "alt": lib.hasKey
   });
 
   const h1 = document.querySelector("h1");
