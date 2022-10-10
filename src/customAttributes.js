@@ -75,35 +75,44 @@ class NativePassiveEvent extends NativeBubblingEvent {
   }
 }
 
-class NativeDCLEvent extends CustomAttr {
-  static reroute(e) {
-    Object.defineProperty(e, "type", {value: "domcontentloaded"});
-    eventLoop.dispatch(e);
-    if (customAttributes.empty("domcontentloaded"))
-      document.removeEventListener("DOMContentLoaded", this.reroute);
+class NativeEventDocument extends CustomAttr {
+  reroute(e) {
+    //todo cleanup for troublesome GC of eventlisteners associated with removed elements.
+    if (customAttributes.globalEmpty(this.type))
+      this._listenerTarget.removeEventListener(this.type, this._reroute);
+    else
+      eventLoop.dispatch(e);
   }
 
   upgrade() {
-    document.addEventListener("DOMContentLoaded", this.constructor.reroute);
+    if (this.name[0] !== "_")
+      throw new SyntaxError(`AttributeError: missing "_" for global-only event: "_${this.name}".`);
+    this._listenerTarget.addEventListener(this.type, this._reroute = this.reroute.bind(this));
+  }
+
+  destructor() {
+    this._listenerTarget.removeEventListener(this.type, this._reroute);
+  }
+
+  get _listenerTarget() {
+    return document;
   }
 }
 
-function getNativeGlobalAttrs(prefix, target = window) {
-  return class NativeGlobalEvent extends CustomAttr {
-    static reroute(e) {
-      eventLoop.dispatch(e);
-      if (customAttributes.empty(prefix))
-        target.removeEventListener(prefix, this.reroute);
-    }
+class NativeEventWindow extends NativeEventDocument {
+  get _listenerTarget() {
+    return window;
+  }
+}
 
-    upgrade() {
-      target.addEventListener(prefix, this.constructor.reroute);
-    }
+class NativeEventDCL extends NativeEventDocument {
+  get type() {
+    return "DOMContentLoaded";
   }
 }
 
 const nativeCustomAttrs = {
-  "domcontentloaded": NativeDCLEvent,
+  "domcontentloaded": NativeEventDCL,
   "fastwheel": NativePassiveEvent,
   "fastmousewheel": NativePassiveEvent,
   "fasttouchstart": NativePassiveEvent,
@@ -117,8 +126,8 @@ const nativeCustomAttrs = {
 function getNativeEventDefinition(prefix) {
   return nativeCustomAttrs[prefix] ??=
     `on${prefix}` in HTMLElement.prototype ? NativeBubblingEvent :
-      `on${prefix}` in window ? getNativeGlobalAttrs(prefix) :
-        `on${prefix}` in Document.prototype && getNativeGlobalAttrs(prefix, document);
+    `on${prefix}` in window ? NativeEventWindow :
+      `on${prefix}` in Document.prototype && NativeEventDocument;
 }
 
 class WeakArrayDict {
@@ -175,8 +184,10 @@ class AttributeRegistry {
     return this.#globals.values(type);
   }
 
-  empty(type) {//todo if elements with global a customAttr is removed in JS but not yet GCed, this will still run
-    return !this.#globals[type]?.length;
+  globalEmpty(type) {//todo if elements with global a customAttr is removed in JS but not yet GCed, this will still run
+    for (let _ of this.globalListeners(type))
+      return false;
+    return true;
   }
 
   #upgradeAttribute(at, Definition) {
