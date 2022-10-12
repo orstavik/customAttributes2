@@ -1,4 +1,4 @@
-export function formDataToEncodedUri(formData) {
+export function encodeUri(formData) {
   const href = this.value || location.href;
   const url = new URL(href, location);
   if (!(formData instanceof FormData))
@@ -51,7 +51,7 @@ export function extractFormData(data) {
 
 export function FormData_GET(data, eventType, returnType = "json") {
   const formData = extractFormData.call(this, data);
-  const url = formDataToEncodedUri.call(this, formData);
+  const url = encodeUri.call(this, formData);
   return reactToUrl.call(this, url, eventType, returnType);
 }
 
