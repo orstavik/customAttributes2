@@ -11,7 +11,8 @@ export function formDataToEncodedUri(formData) {
   return url;
 }
 
-async function fetchAndEvent(attr, url, returnType, eventType) {
+export async function fetchAndEvent(url, returnType, eventType) {
+  const attr = this;
   try {
     const response = await fetch(url, {method: "GET"});
     if (!(response.status >= 200 && response.status < 300))
@@ -25,13 +26,21 @@ async function fetchAndEvent(attr, url, returnType, eventType) {
   }
 }
 
+export function popstate(url) {
+  history.pushState(null, null, url.href), window.dispatchEvent(new PopStateEvent("popstate"));
+}
+
+export function open(url, _, returnType = "self") {
+  window.open(url, "_" + returnType);
+}
+
 export function reactToUrl(url, eventType, returnType) {
   if (returnType === "json" || returnType === "text")
-    fetchAndEvent(this, url, returnType, eventType);
+    fetchAndEvent.call(this, url, returnType, eventType);
   else if (returnType === "popstate")
-    history.pushState(null, null, url.href), window.dispatchEvent(new PopStateEvent("popstate"));
+    popstate(url);
   else if (returnType === "self" || returnType === "blank" || returnType === "parent" || returnType === "top")
-    window.open(url, "_" + returnType);
+    open(url, returnType);
 }
 
 export function extractFormData(data) {
