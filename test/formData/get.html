@@ -6,10 +6,10 @@
 <h2 click:getshortcut_self="https://bbc.com/">hello sunshine</h2>
 
 <script type="module">
-  import {FormData_GET, encodeUriFromFormData, open} from "../src/FormData/FormData_GET.js";
+  import {FormData_GET, formDataToUri, open} from "../src/FormData/FormData_GET.js";
 
   customReactions.define("getshortcut", FormData_GET);
-  customReactions.define("encodeuri", encodeUriFromFormData);
+  customReactions.define("encodeuri", formDataToUri);
   customReactions.define("open", open);
 
   //att!! intercepting native window.open(...) method for testing purposes

@@ -6,10 +6,10 @@
 <h2 click:encodeuri:popstate="#sunshine">hello sunshine</h2>
 
 <script type="module">
-  import {FormData_GET, encodeUriFromFormData, popstate} from "../src/FormData/FormData_GET.js";
+  import {FormData_GET, formDataToUri, popstate} from "../src/FormData/FormData_GET.js";
 
   customReactions.define("get", FormData_GET);
-  customReactions.define("encodeuri", encodeUriFromFormData);
+  customReactions.define("encodeuri", formDataToUri);
   customReactions.define("popstate", popstate);
 
   console.log(location.href.substring(location.href.length - 9));

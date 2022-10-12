@@ -6,7 +6,7 @@ export function extractFormData(data) {
         undefined;
 }
 
-export function encodeUriFromFormData(formData) {
+export function formDataToUri(formData) {
   const url = new URL(this.value, location);
   if (formData instanceof FormData) {
     for (let [k, v] of formData.entries()) {
@@ -61,7 +61,7 @@ export function reactToUrl(url, eventType, returnType) {
 
 export function FormData_GET(data, eventType, returnType = "json") {
   const formData = extractFormData.call(this, data);
-  const url = encodeUriFromFormData.call(this, formData);
+  const url = formDataToUri.call(this, formData);
   return reactToUrl.call(this, url, eventType, returnType);
 }
 
