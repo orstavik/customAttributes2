@@ -2,14 +2,18 @@
 <script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
 <script src="../../src/customAttributes.js"></script>
 
-<h1 click:get_popstate="#sunshine">hello sunshine</h1>
+<h1 click:get_popstate="#hello">hello sunshine</h1>
+<h2 click:encodeuri:popstate="#sunshine">hello sunshine</h2>
 
 <script type="module">
-  import {FormData_GET} from "../src/FormData/FormData_GET.js";
+  import {FormData_GET, encodeUri, popstate} from "../src/FormData/FormData_GET.js";
 
   customReactions.define("get", FormData_GET);
+  customReactions.define("encodeuri", encodeUri);
+  customReactions.define("popstate", popstate);
 
   console.log(location.href.substring(location.href.length - 9));
   window.addEventListener("popstate", e => console.log(location.href.substring(location.href.length - 9)));
   document.querySelector("h1").click();
+  document.querySelector("h2").click();
 </script>
