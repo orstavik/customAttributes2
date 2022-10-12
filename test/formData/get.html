@@ -2,14 +2,19 @@
 <script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
 <script src="../../src/customAttributes.js"></script>
 
-<h1 click:get_self="https://bbc.com/">hello sunshine</h1>
+<h1 click:encodeuri:get_self="https://bbc.com/">hello sunshine</h1>
+<h2 click:getshortcut_self="https://bbc.com/">hello sunshine</h2>
 
 <script type="module">
-  import {FormData_GET} from "../src/FormData/FormData_GET.js";
+  import {FormData_GET, formDataToEncodedUri, reactToUrl} from "../src/FormData/FormData_GET.js";
 
-  customReactions.define("get", FormData_GET);
+  customReactions.define("getshortcut", FormData_GET);
+  customReactions.define("encodeuri", formDataToEncodedUri);
+  customReactions.define("get", reactToUrl);
+
   //att!! intercepting native window.open(...) method for testing purposes
   window.open = (...args) => console.log(...args);
 
   document.querySelector("h1").click();
+  document.querySelector("h2").click();
 </script>

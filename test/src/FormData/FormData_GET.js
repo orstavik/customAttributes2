@@ -1,6 +1,7 @@
-function formDataToEncodedUri(href, formData) {
+export function formDataToEncodedUri(formData) {
+  const href = this.value || location.href;
   const url = new URL(href, location);
-  if (!formData)
+  if (!(formData instanceof FormData))
     return url;
   for (let [k, v] of formData.entries()) {
     if (!(v instanceof String) && typeof v !== "string")
@@ -24,35 +25,35 @@ async function fetchAndEvent(attr, url, returnType, eventType) {
   }
 }
 
-function reactToUrl(attr, returnType, url, eventType) {
+export function reactToUrl(url, eventType, returnType) {
   if (returnType === "json" || returnType === "text")
-    fetchAndEvent(attr, url, returnType, eventType);
+    fetchAndEvent(this, url, returnType, eventType);
   else if (returnType === "popstate")
     history.pushState(null, null, url.href), window.dispatchEvent(new PopStateEvent("popstate"));
   else if (returnType === "self" || returnType === "blank" || returnType === "parent" || returnType === "top")
     window.open(url, "_" + returnType);
 }
 
+export function extractFormData(data) {
+  return data instanceof FormData ? data :
+    data.detail instanceof FormData ? data.detail :
+      this.ownerElement instanceof HTMLFormElement ? new FormData(this.ownerElement) :
+        undefined;
+}
+
 export function FormData_GET(data, eventType, returnType = "json") {
-  //1. get the formData. Fallback is the ownerElement being a <form> element.
-  //2. turn the formData into a URL. Fallback is the location of the document.
-  const formData =
-    data instanceof FormData ? data :
-      data.detail instanceof FormData ? data.detail :
-        this.ownerElement instanceof HTMLFormElement ? new FormData(this.ownerElement) :
-          undefined;
-  const url = formDataToEncodedUri(this.value || location.href, formData);
-  //3. react to the FormData url
-  reactToUrl(this, returnType, url, eventType);
+  const formData = extractFormData.call(this, data);
+  const url = formDataToEncodedUri.call(this, formData);
+  return reactToUrl.call(this, url, eventType, returnType);
 }
 
 export function JSON_GET(ar, eventType, returnType = "self") {
   const url = new URL(this.value, location);
-  if(ar instanceof Event)
+  if (ar instanceof Event)
     ar = ar.detail;
   if (ar instanceof Array)
     for (let [k, v] of ar)
       url.searchParams.set(k, v);
   //3. react to the FormData url
-  reactToUrl(this, returnType, url, eventType);
+  return reactToUrl.call(this, url, eventType, returnType);
 }
