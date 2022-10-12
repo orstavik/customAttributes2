@@ -14,9 +14,7 @@
 
   customReactions.define("formdata", DOM_FormData);
   customReactions.define("get", FormData_GET);
-  customReactions.define("log", function(e){
-    console.log(e.detail);
-  });
+  customReactions.define("log", e => console.log(e.detail));
 
   document.querySelector("form").click();
 </script>

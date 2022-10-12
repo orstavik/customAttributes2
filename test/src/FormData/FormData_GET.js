@@ -1,4 +1,12 @@
-export function encodeUri(formData) {
+//todo move this to the formDataLib
+export function extractFormData(data) {
+  return data instanceof FormData ? data :
+    data.detail instanceof FormData ? data.detail :
+      this.ownerElement instanceof HTMLFormElement ? new FormData(this.ownerElement) :
+        undefined;
+}
+
+export function encodeUriFromFormData(formData) {
   const url = new URL(this.value, location);
   if (formData instanceof FormData) {
     for (let [k, v] of formData.entries()) {
@@ -7,6 +15,16 @@ export function encodeUri(formData) {
       url.searchParams.set(k, v);
     }
   }
+  return url;
+}
+
+export function encodeUriFromJson(ar) {
+  const url = new URL(this.value, location);
+  if (ar instanceof Event)
+    ar = ar.detail;
+  if (ar instanceof Array)
+    for (let [k, v] of ar)
+      url.searchParams.set(k, v);
   return url;
 }
 
@@ -41,25 +59,13 @@ export function reactToUrl(url, eventType, returnType) {
     open(url, returnType);
 }
 
-export function extractFormData(data) {
-  return data instanceof FormData ? data :
-    data.detail instanceof FormData ? data.detail :
-      this.ownerElement instanceof HTMLFormElement ? new FormData(this.ownerElement) :
-        undefined;
-}
-
 export function FormData_GET(data, eventType, returnType = "json") {
   const formData = extractFormData.call(this, data);
-  const url = encodeUri.call(this, formData);
+  const url = encodeUriFromFormData.call(this, formData);
   return reactToUrl.call(this, url, eventType, returnType);
 }
 
 export function JSON_GET(ar, eventType, returnType = "self") {
-  const url = new URL(this.value, location);
-  if (ar instanceof Event)
-    ar = ar.detail;
-  if (ar instanceof Array)
-    for (let [k, v] of ar)
-      url.searchParams.set(k, v);
+  const url = encodeUriFromJson.call(this, ar);
   return reactToUrl.call(this, url, eventType, returnType);
 }

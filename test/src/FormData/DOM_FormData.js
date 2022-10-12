@@ -44,7 +44,7 @@ export function DOM_FormData_Lazy() {
 }
 
 export function DOM_FormData() {
-  if(this.ownerElement.tagName === "FORM")
+  if(this.ownerElement instanceof HTMLFormElement)
     return new FormData(this.ownerElement);
   const namedDesc = getNames(this.ownerElement);
   if (!namedDesc.length)
