@@ -1,12 +1,11 @@
 export function encodeUri(formData) {
-  const href = this.value || location.href;
-  const url = new URL(href, location);
-  if (!(formData instanceof FormData))
-    return url;
-  for (let [k, v] of formData.entries()) {
-    if (!(v instanceof String) && typeof v !== "string")
-      throw TypeError("FormData with File/Blob entities cannot be encoded to uriComponent.");
-    url.searchParams.set(k, v);
+  const url = new URL(this.value, location);
+  if (formData instanceof FormData) {
+    for (let [k, v] of formData.entries()) {
+      if (!(v instanceof String) && typeof v !== "string")
+        throw TypeError("FormData with File/Blob entities cannot be encoded to uriComponent.");
+      url.searchParams.set(k, v);
+    }
   }
   return url;
 }
@@ -62,6 +61,5 @@ export function JSON_GET(ar, eventType, returnType = "self") {
   if (ar instanceof Array)
     for (let [k, v] of ar)
       url.searchParams.set(k, v);
-  //3. react to the FormData url
   return reactToUrl.call(this, url, eventType, returnType);
 }
