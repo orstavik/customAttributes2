@@ -1,8 +1,9 @@
 <script src="https://cdn.jsdelivr.net/gh/orstavik/parse@v1.0.2/parse.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
 <script src="../../src/customAttributes.js"></script>
+<script src="../../src/lib.js"></script>
 
-<div click:formdata:dispatch_submit submit:log>
+<div click:formdata:submit:dispatch submit:log auxclick:formdata:clone_submit>
   <div name="one" value="hello sunshine"></div>
   <div name="two">2</div>
   <ul name="three">
@@ -15,15 +16,13 @@
 <script type="module">
   import {DOM_FormData_Lazy} from "../src/FormData/DOM_FormData.js";
 
+  customReactions.define("submit", lib.customEvent);
+  customReactions.define("dispatch", lib.dispatch);
+  customReactions.define("clone", lib.dispatchCustom);
   customReactions.define("formdata", DOM_FormData_Lazy);
-  customReactions.define("dispatch", function (data, _, eventName) {
-    const event = new CustomEvent(eventName, data);
-    this.ownerElement.dispatchEvent(event);
-    return event;
-  });
-  customReactions.define("log", function (e) {
-    return console.log(...e.detail), e;
-  });
+  //todo the formData should be appended as .detail on the incoming object.
+  customReactions.define("log", e => (console.log(...e.detail), e));
 
   document.querySelector("div").click();
+  document.querySelector("div").dispatchEvent(new MouseEvent("auxclick"));
 </script>

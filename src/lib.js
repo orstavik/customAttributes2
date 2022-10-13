@@ -25,8 +25,18 @@
     return new e.constructor(prefix, e);
   }
 
-  function dispatch(e, _, querySelector){
-    return eventLoop.dispatch(e, document.querySelector(querySelector)), e;
+  function customEvent(data, prefix) {
+    return new CustomEvent(prefix, data);
+  }
+
+  function dispatch(e, _, querySelector) {
+    const target = querySelector ? document.querySelector(querySelector) : this.ownerElement;
+    eventLoop.dispatch(e, target);
+    return e;
+  }
+
+  function dispatchCustom(e, _, name){
+    return dispatch.call(this, customEvent.call(this, e, name));
   }
 
   function hasKey(e, prefix) {
@@ -71,7 +81,9 @@
     parentToggleAttr,
     newEvent,
     cloneEvent,
+    customEvent,
     dispatch,
+    dispatchCustom,
     hasKey,
     once,
     ownerCallback,

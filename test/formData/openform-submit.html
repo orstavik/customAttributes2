@@ -5,9 +5,9 @@
 <h1 submit:open_self="https://example.com/bob/sideisy/bob" _unload:log>hello sunshine</h1>
 
 <script type="module">
-  import {FormData_GET} from "../src/FormData/FormData_GET.js";
+  import {open} from "../src/FormData/FormData_GET.js";
 
-  customReactions.define("open", FormData_GET);
+  customReactions.define("open", open);
   customReactions.define("log", function (e) {
     return console.log("triggered navigation"), e;
   });
