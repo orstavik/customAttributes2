@@ -8,9 +8,7 @@
   import {open} from "../src/FormData/FormData_GET.js";
 
   customReactions.define("open", open);
-  customReactions.define("log", function (e) {
-    return console.log("triggered navigation"), e;
-  });
+  customReactions.define("log", e => (console.log("triggered navigation"), e));
 
   const formData = new FormData();
   formData.append("a", "A");

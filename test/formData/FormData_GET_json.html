@@ -2,19 +2,29 @@
 <script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
 <script src="../../src/customAttributes.js"></script>
 
-<form click:formdata::get="https://jsonplaceholder.typicode.com/todos/1" get:log action="http://foo.com" method="post">
+<form
+    action="http://foo.com" method="post"
+    click:formdata::get="https://jsonplaceholder.typicode.com/todos/1"
+    auxclick:formdata::encodeuri:json_load="https://jsonplaceholder.typicode.com/todos/1"
+    get:log
+    load:log>
   <div><input name="hello" type="text" value="asds"></div>
   <input name="sunshine" type="text" value="312312">
   <input type="submit">
 </form>
 
 <script type="module">
-  import {FormData_GET} from "../src/FormData/FormData_GET.js";
+  import {FormData_GET, formDataToUri, fetchAndEvent} from "../src/FormData/FormData_GET.js";
   import {DOM_FormData} from "../src/FormData/DOM_FormData.js";
 
-  customReactions.define("formdata", DOM_FormData);
-  customReactions.define("get", FormData_GET);
-  customReactions.define("log", e => console.log(e.detail));
+  customReactions.defineAll({
+    "formdata": DOM_FormData,
+    "get": FormData_GET,
+    "encodeuri": formDataToUri,
+    "json": fetchAndEvent,
+    "log": e => (console.log(e.detail), e)
+  });
 
   document.querySelector("form").click();
+  document.querySelector("form").dispatchEvent(new MouseEvent("auxclick"));
 </script>

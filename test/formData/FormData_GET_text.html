@@ -2,7 +2,12 @@
 <script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
 <script src="../../src/customAttributes.js"></script>
 
-<form click:get_text="https://httpbin.org/anything?hello=sunshine" get:log action="http://foo.com" method="post">
+<form
+    action="http://foo.com" method="post"
+    click:get_text="https://httpbin.org/anything?hello=sunshine"
+    click:formdata:encodeuri:text_load="https://httpbin.org/anything?hello=sunshine"
+    get:log
+    load:log>
   <div><input name="hello" type="text" value="asds"></div>
   <input name="sunshine" type="text" value="312312">
   <input type="submit">
@@ -10,11 +15,14 @@
 
 <script type="module">
 
-  import {FormData_GET} from "../src/FormData/FormData_GET.js";
+  import {FormData_GET, extractFormData, formDataToUri, fetchAndEvent} from "../src/FormData/FormData_GET.js";
 
-  customReactions.define("get", FormData_GET);
-  customReactions.define("log", function (e) {
-    console.log(e.detail.substring(0,100));
+  customReactions.defineAll({
+    "get": FormData_GET,
+    "log": e => (console.log(e.detail.substring(0, 100)), e),
+    "formdata": extractFormData,
+    "encodeuri": formDataToUri,
+    "text": fetchAndEvent
   });
 
   document.querySelector("form").click();
