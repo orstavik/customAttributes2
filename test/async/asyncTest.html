@@ -1,0 +1,23 @@
+<script src="https://cdn.jsdelivr.net/gh/orstavik/parse@v1.0.2/parse.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
+<script src="../../src/customAttributes.js"></script>
+
+<h1 click:hello:sunshine>hello sunshine</h1>
+<script>
+  (async function () {
+
+    let last = performance.now();
+
+    async function reaction(e, prefix) {
+      await new Promise(r => setTimeout(r, 100));
+      console.log(prefix ,performance.now() - last > 100);
+      last = performance.now();
+      return e;
+    }
+
+    customReactions.define("hello", reaction);
+    customReactions.define("sunshine", reaction);
+    const h1 = document.querySelector("h1");
+    h1.click();
+  })();
+</script>
