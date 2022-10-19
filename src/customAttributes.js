@@ -5,7 +5,7 @@ class ReactionRegistry {
     this[type] = Function;
   }
 
-  defineAll(defs){
+  defineAll(defs) {
     for (let [type, Function] of Object.entries(defs))
       this.define(type, Function);
   }
@@ -165,7 +165,7 @@ class EventLoop {
         if (attr.type === event.type && attr.name[0] !== "_") {
           if (attr.defaultAction && (event.defaultAction || event.defaultPrevented))
             continue;
-          const res = EventLoop.#callReactions(attr.reaction, attr, event);
+          const res = EventLoop.#callReactions(attr.reaction, attr, event, !!attr.defaultAction);
           if (res !== undefined && attr.defaultAction)
             event.defaultAction = {attr, res};
         }
@@ -180,15 +180,28 @@ class EventLoop {
     }
   }
 
-  static #callReactions(reactions, at, event) {
-    for (let {Function, prefix, suffix} of customReactions.getReactions(reactions)) {
+  static #callReactions(reactions, at, event, syncOnly = false) {
+    return this.#runReactions(customReactions.getReactions(reactions), event, at, syncOnly, 0);
+  }
+
+  static #runReactions(reactions, event, at, syncOnly, i) {
+    for (; i < reactions.length; i++) {
+      let {Function, prefix, suffix} = reactions[i];
       try {
         event = Function.call(at, event, prefix, ...suffix);
+        if (event === undefined)
+          return;
+        if (event instanceof Promise) {
+          if (syncOnly)
+            throw new SyntaxError("You cannot use reactions that return Promises before default actions.");
+          event
+            .then(event => this.#runReactions(reactions, event, at, syncOnly, i+1))
+            .catch(error => eventLoop.dispatch(new ErrorEvent("AsyncReactionError", {error}), at.ownerElement));
+          return;
+        }
       } catch (error) {
         return eventLoop.dispatch(new ErrorEvent("ReactionError", {error}), at.ownerElement);
       }
-      if (event === undefined)
-        return;
     }
     return event;
   }
