@@ -128,17 +128,41 @@ class AttributeRegistry {
       at.upgrade?.();
     } catch (error) {
       Object.setPrototypeOf(at, CustomAttr.prototype);
-      eventLoop.dispatch(new ErrorEvent("AttributeError", {error}), at.ownerElement);
+      //todo fix the error type here.
+      eventLoop.dispatch(new ErrorEvent("error", {error}), at.ownerElement);
     }
     try {
       at.changeCallback?.();
     } catch (error) {
-      eventLoop.dispatch(new ErrorEvent("AttributeError", {error}), at.ownerElement);
+      //todo fix the error type here.
+      eventLoop.dispatch(new ErrorEvent("error", {error}), at.ownerElement);
     }
   }
 }
 
 window.customAttributes = new AttributeRegistry();
+
+class ReactionErrorEvent extends ErrorEvent {
+  #reactions;
+  #i;
+  #at;
+
+  constructor(error, at, reactions, i, async) {
+    super("error", {error});
+    this.#reactions = reactions;
+    this.#i = i;
+    this.#at = at;
+    this.async = async;
+  }
+
+  get attribute(){
+    return this.#at;
+  }
+
+  get reaction(){
+    return this.#reactions[this.#i].prefix + this.#reactions[this.#i].suffix.map(s => "_" + s);
+  }
+}
 
 class EventLoop {
   #eventLoop = [];
@@ -153,6 +177,7 @@ class EventLoop {
       const {target, event} = this.#eventLoop[0];
       if (!target || target instanceof Element)   //a bug in the ElementObserver.js causes "instanceof HTMLElement" to fail.
         EventLoop.bubble(target, event);
+      //todo if (target?.isConnected === false) then bubble without default action?? I think that we need the global listeners to run for disconnected targets, as this will make them able to trigger _error for example. I also think that attributes on disconnected ownerElements should still catch the _global events. Don't see why not.
       else if (target instanceof Attr)
         EventLoop.#callReactions(target.allFunctions, target, event);
       this.#eventLoop.shift();
@@ -184,8 +209,8 @@ class EventLoop {
     return this.#runReactions(customReactions.getReactions(reactions), event, at, syncOnly, 0);
   }
 
-  static #runReactions(reactions, event, at, syncOnly, i) {
-    for (; i < reactions.length; i++) {
+  static #runReactions(reactions, event, at, syncOnly, start) {
+    for (let i = start; i < reactions.length; i++) {
       let {Function, prefix, suffix} = reactions[i];
       try {
         event = Function.call(at, event, prefix, ...suffix);
@@ -195,12 +220,12 @@ class EventLoop {
           if (syncOnly)
             throw new SyntaxError("You cannot use reactions that return Promises before default actions.");
           event
-            .then(event => this.#runReactions(reactions, event, at, syncOnly, i+1))
-            .catch(error => eventLoop.dispatch(new ErrorEvent("AsyncReactionError", {error}), at.ownerElement));
+            .then(event => this.#runReactions(reactions, event, at, syncOnly, i + 1))
+            .catch(error => eventLoop.dispatch(new ReactionErrorEvent(error, at, reactions, i, true), at.ownerElement));
           return;
         }
       } catch (error) {
-        return eventLoop.dispatch(new ErrorEvent("ReactionError", {error}), at.ownerElement);
+        return eventLoop.dispatch(new ReactionErrorEvent(error, at, reactions, i, start === 0), at.ownerElement);
       }
     }
     return event;

@@ -10,14 +10,15 @@
 
     async function reaction(e, prefix) {
       await new Promise(r => setTimeout(r, 100));
-      console.log(prefix ,performance.now() - last > 100);
+      console.log(prefix, performance.now() - last > 100);
       last = performance.now();
       return e;
     }
 
-    customReactions.define("hello", reaction);
-    customReactions.define("sunshine", reaction);
-    const h1 = document.querySelector("h1");
-    h1.click();
+    customReactions.defineAll({
+      "hello": reaction,
+      "sunshine": reaction
+    });
+    document.querySelector("h1").click();
   })();
 </script>

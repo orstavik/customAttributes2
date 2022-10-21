@@ -17,14 +17,15 @@
       throw "some async error";
     }
 
-    function log(e){
+    function log(e) {
       console.log(e.reaction, e.async, e.error);
     }
 
-    customReactions.define("hello", error);
-    customReactions.define("sunshine", reaction);
-    customReactions.define("log", log);
-    const h1 = document.querySelector("h1");
-    h1.click();
+    customReactions.defineAll({
+      "hello": error,
+      "sunshine": reaction,
+      "log": log
+    });
+    document.querySelector("h1").click();
   })();
 </script>
