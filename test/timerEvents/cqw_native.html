@@ -3,11 +3,13 @@
     width: 600px;
     container-type: inline-size;
     border: 2px solid blue;
+    --color: blue;
   }
   h4 {
     width: 50cqw;
     /*is the width of h4 200px or 100px?*/
     border: 2px solid lightblue;
+    color: var(--color);
   }
 </style>
 <div>
@@ -31,11 +33,13 @@
     width: 50cqw;
     /*this should be 200px wide*/
     border: 2px solid red;
+    --color: red;
   }
   h4{
     width: 50cqw;
     /*this should be 100px wide*/
     border: 2px solid orange;
+    color: var(--color);
   }
 </style>
 <div>
