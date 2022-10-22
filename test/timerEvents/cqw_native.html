@@ -1,0 +1,49 @@
+<style>
+  div {
+    width: 600px;
+    container-type: inline-size;
+    border: 2px solid blue;
+  }
+  h4 {
+    width: 50cqw;
+    /*is the width of h4 200px or 100px?*/
+    border: 2px solid lightblue;
+  }
+</style>
+<div>
+  <web-comp>
+    <h4>hello 50cqw light</h4>
+  </web-comp>
+</div>
+
+<script>
+  class WebComp extends HTMLElement {
+    constructor() {
+      super();
+      this.attachShadow({mode: "open"});
+      this.shadowRoot.innerHTML = `
+<style>
+  :host{
+    display: block;
+  }
+  div{
+    container-type: inline-size;
+    width: 50cqw;
+    /*this should be 200px wide*/
+    border: 2px solid red;
+  }
+  h4{
+    width: 50cqw;
+    /*this should be 100px wide*/
+    border: 2px solid orange;
+  }
+</style>
+<div>
+<slot></slot>
+<h4>hello 50cqw shadow</h4>
+</div>`;
+    }
+  }
+
+  customElements.define("web-comp", WebComp);
+</script>
