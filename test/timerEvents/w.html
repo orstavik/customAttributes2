@@ -14,8 +14,8 @@
   }
 </style>
 <web-comp timeout_100:width_500px>
-  <div slot="one" timeout_50:log timeout_200:log>hello</div>
-  <div slot="two" timeout_50:log timeout_200:log>sunshine</div>
+  <div slot="one" size:log size:log>hello</div>
+  <div slot="two" size:log size:log>sunshine</div>
 </web-comp>
 
 <template id="webcomp">
@@ -32,13 +32,24 @@
     }
   });
 
-  customAttributes.define("w", class ResizeAttr extends CustomAttr {
+  customAttributes.define("w", class WAttr extends CustomAttr {
     upgrade() {
       let _width, type = this.type;
       this._obs = new ResizeObserver(([{target, contentBoxSize: [{inlineSize}]}]) =>
         _width !== inlineSize && target.style.setProperty("--" + type, (_width = inlineSize) + "px")
       );
       this._obs.observe(this.ownerElement, {box: "content-box"});
+    }
+
+    destructor() {
+      this._obs.disconnect();
+    }
+  });
+
+  customAttributes.define("size", class ResizeAttr extends CustomAttr {
+    upgrade() {
+      this._obs = new ResizeObserver(_ => eventLoop.dispatch(new Event(this.type), this));
+      this._obs.observe(this.ownerElement, {box: "border-box"});
     }
 
     destructor() {
