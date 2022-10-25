@@ -1,0 +1,65 @@
+<script src="https://cdn.jsdelivr.net/gh/orstavik/parse@v1.0.2/parse.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver@v.1.0.3/constructionFrame.js"></script>
+<script src="../../src/customAttributes.js"></script>
+
+<style>
+  div {
+    width: calc(0.5 * var(--w));
+    border: calc(0.02 * var(--w)) solid orange;
+    font-size: calc(0.12 * var(--w));
+  }
+  web-comp {
+    display: block;
+    width: 200px;
+  }
+</style>
+<web-comp timeout_100:width_500px>
+  <div slot="one" timeout_50:log timeout_200:log>hello</div>
+  <div slot="two" timeout_50:log timeout_200:log>sunshine</div>
+</web-comp>
+
+<template id="webcomp">
+  <style>slot { width: 50%; border: 2px solid grey;display: inline-block;}</style>
+  <slot w name=one style="width: 25%;"></slot>
+  <slot w name=two></slot>
+</template>
+
+<script>
+  customAttributes.define("timeout", class TimeoutAttr extends CustomAttr {
+    upgrade() {
+      //todo add destructor(){clearTimeout(this._timer)}?? yes
+      setTimeout(_ => eventLoop.dispatch(new Event(this.type), this), this.suffix[0]);
+    }
+  });
+
+  customAttributes.define("w", class ResizeAttr extends CustomAttr {
+    upgrade() {
+      let _width, type = this.type;
+      this._obs = new ResizeObserver(([{target, contentBoxSize: [{inlineSize}]}]) =>
+        _width !== inlineSize && target.style.setProperty("--" + type, (_width = inlineSize) + "px")
+      );
+      this._obs.observe(this.ownerElement, {box: "content-box"});
+    }
+
+    destructor() {
+      this._obs.disconnect();
+    }
+  });
+
+  customElements.define("web-comp", class WebComp extends HTMLElement {
+    constructor() {
+      super();
+      this.attachShadow({mode: "open"});
+      this.shadowRoot.append(document.getElementById("webcomp").content.cloneNode(true));
+    }
+  });
+
+  customReactions.defineAll({
+    "width": function styler(e, prop, value) {
+      return this.ownerElement.style[prop] = value, e;
+    },
+    "log": function (e) {
+      return console.log(getComputedStyle(this.ownerElement).width), e;
+    }
+  });
+</script>

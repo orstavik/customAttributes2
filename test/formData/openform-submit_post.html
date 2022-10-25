@@ -2,15 +2,18 @@
 <script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
 <script src="../../src/customAttributes.js"></script>
 
-<h1 submit:value:open_self="https://httpbin.org/anything?hello=sunshine" _unload:log>hello sunshine</h1>
+<h1 submit:href:open_self="https://httpbin.org/anything?hello=sunshine" _unload:log>hello sunshine</h1>
 
 <script type="module">
-  import {open} from "../src/FormData/FormData_GET.js";
+  import {openPost} from "../src/FormData/FormData_GET.js";
 
-  customReactions.define("value", function () {
-    return this.value;
+  customReactions.define("open", openPost);
+  customReactions.define("href", function (e, prefix) {
+    return {
+      [prefix]: this.value,
+      withEntries: e.detail
+    };
   });
-  customReactions.define("open", open);
   customReactions.define("log", e => (console.log("triggered navigation"), e));
 
   const formData = new FormData();
