@@ -272,7 +272,7 @@ function deprecated() {
   };
 
   Element_proto.removeAttribute = function (name) {
-    getAttrNodeOG.call(this, name).destructor?.();
+    getAttrNodeOG.call(this, name)?.destructor?.();
     removeAttrOG.call(this, name);
   };
 })(Element.prototype, document.createAttribute);
