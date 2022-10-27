@@ -35,8 +35,12 @@
     return e;
   }
 
-  function dispatchCustom(e, _, name){
+  function dispatchCustom(e, _, name) {
     return dispatch.call(this, customEvent.call(this, e, name));
+  }
+
+  function dispatchClone(e, _, name) {
+    return dispatch.call(this, cloneEvent.call(this, e, name));
   }
 
   function hasKey(e, prefix) {
@@ -76,6 +80,10 @@
     return e;
   }
 
+  async function fetch(e, _, type) {       //fetch_json and fetch_text
+    return await (await fetch(this.value))[type]();
+  }
+
   window.lib = {
     toggleAttr,
     parentToggleAttr,
@@ -84,10 +92,12 @@
     customEvent,
     dispatch,
     dispatchCustom,
+    dispatchClone, //todo untested
     hasKey,
     once,
     ownerCallback,
     cssClass,
-    toCamelCase
+    toCamelCase,
+    fetch  //todo untested
   };
 })();
