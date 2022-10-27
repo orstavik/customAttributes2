@@ -80,8 +80,8 @@
     return e;
   }
 
-  async function fetch(e, _, type) {       //fetch_json and fetch_text
-    return await (await fetch(this.value))[type]();
+  async function _fetch(body, _, type = "text", method = "GET") { //fetch_json and fetch_text_POST
+    return await (await fetch(this.value, method === "POST" ? {method, body} : undefined))[type]();
   }
 
   window.lib = {
@@ -98,6 +98,6 @@
     ownerCallback,
     cssClass,
     toCamelCase,
-    fetch  //todo untested
+    fetch: _fetch  //todo untested
   };
 })();
