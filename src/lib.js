@@ -39,8 +39,9 @@
     return dispatch.call(this, customEvent.call(this, e, name));
   }
 
-  function dispatchClone(e, _, name) {
-    return dispatch.call(this, cloneEvent.call(this, e, name));
+  function dispatchClone(e, prefix) {
+    const c = new e.constructor(prefix, e);
+    return eventLoop.dispatch(c, this.ownerElement), c;
   }
 
   function hasKey(e, prefix) {
@@ -84,6 +85,14 @@
     return await (await fetch(this.value, method === "POST" ? {method, body} : undefined))[type]();
   }
 
+  function elementProp(_, prop) {
+    return this.ownerElement[prop];
+  }
+
+  function eventProp(e, prop) {
+    return e[prop];
+  }
+
   window.lib = {
     toggleAttr,
     parentToggleAttr,
@@ -98,6 +107,8 @@
     ownerCallback,
     cssClass,
     toCamelCase,
-    fetch: _fetch  //todo untested
+    fetch: _fetch,  //todo untested
+    elementProp,    //todo untested
+    eventProp       //todo untested
   };
 })();
