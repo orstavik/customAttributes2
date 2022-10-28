@@ -55,6 +55,19 @@
     ["wheel", "two"]
   ]</script>
 </test-html>
+<test-html test="target.html">
+  <script expected>[
+    ["SPAN", "#document", "SPAN"],
+    ["H1", "#document", "SPAN"],
+    ["SLOT", "#document-fragment", "SLOT"],
+    ["DIV", "#document-fragment", "SLOT"],
+    ["WEB-COMP", "#document", "WEB-COMP"],
+    ["BODY", "#document", "WEB-COMP"],
+    ["DIV", "#document-fragment", "WEB-COMP"],
+    ["SPAN", "#document", "WEB-COMP"],
+    ["SPAN", "#document", "SPAN"]
+  ]</script>
+</test-html>
 
 
 <!-- Note!! You must load the test-html component at the end -->

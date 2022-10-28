@@ -166,6 +166,26 @@ class ReactionErrorEvent extends ErrorEvent {
 
 (function () {
 
+//Event.uid
+  let eventUid = 1;
+  const eventToUid = new WeakMap();
+  Object.defineProperty(Event.prototype, "uid", {
+    get: function () {
+      let uid = eventToUid.get(this);
+      uid === undefined && eventToUid.set(this, eventUid++);
+      return eventUid;
+    }
+  });
+
+  const eventToTarget = new WeakMap();
+  Object.defineProperty(Event.prototype, "target", {
+    get: function () {
+      return eventToTarget.get(this);
+    }
+  });
+
+  //todo path is not supported
+
   class EventLoop {
     #eventLoop = [];
 
@@ -186,23 +206,26 @@ class ReactionErrorEvent extends ErrorEvent {
       }
     }
 
-    static bubble(target, event) {
-      for (let t = target; t; t = t.assignedSlot || t.parentElement || t.parentNode?.host) {
+    static bubble(rootTarget, event, target = rootTarget) {
+      for (let prev, t = rootTarget; t; prev = t, t = t.assignedSlot || t.parentElement || t.parentNode?.host) {
+        t !== prev?.parentElement && eventToTarget.set(event, target = t);
         for (let attr of t.attributes) {
           if (attr.type === event.type && attr.name[0] !== "_") {
             if (attr.defaultAction && (event.defaultAction || event.defaultPrevented))
               continue;
             const res = EventLoop.#callReactions(attr.reaction, attr, event, !!attr.defaultAction);
             if (res !== undefined && attr.defaultAction)
-              event.defaultAction = {attr, res};
+              event.defaultAction = {attr, res, target};
           }
         }
       }
-      const prevented = event.defaultPrevented;  //global listeners can't call .preventDefault()
+      const prevented = event.defaultPrevented;     //global listeners can't call .preventDefault()
+      //eventToTarget.set(event, theTopMostTarget); //not necessary, bubble already set it
       for (let attr of customAttributes.globalListeners(event.type))
         EventLoop.#callReactions(attr.allFunctions, attr, event);
       if (event.defaultAction && !prevented) {
-        const {attr, res} = event.defaultAction;
+        const {attr, res, target} = event.defaultAction;
+        eventToTarget.set(event, target);
         EventLoop.#callReactions(attr.defaultAction, attr, res);
       }
     }
@@ -279,19 +302,6 @@ function deprecated() {
     removeAttrOG.call(this, name);
   };
 })(Element.prototype, document.createAttribute);
-
-//Event.uid
-(function () {
-  let eventUid = 1;
-  const eventToUid = new WeakMap();
-  Object.defineProperty(Event.prototype, "uid", {
-    get: function () {
-      let uid = eventToUid.get(this);
-      uid === undefined && eventToUid.set(this, eventUid++);
-      return eventUid;
-    }
-  });
-})();
 
 ElementObserver.end(el => customAttributes.upgrade(...el.attributes));
 

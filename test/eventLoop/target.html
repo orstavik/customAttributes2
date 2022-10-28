@@ -1,0 +1,34 @@
+<script src="https://cdn.jsdelivr.net/gh/orstavik/parse@v1.0.2/parse.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
+<script src="../../src/customAttributes.js"></script>
+<script>
+  customElements.define("web-comp", class WebComp extends HTMLElement {
+    constructor() {
+      super();
+      this.attachShadow({mode: "open"});
+      this.shadowRoot.innerHTML = `
+<div click:log _click:log>
+  <slot click:log></slot>
+</div>
+    `;
+    }
+  })
+</script>
+
+<body click:log>
+<web-comp click:log>
+  <h1 click:log>
+    <span click:log click::log _click:log>hello sunshine</span>
+  </h1>
+</web-comp>
+
+<script type="module">
+//todo must be module so that the tag on <body> has been read.
+//todo ElementObserver.end(...) should be replaced with ElementObserver.attributesRead(...)
+//todo This is what we need here.
+  customReactions.define("log", function (e) {
+    console.log(this.ownerElement.nodeName, this.ownerElement.getRootNode().nodeName, e.target.nodeName);
+  });
+  document.querySelector("span").click();
+</script>
+</body>
