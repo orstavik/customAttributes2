@@ -155,84 +155,87 @@ class ReactionErrorEvent extends ErrorEvent {
     this.async = async;
   }
 
-  get attribute(){
+  get attribute() {
     return this.#at;
   }
 
-  get reaction(){
+  get reaction() {
     return this.#reactions[this.#i].prefix + this.#reactions[this.#i].suffix.map(s => "_" + s);
   }
 }
 
-class EventLoop {
-  #eventLoop = [];
+(function () {
 
-  dispatch(event, target) {
-    if (event.type[0] === "_")
-      throw new Error(`eventLoop.dispatch(..) doesn't accept events beginning with "_": ${event.type}.`);
-    this.#eventLoop.push({target, event});
-    if (this.#eventLoop.length > 1)
-      return;
-    while (this.#eventLoop.length) {
-      const {target, event} = this.#eventLoop[0];
-      if (!target || target instanceof Element)   //a bug in the ElementObserver.js causes "instanceof HTMLElement" to fail.
-        EventLoop.bubble(target, event);
-      //todo if (target?.isConnected === false) then bubble without default action?? I think that we need the global listeners to run for disconnected targets, as this will make them able to trigger _error for example. I also think that attributes on disconnected ownerElements should still catch the _global events. Don't see why not.
-      else if (target instanceof Attr)
-        EventLoop.#callReactions(target.allFunctions, target, event);
-      this.#eventLoop.shift();
-    }
-  }
+  class EventLoop {
+    #eventLoop = [];
 
-  static bubble(target, event) {
-    for (let t = target; t; t = t.assignedSlot || t.parentElement || t.parentNode?.host) {
-      for (let attr of t.attributes) {
-        if (attr.type === event.type && attr.name[0] !== "_") {
-          if (attr.defaultAction && (event.defaultAction || event.defaultPrevented))
-            continue;
-          const res = EventLoop.#callReactions(attr.reaction, attr, event, !!attr.defaultAction);
-          if (res !== undefined && attr.defaultAction)
-            event.defaultAction = {attr, res};
-        }
+    dispatch(event, target) {
+      if (event.type[0] === "_")
+        throw new Error(`eventLoop.dispatch(..) doesn't accept events beginning with "_": ${event.type}.`);
+      this.#eventLoop.push({target, event});
+      if (this.#eventLoop.length > 1)
+        return;
+      while (this.#eventLoop.length) {
+        const {target, event} = this.#eventLoop[0];
+        if (!target || target instanceof Element)   //a bug in the ElementObserver.js causes "instanceof HTMLElement" to fail.
+          EventLoop.bubble(target, event);
+        //todo if (target?.isConnected === false) then bubble without default action?? I think that we need the global listeners to run for disconnected targets, as this will make them able to trigger _error for example. I also think that attributes on disconnected ownerElements should still catch the _global events. Don't see why not.
+        else if (target instanceof Attr)
+          EventLoop.#callReactions(target.allFunctions, target, event);
+        this.#eventLoop.shift();
       }
     }
-    const prevented = event.defaultPrevented;  //global listeners can't call .preventDefault()
-    for (let attr of customAttributes.globalListeners(event.type))
-      EventLoop.#callReactions(attr.allFunctions, attr, event);
-    if (event.defaultAction && !prevented) {
-      const {attr, res} = event.defaultAction;
-      EventLoop.#callReactions(attr.defaultAction, attr, res);
-    }
-  }
 
-  static #callReactions(reactions, at, event, syncOnly = false) {
-    return this.#runReactions(customReactions.getReactions(reactions), event, at, syncOnly, 0);
-  }
-
-  static #runReactions(reactions, event, at, syncOnly, start) {
-    for (let i = start; i < reactions.length; i++) {
-      let {Function, prefix, suffix} = reactions[i];
-      try {
-        event = Function.call(at, event, prefix, ...suffix);
-        if (event === undefined)
-          return;
-        if (event instanceof Promise) {
-          if (syncOnly)
-            throw new SyntaxError("You cannot use reactions that return Promises before default actions.");
-          event
-            .then(event => this.#runReactions(reactions, event, at, syncOnly, i + 1))
-            .catch(error => eventLoop.dispatch(new ReactionErrorEvent(error, at, reactions, i, true), at.ownerElement));
-          return;
+    static bubble(target, event) {
+      for (let t = target; t; t = t.assignedSlot || t.parentElement || t.parentNode?.host) {
+        for (let attr of t.attributes) {
+          if (attr.type === event.type && attr.name[0] !== "_") {
+            if (attr.defaultAction && (event.defaultAction || event.defaultPrevented))
+              continue;
+            const res = EventLoop.#callReactions(attr.reaction, attr, event, !!attr.defaultAction);
+            if (res !== undefined && attr.defaultAction)
+              event.defaultAction = {attr, res};
+          }
         }
-      } catch (error) {
-        return eventLoop.dispatch(new ReactionErrorEvent(error, at, reactions, i, start === 0), at.ownerElement);
+      }
+      const prevented = event.defaultPrevented;  //global listeners can't call .preventDefault()
+      for (let attr of customAttributes.globalListeners(event.type))
+        EventLoop.#callReactions(attr.allFunctions, attr, event);
+      if (event.defaultAction && !prevented) {
+        const {attr, res} = event.defaultAction;
+        EventLoop.#callReactions(attr.defaultAction, attr, res);
       }
     }
-    return event;
-  }
-}
 
-window.eventLoop = new EventLoop();
+    static #callReactions(reactions, at, event, syncOnly = false) {
+      return this.#runReactions(customReactions.getReactions(reactions), event, at, syncOnly, 0);
+    }
+
+    static #runReactions(reactions, event, at, syncOnly, start) {
+      for (let i = start; i < reactions.length; i++) {
+        let {Function, prefix, suffix} = reactions[i];
+        try {
+          event = Function.call(at, event, prefix, ...suffix);
+          if (event === undefined)
+            return;
+          if (event instanceof Promise) {
+            if (syncOnly)
+              throw new SyntaxError("You cannot use reactions that return Promises before default actions.");
+            event
+              .then(event => this.#runReactions(reactions, event, at, syncOnly, i + 1))
+              .catch(error => eventLoop.dispatch(new ReactionErrorEvent(error, at, reactions, i, true), at.ownerElement));
+            return;
+          }
+        } catch (error) {
+          return eventLoop.dispatch(new ReactionErrorEvent(error, at, reactions, i, start === 0), at.ownerElement);
+        }
+      }
+      return event;
+    }
+  }
+
+  window.eventLoop = new EventLoop();
+})();
 
 function deprecated() {
   throw `${this}() is deprecated`;
