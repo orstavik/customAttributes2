@@ -183,6 +183,18 @@ class ReactionErrorEvent extends ErrorEvent {
       return eventToTarget.get(this);
     }
   });
+  const _event_to_Document_to_Target = new WeakMap();
+
+  function getTargetForEvent(event, target, root = target.getRootNode()) {
+    const map = _event_to_Document_to_Target.get(event);
+    if (!map) {
+      _event_to_Document_to_Target.set(event, new Map([[root, target]]));
+      return target;
+    }
+    let prevTarget = map.get(root);
+    !prevTarget && map.set(root, prevTarget = target);
+    return prevTarget;
+  }
 
   //todo path is not supported
 
@@ -208,7 +220,7 @@ class ReactionErrorEvent extends ErrorEvent {
 
     static bubble(rootTarget, event, target = rootTarget) {
       for (let prev, t = rootTarget; t; prev = t, t = t.assignedSlot || t.parentElement || t.parentNode?.host) {
-        t !== prev?.parentElement && eventToTarget.set(event, target = t);
+        t !== prev?.parentElement && eventToTarget.set(event, target = getTargetForEvent(event, t));
         for (let attr of t.attributes) {
           if (attr.type === event.type && attr.name[0] !== "_") {
             if (attr.defaultAction && (event.defaultAction || event.defaultPrevented))
