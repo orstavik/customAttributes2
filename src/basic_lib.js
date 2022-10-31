@@ -22,11 +22,9 @@
     return module;
   }
 
-//todo move to lib
-
   class Import extends CustomAttr {
     async upgrade() {
-      const detail = await import(this.value);
+      const detail = await import(new URL(this.value, location.href).href);
       !this._stopped && eventLoop.dispatch(new CustomEvent(this.type, {detail}), this);
     }
 
