@@ -299,13 +299,13 @@ function deprecated() {
       if (oldValue === value)
         return;
       at.value = value;
-      at.changeCallback?.(oldValue);      //todo try catch and tests for try catch
+      at.changeCallback?.(oldValue);      //todo try catch and tests for try catch, see the upgrade process above
     } else {
       const at = documentCreateAttributeOG.call(document, name);
       if (value !== undefined)
         at.value = value;
       setAttributeNodeOG.call(this, at);
-      customAttributes.upgrade(at);       //todo try catch and tests for try catch
+      customAttributes.upgrade(at);       //todo try catch and tests for try catch, see the upgrade process above
     }
   };
 
