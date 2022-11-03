@@ -1,0 +1,17 @@
+<script src="../../src/customAttributes.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver@1.1.0/startObserver.js"></script>
+<script src="../../src/core.js"></script>
+
+<body test:stopwatch:math_min_25:console_log>
+
+<script>
+  const stopWatches = new WeakMap();
+  customReactions.define("stopwatch", function stopwatch({timeStamp}) {
+    const lastTime = stopWatches.get(this) || timeStamp;
+    stopWatches.set(this, timeStamp);
+    return timeStamp - lastTime;
+  });
+</script>
+
+<h1 ready:dispatch_test timeout_50:dispatch_test timeout_100:dispatch_test>hello sunshine</h1>
+</body>
