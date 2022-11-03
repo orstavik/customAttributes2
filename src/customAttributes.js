@@ -315,7 +315,8 @@ function deprecated() {
   };
 })(Element.prototype, document.createAttribute);
 
-ElementObserver.end(el => customAttributes.upgrade(...el.attributes));
+document.addEventListener("element-created", ({detail:els})=> els.forEach(el => customAttributes.upgrade(...el.attributes)));
+// ElementObserver.end(el => customAttributes.upgrade(...el.attributes));
 
 //** CustomAttribute registry with builtin support for the native HTML events.
 class NativeBubblingEvent extends CustomAttr {

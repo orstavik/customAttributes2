@@ -1,40 +1,20 @@
-<script src="https://cdn.jsdelivr.net/gh/orstavik/parse@v1.0.2/parse.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
 <script src="../../src/customAttributes.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver@1.1.0/startObserver.js"></script>
+<script src="../../src/core.js"></script>
 
+<body test:sincelast:math_min_25:console_log>
 
-<h1 timeout_50:log:bob:once>hello :timeout50:log:bob</h1>
 <script>
-  customReactions.define("log", function (e) {
-    console.log(e.type);
-    return e;
-  });
-  customReactions.define("bob", function (e) {
-    console.log("bob");
-    return e;
-  });
-  customReactions.define("once", function (e) {
-    return this.ownerElement.removeAttribute(this.name), e;
-  });
-  customAttributes.define("timeout", class TimeoutAttr extends CustomAttr {
-    upgrade() {
-      //todo here we can check to see if the element has a value at startup and then do from there.
-      //todo but, for this to be freezable, from inside a shadowRoot, then we need a meta element for this one..
-      this.value = "a" + Date.now();
-      this._timer = setTimeout(() => {
-        this.ownerElement.setAttribute(this.name, "z" + Date.now());
-        eventLoop.dispatch(new Event(this.type), this);
-      }, this.suffix[0]);
-    }
-
-    changeCallback(oldValue) {
-      console.log("changing");
-      console.info(this.value);
-    }
-
-    destructor() {
-      console.log("destructing");
-      clearTimeout(this._timer);
-    }
+  let lastTime;
+  customReactions.define("sincelast", function sinceLast({timeStamp}) {
+    debugger
+    const diff = lastTime ? timeStamp - lastTime : 0;
+    lastTime = timeStamp;
+    return diff;
   });
 </script>
+
+<h1 ready:dispatch_test timeout_50:dispatch_test timeout_100:dispatch_test>
+  hello sunshine
+</h1>
+</body>

@@ -1,6 +1,5 @@
-<script src="https://cdn.jsdelivr.net/gh/orstavik/parse@v1.0.2/parse.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver/constructionFrame.js"></script>
 <script src="../../src/customAttributes.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver@1.1.0/startObserver.js"></script>
 <script src="../../src/lib.js"></script>
 
 <div
@@ -22,7 +21,7 @@
   customReactions.defineAll({
     "submit": lib.customEvent,
     "dispatch": lib.dispatch,
-    "clone": lib.dispatchCustom,
+    "clone": lib.dispatchDetail,
     "formdata": DOM_FormData_Lazy,
     "log": e => (console.log(...e.detail), e)
   });

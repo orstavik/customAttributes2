@@ -1,4 +1,4 @@
-//todo move this to the formDataLib
+//todo rename to navigationLib.js
 export function extractFormData(data) {
   return data instanceof FormData ? data :
     data.detail instanceof FormData ? data.detail :
@@ -37,7 +37,8 @@ export async function fetchAndEvent(url, returnType, eventType) {
     const detail = await response[returnType]();
     eventLoop.dispatch(new CustomEvent(eventType, {detail}), this.ownerElement);
   } catch (err) {
-    const target = this.ownerElement.isConnected ? this.ownerElement : document.documentElement;//todo move this logic to the propagation algorithm??
+    const target = this.ownerElement.isConnected ? this.ownerElement : document.documentElement;
+    //todo move this logic to the propagation algorithm??
     eventLoop.dispatch(new ErrorEvent("error", {error: `${this.name}: ${err}`}), target);
   }
 }
@@ -49,6 +50,39 @@ export function popstate(url) {
 export function open(url, _, returnType = "self") {
   window.open(url, "_" + returnType);
 }
+
+function enctypeTail(enctype) {
+  if (enctype === "multipart") return "/form-data";
+  if (enctype === "application") return "/x-www-form-urlencoded";
+  if (enctype === "text") return "/plain";
+  throw new SyntaxError(`Unknown enctype: "${enctype}". Known enctypes are "application", "multipart", and "text".`);
+}
+
+export function openPost({href, withEntries}, _, target = "self", enctype = "multipart") {
+  const form = document.createElement("form");
+  form.method = "POST";
+  form.action = href;
+  form.target = `_${target}`;
+  form.enctype = enctype + enctypeTail(enctype);
+  form.style.display = "none";
+
+  for (let [name, value] of withEntries.entries()) {
+    const input = document.createElement("input");
+    input.type = "hidden";
+    input.name = name;
+    input.value = value;
+    form.appendChild(input);
+  }
+  document.body.appendChild(form);
+  form.submit();
+  form.remove();
+}
+
+
+//todo below are essentially shortcuts. How to make these syntactical in HTML?
+// To make them syntactical in JS is essentially not that interesting, that can be done in JS.
+// The shortcut mainly has value if it is done using
+// a standard set of html defined reactions and custom attributes.
 
 export function reactToUrl(url, eventType, returnType) {
   if (returnType === "json" || returnType === "text")

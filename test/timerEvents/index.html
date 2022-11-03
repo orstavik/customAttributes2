@@ -1,5 +1,5 @@
 <test-html test="timeoutTest.html">
-  <script expected>["changing", "changing", "timeout", "bob", "destructing"]</script>
+  <script expected>[0, 25, 25]</script>
 </test-html>
 <test-html test="raf.html">
   <script expected>[
@@ -12,7 +12,7 @@
   <script expected>[200, 500]</script>
 </test-html>
 <test-html test="w.html">
-  <script expected>["50px", "100px","25px", "50px", "62.5px", "125px"]</script>
+  <script expected>["50px", "100px", "25px", "50px", "62.5px", "125px"]</script>
 </test-html>
 <!-- Note!! You must load the test-html component at the end -->
 <script src="https://cdn.jsdelivr.net/gh/orstavik/TestHTML@v1.0.3/TestHTML.js"></script>
