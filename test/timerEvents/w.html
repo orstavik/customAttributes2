@@ -17,7 +17,7 @@
   <div slot="one" border-box:this_owner-element:self_get-computed-style:prop_width:console_log>
     hello
   </div>
-  <div slot="two" border-box:this_owner-element:self_get-computed-style:prop_width:console_log>
+  <div slot="two" border-box:logwidth>
     sunshine
   </div>
 </web-comp>
@@ -41,6 +41,11 @@
     destructor() {
       this._obs.disconnect();
     }
+  });
+
+  customReactions.define("logwidth", function (e) {
+    console.log(getComputedStyle(this.ownerElement).width);
+    return e;
   });
 
   customElements.define("web-comp", class WebComp extends HTMLElement {
