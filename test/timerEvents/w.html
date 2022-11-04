@@ -1,5 +1,6 @@
 <script src="../../src/customAttributes.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver@1.1.0/startObserver.js"></script>
+<script src="../../src/core.js"></script>
 
 <style>
   div {
@@ -12,43 +13,29 @@
     width: 200px;
   }
 </style>
-<web-comp timeout_100:width_500px>
-  <div slot="one" size:log size:log>hello</div>
-  <div slot="two" size:log size:log>sunshine</div>
+<web-comp timeout_100:style_width_500px>
+  <div slot="one" border-box:this_owner-element:self_get-computed-style:prop_width:console_log>
+    hello
+  </div>
+  <div slot="two" border-box:this_owner-element:self_get-computed-style:prop_width:console_log>
+    sunshine
+  </div>
 </web-comp>
 
 <template id="webcomp">
   <style>slot { width: 50%; border: 2px solid grey;display: inline-block;}</style>
   <slot w name=one style="width: 25%;"></slot>
-  <slot w name=two></slot>
+  <slot content-box:detail_content-box-size_0_inline-size:throttle:plus_px:style_--w name=two></slot>
 </template>
 
 <script>
-  customAttributes.define("timeout", class TimeoutAttr extends CustomAttr {
-    upgrade() {
-      //todo add destructor(){clearTimeout(this._timer)}?? yes
-      setTimeout(_ => eventLoop.dispatch(new Event(this.type), this), this.suffix[0]);
-    }
-  });
-
   customAttributes.define("w", class WAttr extends CustomAttr {
     upgrade() {
       let _width, type = this.type;
-      this._obs = new ResizeObserver(([{target, contentBoxSize: [{inlineSize}]}]) =>
-        _width !== inlineSize && target.style.setProperty("--" + type, (_width = inlineSize) + "px")
+      this._obs = new ResizeObserver(([{contentBoxSize: [{inlineSize}]}]) =>
+        _width !== inlineSize && this.ownerElement.style.setProperty("--" + type, (_width = inlineSize) + "px")
       );
       this._obs.observe(this.ownerElement, {box: "content-box"});
-    }
-
-    destructor() {
-      this._obs.disconnect();
-    }
-  });
-
-  customAttributes.define("size", class ResizeAttr extends CustomAttr {
-    upgrade() {
-      this._obs = new ResizeObserver(_ => eventLoop.dispatch(new Event(this.type), this));
-      this._obs.observe(this.ownerElement, {box: "border-box"});
     }
 
     destructor() {
@@ -60,16 +47,7 @@
     constructor() {
       super();
       this.attachShadow({mode: "open"});
-      this.shadowRoot.append(document.getElementById("webcomp").content.cloneNode(true));
-    }
-  });
-
-  customReactions.defineAll({
-    "width": function styler(e, prop, value) {
-      return this.ownerElement.style[prop] = value, e;
-    },
-    "log": function (e) {
-      return console.log(getComputedStyle(this.ownerElement).width), e;
+      this.shadowRoot.append(document.getElementById("webcomp").content);
     }
   });
 </script>
