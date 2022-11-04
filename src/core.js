@@ -73,6 +73,27 @@ function toPascalCase(strWithDash) {
     }
   }
 
+  class Interval extends CustomAttr {
+    upgrade() {
+      if (this.name === this.type)
+        return;
+      let countDown = parseInt(this.suffix[1]) || Infinity;
+      eventLoop.dispatch(new Event(this.type), this);
+      this._interval = setInterval(_ => {
+        if(!customReactions.getReactions(this.allFunctions).length)
+          return;
+        eventLoop.dispatch(new Event(this.type), this);
+        //the countdown state is not reflected in the DOM. We could implement this by actually adding/removing the attribute with a new attribute. That would be ok.
+        if (countDown-- === 1)
+          clearInterval(this._interval);
+      }, this.suffix[0]);
+    }
+
+    destructor() {
+      clearInterval(this._interval);
+    }
+  }
+
   class Timeout extends CustomAttr {
     upgrade() {
       if (this.name !== this.type)
@@ -113,6 +134,7 @@ function toPascalCase(strWithDash) {
   customAttributes.define("ready", Ready);
   customAttributes.define("import", Import);
   customAttributes.define("timeout", Timeout);
+  customAttributes.define("interval", Interval);
   customAttributes.define("raf", Raf);
 })();
 
@@ -169,51 +191,105 @@ function toPascalCase(strWithDash) {
       return throttleRegister.set(this, primitive), value;
   }
 
-  function sself(e, _, ...args) {
-    let obj = self;
+  function callFunction(obj, args, e) {
     for (let i = 0; i < args.length; i++) {
       obj = obj[toCamelCase(args[i])];
       if (obj instanceof Function)
-        return obj(e, args.slice(i + 1));
+        return obj(...args.slice(i + 1), e);
     }
     return obj;
   }
 
-  function tthis(e, _, ...args) {
-    let obj = this;
-    for (let i = 0; i < args.length; i++) {
-      obj = obj[toCamelCase(args[i])];
-      if (obj instanceof Function)
-        return obj(e, args.slice(i + 1));
-    }
-    return obj;
-  }
-
-  function prop(e,_, ...props){
+  function getProperty(obj, props) {
     for (let p of props)
-      e = e[toCamelCase(p)];
+      obj = obj[toCamelCase(p)];
+    return obj;
+  }
+
+  function tthis(e, _, ...props) {
+    return callFunction(this, props, e);
+  }
+
+  function sself(e, _, ...args) {
+    return callFunction(self, args, e);
+  }
+
+  function prop(e, _, ...props) {
+    return getProperty(e, props);
+  }
+
+  function call2(obj, _, ...props) {
+    debugger;
+    for (let i = 0; i < props.length; i++) {
+      obj = obj[toCamelCase(props[i])];
+      if (obj instanceof Function)
+        return obj(...props.slice(i + 1), obj);
+    }
+    return obj;
+  }
+
+  function prop2(obj, _, ...props) {
+    debugger;
+    for (let p of props)
+      obj = obj[toCamelCase(p)];
+    return obj;
+  }
+
+  function this2(e, _, method, ...props) {
+    debugger;
+    return getReaction(method).call(this, this, method, ...props);
+  }
+
+  function window2(e, _, method, ...props) {
+    debugger;
+    return getReaction(method).call(this, self, method, ...props);
+  }
+
+  function e2(e, _, method, ...props) {
+    debugger;
+    return getReaction(method).call(this, e, method, ...props);
+  }
+
+  function getReaction(method) {
+    return customReactions.getReactions(method)[0].Function;
+  }
+
+  function el2(e, _, method, ...props) {
+    debugger;
+    return getReaction(method).call(this, this.ownerElement, method, ...props);
+  }
+
+  function m2(e, _, prop, method, ...args) {
+    debugger
+    e[prop] = getReaction(method).call(this, e, method, ...args);
+    return e;
+  }
+
+  function ddebugger(e) {
+    debugger;
     return e;
   }
 
   customReactions.defineAll({
-    value,
-    once,
-    console: _console,
-    detail: eventProps,
-    target: eventProps,
-    dispatch,
-    timestamp: e => e.timeStamp,
+    // value,
     prevent: e => (e.preventDefault(), e),
-    on,
-    math,
-    style,
+    e: prop,
+
+    dispatch,
     throttle,
+
+    window: sself,
     plus,
-    self: sself,
-    this: tthis,
-    prop
+
+    this: tthis,  //once => m-f-this_remove()
+
+    on,
+    style,
   });
 })();
+//m_res2_call_window_get-computed-style_...
+
+//m_e_fun_prevent-default
 
 //border-box: and content-box:
 (function () {
@@ -231,4 +307,41 @@ function toPascalCase(strWithDash) {
   customAttributes.define("border-box", ResizeAttr);
   customAttributes.define("content-box", ResizeAttr);
   customAttributes.define("device-pixel-content-box", ResizeAttr);
+})();
+(function () {
+
+  function getReaction(method) {
+    return customReactions.getReactions(method)[0].Function;
+  }
+
+  customReactions.defineAll({
+    prop3: function (e, _, root, ...props) {
+      let obj = getReaction(root).call(this, e);
+      for (let prop of props)
+        obj = obj[toCamelCase(prop)];
+      return obj;
+    },
+    call3: function (e, _, root, ...props) {
+      let obj = getReaction(root).call(this, e);
+      for (let i = 0; i < props.length; i++) {
+        obj = obj[toCamelCase(props[i])];
+        if (obj instanceof Function)
+          return obj(...props.slice(i + 1), e);
+      }
+      return obj;
+    },
+    this3: function (e) {
+      return this;
+    },
+    window3: e => self,
+    e3: e => e,
+    el3: function (e) {
+      return this.ownerElement;
+    },
+    m3: function m3(e, _, prop, method, ...args) {
+      e[prop] = getReaction(method).call(this, e, method, ...args);
+      return e;
+    }
+  });
+  //m3_something_call3_window_get-computed-style_width
 })();

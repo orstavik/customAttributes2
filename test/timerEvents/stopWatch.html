@@ -2,11 +2,12 @@
 <script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver@1.1.0/startObserver.js"></script>
 <script src="../../src/core.js"></script>
 
-<body test:stopwatch:math_min_25:console_log>
+<body test:prop3_e3_time-stamp:stopwatch:call3_window3_-math_min_25:call3_window3_console_log>
 
 <script>
+  //todo a diff/aggregator of sorts. same as throttle. it joins the output of many different events across async time.
   const stopWatches = new WeakMap();
-  customReactions.define("stopwatch", function stopwatch({timeStamp}) {
+  customReactions.define("stopwatch", function stopwatch(timeStamp) {
     const lastTime = stopWatches.get(this) || timeStamp;
     stopWatches.set(this, timeStamp);
     return timeStamp - lastTime;

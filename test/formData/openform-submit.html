@@ -1,7 +1,8 @@
 <script src="../../src/customAttributes.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver@1.1.0/startObserver.js"></script>
+<script src="../../src/core.js"></script>
 
-<h1 submit:value:open_self="https://httpbin.org/anything?hello=sunshine" _unload:log>hello sunshine</h1>
+<h1 submit:prop3_this3_value:open_self="https://httpbin.org/anything?hello=sunshine" _unload:prop3_this3_value:log="triggered navigation">hello sunshine</h1>
 
 <script type="module">
   import {open} from "../src/FormData/FormData_GET.js";
@@ -10,7 +11,7 @@
     return this.value;
   });
   customReactions.define("open", open);
-  customReactions.define("log", e => (console.log("triggered navigation"), e));
+  customReactions.define("log", e => (console.log(e), e));
 
   const formData = new FormData();
   formData.append("a", "A");

@@ -35,12 +35,12 @@
     return e;
   }
 
-  function dispatchCustom(e, _, name) {
+  function dispatchDetail(e, prefix, name = prefix) {
     return dispatch.call(this, customEvent.call(this, e, name));
   }
 
-  function dispatchClone(e, prefix) {
-    const c = new e.constructor(prefix, e);
+  function dispatchClone(e, prefix, type = prefix) {
+    const c = new e.constructor(type, e);
     return eventLoop.dispatch(c, this.ownerElement), c;
   }
 
@@ -82,7 +82,7 @@
   }
 
   async function _fetch(body, _, type = "text", method = "GET") { //fetch_json and fetch_text_POST
-    return await (await fetch(this.value, method === "POST" ? {method, body} : undefined))[type]();
+    return await (await fetch(this.value, method.toUpperCase() === "POST" ? {method, body} : undefined))[type]();
   }
 
   function elementProp(_, prop) {
@@ -100,7 +100,7 @@
     cloneEvent,
     customEvent,
     dispatch,
-    dispatchCustom,
+    dispatchDetail,
     dispatchClone, //todo untested
     hasKey,
     once,

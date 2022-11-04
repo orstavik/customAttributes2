@@ -22,6 +22,12 @@
     return module;
   }
 
+  customReactions.defineAll({
+    "element": element,
+    "reaction": reaction,
+    "attribute": attribute,
+  });
+
   class Import extends CustomAttr {
     async upgrade() {
       const detail = await import(new URL(this.value, location.href).href);
@@ -49,9 +55,4 @@
 
   customAttributes.define("ready", Ready);
   customAttributes.define("import", Import);
-  customReactions.defineAll({
-    "element": element,
-    "reaction": reaction,
-    "attribute": attribute,
-  });
 })();

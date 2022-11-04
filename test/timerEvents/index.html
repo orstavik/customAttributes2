@@ -14,5 +14,17 @@
 <test-html test="w.html">
   <script expected>["50px", "100px", "25px", "50px", "62.5px", "125px"]</script>
 </test-html>
+<test-html test="hover_clone.html">
+  <script expected>[
+    "rgb(255, 165, 0)",
+    ["SPAN[hover]", "on"],
+    "rgb(255, 0, 0)",
+    ["DIV[hover]", "on"],
+    "rgb(0, 0, 0)",
+    ["SPAN[hover]", "off"],
+    "rgb(0, 0, 0)",
+    ["DIV[hover]", "off"]
+  ]</script>
+</test-html>
 <!-- Note!! You must load the test-html component at the end -->
 <script src="https://cdn.jsdelivr.net/gh/orstavik/TestHTML@v1.0.3/TestHTML.js"></script>
