@@ -88,6 +88,8 @@ class AttributeRegistry {
   #globals = new WeakArrayDict();
 
   define(prefix, Definition) {
+    if (!(Definition.prototype instanceof CustomAttr))
+      throw `"${Definition.name}" must extend "CustomAttr".`;
     if (this.getDefinition(prefix))
       throw `The customAttribute "${prefix}" is already defined.`;
     this[prefix] = Definition;
