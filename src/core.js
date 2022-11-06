@@ -80,7 +80,7 @@ function toPascalCase(strWithDash) {
       let countDown = parseInt(this.suffix[1]) || Infinity;
       eventLoop.dispatch(new Event(this.type), this);
       this._interval = setInterval(_ => {
-        if(!customReactions.getReactions(this.allFunctions).length)
+        if (!customReactions.getReactions(this.allFunctions).length)
           return;
         eventLoop.dispatch(new Event(this.type), this);
         //the countdown state is not reflected in the DOM. We could implement this by actually adding/removing the attribute with a new attribute. That would be ok.
@@ -139,50 +139,6 @@ function toPascalCase(strWithDash) {
 })();
 
 (function () {
-  function value() {
-    return this.value;
-  }
-
-  function eventProps(e, ...props) {
-    for (let p of props)
-      e = e[toCamelCase(p)];
-    return e;
-  }
-
-  function once(e) {
-    return this.ownerElement.removeAttribute(this.name), e;
-  }
-
-  function dispatch(e, _, type) {
-    const e2 = e instanceof Event ? new e.constructor(type, e) : new CustomEvent(type, {detail: e});
-    eventLoop.dispatch(e2, this.ownerElement);
-    return e2;
-  }
-
-  function on(e, _, ...methods) {
-    for (let method of methods)
-      this.ownerElement[method].call(this.ownerElement, e);
-    return e;
-  }
-
-  function math(e, _, method, ...args) {
-    return window.Math[method](e, ...args);
-  }
-
-  function plus(value, plus, ...addends) {
-    for (let addend of addends)
-      value += addend;
-    return value;
-  }
-
-  function _console(e, _, channel, ...values) {
-    return console[channel](...values, e);
-  }
-
-  function style(e, _, prop, value = e) {
-    return this.ownerElement.style.setProperty(prop, value), e;
-  }
-
   const throttleRegister = new WeakMap();
 
   function throttle(value) {
@@ -191,105 +147,20 @@ function toPascalCase(strWithDash) {
       return throttleRegister.set(this, primitive), value;
   }
 
-  function callFunction(obj, args, e) {
-    for (let i = 0; i < args.length; i++) {
-      obj = obj[toCamelCase(args[i])];
-      if (obj instanceof Function)
-        return obj(...args.slice(i + 1), e);
-    }
-    return obj;
-  }
-
-  function getProperty(obj, props) {
-    for (let p of props)
-      obj = obj[toCamelCase(p)];
-    return obj;
-  }
-
-  function tthis(e, _, ...props) {
-    return callFunction(this, props, e);
-  }
-
-  function sself(e, _, ...args) {
-    return callFunction(self, args, e);
-  }
-
-  function prop(e, _, ...props) {
-    return getProperty(e, props);
-  }
-
-  function call2(obj, _, ...props) {
-    debugger;
-    for (let i = 0; i < props.length; i++) {
-      obj = obj[toCamelCase(props[i])];
-      if (obj instanceof Function)
-        return obj(...props.slice(i + 1), obj);
-    }
-    return obj;
-  }
-
-  function prop2(obj, _, ...props) {
-    debugger;
-    for (let p of props)
-      obj = obj[toCamelCase(p)];
-    return obj;
-  }
-
-  function this2(e, _, method, ...props) {
-    debugger;
-    return getReaction(method).call(this, this, method, ...props);
-  }
-
-  function window2(e, _, method, ...props) {
-    debugger;
-    return getReaction(method).call(this, self, method, ...props);
-  }
-
-  function e2(e, _, method, ...props) {
-    debugger;
-    return getReaction(method).call(this, e, method, ...props);
-  }
-
-  function getReaction(method) {
-    return customReactions.getReactions(method)[0].Function;
-  }
-
-  function el2(e, _, method, ...props) {
-    debugger;
-    return getReaction(method).call(this, this.ownerElement, method, ...props);
-  }
-
-  function m2(e, _, prop, method, ...args) {
-    debugger
-    e[prop] = getReaction(method).call(this, e, method, ...args);
-    return e;
-  }
-
-  function ddebugger(e) {
-    debugger;
-    return e;
-  }
-
   customReactions.defineAll({
-    // value,
-    prevent: e => (e.preventDefault(), e),
-    e: prop,
-
-    dispatch,
+    prevent: e => (e.preventDefault(), e),  //3
     throttle,
-
-    window: sself,
-    plus,
-
-    this: tthis,  //once => m-f-this_remove()
-
-    on,
-    style,
+    plus: function plus(value, plus, ...addends) {
+      for (let addend of addends)
+        value += addend;
+      return value;
+    },
+    debugger: function (e) {
+      debugger;
+      return e;
+    }
   });
 })();
-//m_res2_call_window_get-computed-style_...
-
-//m_e_fun_prevent-default
 
 //border-box: and content-box:
 (function () {
@@ -324,9 +195,20 @@ function toPascalCase(strWithDash) {
     call3: function (e, _, root, ...props) {
       let obj = getReaction(root).call(this, e);
       for (let i = 0; i < props.length; i++) {
+        const parent = obj;
         obj = obj[toCamelCase(props[i])];
         if (obj instanceof Function)
-          return obj(...props.slice(i + 1), e);
+          return obj.call(parent, ...props.slice(i + 1), e);
+      }
+      return obj;
+    },
+    apply3: function (e, _, root, ...props) {
+      let obj = getReaction(root).call(this, e);
+      for (let i = 0; i < props.length; i++) {
+        const parent = obj;
+        obj = obj[toCamelCase(props[i])];
+        if (obj instanceof Function)
+          return obj.apply(parent, [...props.slice(i + 1), ...e]);
       }
       return obj;
     },
@@ -338,8 +220,17 @@ function toPascalCase(strWithDash) {
     el3: function (e) {
       return this.ownerElement;
     },
+    new3: function new3(e, _, constructor, ...args) {
+      //todo not sure that the self is the right reference frame here
+      return new self[toCamelCase(constructor)](...args, e);
+    },
     m3: function m3(e, _, prop, method, ...args) {
       e[prop] = getReaction(method).call(this, e, method, ...args);
+      return e;
+    },
+    push3: function push3(e, _, method, ...args) {
+      const value = getReaction(method).call(this, e, method, ...args);
+      e.push(value);
       return e;
     }
   });

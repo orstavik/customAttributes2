@@ -12,7 +12,15 @@
     stopWatches.set(this, timeStamp);
     return timeStamp - lastTime;
   });
+  customReactions.define("dispatch", function dispatch(e, _, type) {
+    const e2 = e instanceof Event ? new e.constructor(type, e) : new CustomEvent(type, {detail: e});
+    eventLoop.dispatch(e2, this.ownerElement);
+    return e2;
+  });
 </script>
 
-<h1 ready:dispatch_test timeout_50:dispatch_test timeout_100:dispatch_test>hello sunshine</h1>
+<h1
+    ready:new3_-event_test:new3_-array:push3_el3:apply3_window3_event-loop_dispatch
+    timeout_50:dispatch_test
+    timeout_100:dispatch_test>hello sunshine</h1>
 </body>
