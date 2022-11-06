@@ -138,30 +138,6 @@ function toPascalCase(strWithDash) {
   customAttributes.define("raf", Raf);
 })();
 
-(function () {
-  const throttleRegister = new WeakMap();
-
-  function throttle(value) {
-    const primitive = value instanceof Object ? JSON.stringify(value) : value;
-    if (throttleRegister.get(this) !== primitive)
-      return throttleRegister.set(this, primitive), value;
-  }
-
-  customReactions.defineAll({
-    prevent: e => (e.preventDefault(), e),  //3
-    throttle,
-    plus: function plus(value, plus, ...addends) {
-      for (let addend of addends)
-        value += addend;
-      return value;
-    },
-    debugger: function (e) {
-      debugger;
-      return e;
-    }
-  });
-})();
-
 //border-box: and content-box:
 (function () {
   class ResizeAttr extends CustomAttr {
@@ -179,6 +155,7 @@ function toPascalCase(strWithDash) {
   customAttributes.define("content-box", ResizeAttr);
   customAttributes.define("device-pixel-content-box", ResizeAttr);
 })();
+
 (function () {
 
   function getReaction(method) {
@@ -215,7 +192,7 @@ function toPascalCase(strWithDash) {
     this3: function (e) {
       return this;
     },
-    window3: e => self,
+    window3: e => window,
     e3: e => e,
     el3: function (e) {
       return this.ownerElement;
@@ -235,4 +212,25 @@ function toPascalCase(strWithDash) {
     }
   });
   //m3_something_call3_window_get-computed-style_width
+
+  const throttleRegister = new WeakMap();
+
+  function throttle(value) {
+    const primitive = value instanceof Object ? JSON.stringify(value) : value;
+    if (throttleRegister.get(this) !== primitive)
+      return throttleRegister.set(this, primitive), value;
+  }
+
+  customReactions.defineAll({
+    throttle,
+    plus: function plus(value, plus, ...addends) {
+      for (let addend of addends)
+        value += addend;
+      return value;
+    },
+    debugger: function (e) {
+      debugger;
+      return e;
+    }
+  });
 })();
