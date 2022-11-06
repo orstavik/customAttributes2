@@ -163,6 +163,14 @@ function toPascalCase(strWithDash) {
   }
 
   customReactions.defineAll({
+    this: function (e) {
+      return this;
+    },
+    window: e => window,
+    e: e => e,
+    new: function _new(e, _, constructor, ...args) {
+      return new window[toCamelCase(constructor)](...args, e);
+    },
     prop3: function (e, _, root, ...props) {
       let obj = getReaction(root).call(this, e);
       for (let prop of props)
@@ -188,18 +196,6 @@ function toPascalCase(strWithDash) {
           return obj.apply(parent, [...props.slice(i + 1), ...e]);
       }
       return obj;
-    },
-    this3: function (e) {
-      return this;
-    },
-    window3: e => window,
-    e3: e => e,
-    el3: function (e) {
-      return this.ownerElement;
-    },
-    new3: function new3(e, _, constructor, ...args) {
-      //todo not sure that the self is the right reference frame here
-      return new self[toCamelCase(constructor)](...args, e);
     },
     m3: function m3(e, _, prop, method, ...args) {
       e[prop] = getReaction(method).call(this, e, method, ...args);
