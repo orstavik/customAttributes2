@@ -10,17 +10,27 @@ class ReactionRegistry {
       this.define(type, Function);
   }
 
+  static #doDots(dots, thiz, e) {
+    dots = dots.split(".");
+    let obj = dots[0] === "e" ? e : dots[0] === "this" ? thiz : window;
+    let parent;
+    for (let i = obj === window ? 0 : 1; i < dots.length; i++)
+      parent = obj, obj = obj[this.toCamelCase(dots[i])];
+    return {obj, parent};
+  }
+
   static toCamelCase(strWithDash) {
     return strWithDash.replace(/-([a-z])/g, g => g[1].toUpperCase());
   }
 
   static call(e, prefix, ...args) {
-    const dots = prefix.split(".");
-    let obj = dots[0] === "e" ? e : dots[0] === "this" ? this : window;
-    let parent;
-    for (let i = obj === window ? 0 : 1; i < dots.length; i++)
-      parent = obj, obj = obj[ReactionRegistry.toCamelCase(dots[i])];
+    const {obj, parent} = ReactionRegistry.#doDots(prefix, this, e);
     return obj instanceof Function ? obj.call(parent, ...args, e) : obj;
+  }
+
+  static apply(e, prefix, ...args) {
+    const {obj, parent} = ReactionRegistry.#doDots(prefix.substring(3), this, e);
+    return obj.apply(parent, [...args, ...e]);
   }
 
   #cache = {"": Object.freeze([])};
@@ -31,9 +41,11 @@ class ReactionRegistry {
     const res = [];
     for (let [prefix, ...suffix] of reaction.split(":").map(str => str.split("_"))) {
       if (!prefix) continue;        //ignore empty strings enables "one::two" to run as one sequence
-      if (prefix.indexOf(".") >= 0)
+      if (prefix.startsWith("..."))
+        this[prefix] = ReactionRegistry.apply;
+      else if (prefix.indexOf(".") >= 0)
         this[prefix] = ReactionRegistry.call;
-      if (!this[prefix]) return []; //one undefined reaction disables the entire chain reaction
+      else if (!this[prefix]) return []; //one undefined reaction disables the entire chain reaction
       res.push({Function: this[prefix], prefix, suffix});
     }
     return this.#cache[reaction] = res;

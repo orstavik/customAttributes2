@@ -1,9 +1,5 @@
-function toCamelCase(strWithDash) {
-  return strWithDash.replace(/-([a-z])/g, g => g[1].toUpperCase());
-}
-
 function toPascalCase(strWithDash) {
-  return strWithDash[0].toUpperCase() + toCamelCase(strWithDash.slice(1));
+  return strWithDash[0].toUpperCase() + ReactionRegistry.toCamelCase(strWithDash.slice(1));
 }
 
 //:element, :attribute, :reaction
@@ -23,7 +19,7 @@ function toPascalCase(strWithDash) {
   }
 
   function reaction(module, _, tag) {
-    customReactions.define(tag, getModule(module, toCamelCase(tag)));
+    customReactions.define(tag, getModule(module, ReactionRegistry.toCamelCase(tag)));
     return module;
   }
 
@@ -157,39 +153,19 @@ function toPascalCase(strWithDash) {
 })();
 
 (function () {
-
-  function getReaction(method) {
-    return customReactions.getReactions(method)[0].Function;
-  }
-
-  function doDots(dots, thiz, e) {
-    dots = dots.split(".");
-    let obj = dots[0] === "e" ? e : dots[0] === "this" ? thiz : window;
-    let parent;
-    for (let i = obj === window ? 0 : 1; i < dots.length; i++)
-      parent = obj, obj = obj[toCamelCase(dots[i])];
-    return {obj, parent};
-  }
+  const throttleRegister = new WeakMap();
 
   customReactions.defineAll({
     this: function (e) {
       return this;
     },
     window: e => window,
-    e: e => e,                   //todo this should be anything with a `.`
-    x4: function call(e, _, prefix, ...args) {
-      const {parent, obj} = doDots(prefix, this, e);
-      return obj instanceof Function ? obj.call(parent, ...args, e) : obj;
-    },                           //todo this should be anything starting with `...` and then the rest.
-    a4: function apply(e, _, prefix, ...args) {
-      const {parent, obj} = doDots(prefix, this, e);
-      return obj.apply(parent, [...args, ...e]);
-    },                                         //todo this doesn't need to be anything other than what it is
+    e: e => e,
     new: function _new(e, _, constructor, ...args) {
-      return new window[toCamelCase(constructor)](...args, e);
+      return new window[ReactionRegistry.toCamelCase(constructor)](...args, e);
     },
-    m3: function monadish(e, _, prop, method, ...args) {
-      const value = getReaction(method).call(this, e, method, ...args);
+    m: function monadish(e, _, prop, method, ...args) {
+      const value = customReactions.getReactions(method)[0].Function.call(this, e, method, ...args);
       if (e instanceof Array)
         Number.isInteger(+prop) ?
           e.splice(prop < 0 ? Math.max(e.length + 1 + prop, 0) : Math.min(prop, e.length), 0, value) :
@@ -198,19 +174,6 @@ function toPascalCase(strWithDash) {
         e[prop] = value;
       return e;
     },
-  });
-  //m3_something_call3_window_get-computed-style_width
-
-  const throttleRegister = new WeakMap();
-
-  function throttle(value) {
-    const primitive = value instanceof Object ? JSON.stringify(value) : value;
-    if (throttleRegister.get(this) !== primitive)
-      return throttleRegister.set(this, primitive), value;
-  }
-
-  customReactions.defineAll({
-    throttle,
     plus: function plus(value, plus, ...addends) {
       for (let addend of addends)
         value += addend;
@@ -219,6 +182,12 @@ function toPascalCase(strWithDash) {
     debugger: function (e) {
       debugger;
       return e;
+    },
+
+    throttle: function throttle(value) {
+      const primitive = value instanceof Object ? JSON.stringify(value) : value;
+      if (throttleRegister.get(this) !== primitive)
+        return throttleRegister.set(this, primitive), value;
     }
   });
 })();
