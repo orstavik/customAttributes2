@@ -162,50 +162,42 @@ function toPascalCase(strWithDash) {
     return customReactions.getReactions(method)[0].Function;
   }
 
+  function doDots(dots, thiz, e) {
+    dots = dots.split(".");
+    let obj = dots[0] === "e" ? e : dots[0] === "this" ? thiz : window;
+    let parent;
+    for (let i = obj === window ? 0 : 1; i < dots.length; i++)
+      parent = obj, obj = obj[toCamelCase(dots[i])];
+    return {obj, parent};
+  }
+
   customReactions.defineAll({
     this: function (e) {
       return this;
     },
     window: e => window,
-    e: e => e,
+    e: e => e,                   //todo this should be anything with a `.`
+    x4: function call(e, _, prefix, ...args) {
+      const {parent, obj} = doDots(prefix, this, e);
+      return obj instanceof Function ? obj.call(parent, ...args, e) : obj;
+    },                           //todo this should be anything starting with `...` and then the rest.
+    a4: function apply(e, _, prefix, ...args) {
+      const {parent, obj} = doDots(prefix, this, e);
+      return obj.apply(parent, [...args, ...e]);
+    },                                         //todo this doesn't need to be anything other than what it is
     new: function _new(e, _, constructor, ...args) {
       return new window[toCamelCase(constructor)](...args, e);
     },
-    prop3: function (e, _, root, ...props) {
-      let obj = getReaction(root).call(this, e);
-      for (let prop of props)
-        obj = obj[toCamelCase(prop)];
-      return obj;
-    },
-    call3: function (e, _, root, ...props) {
-      let obj = getReaction(root).call(this, e);
-      for (let i = 0; i < props.length; i++) {
-        const parent = obj;
-        obj = obj[toCamelCase(props[i])];
-        if (obj instanceof Function)
-          return obj.call(parent, ...props.slice(i + 1), e);
-      }
-      return obj;
-    },
-    apply3: function (e, _, root, ...props) {
-      let obj = getReaction(root).call(this, e);
-      for (let i = 0; i < props.length; i++) {
-        const parent = obj;
-        obj = obj[toCamelCase(props[i])];
-        if (obj instanceof Function)
-          return obj.apply(parent, [...props.slice(i + 1), ...e]);
-      }
-      return obj;
-    },
-    m3: function m3(e, _, prop, method, ...args) {
-      e[prop] = getReaction(method).call(this, e, method, ...args);
-      return e;
-    },
-    push3: function push3(e, _, method, ...args) {
+    m3: function monadish(e, _, prop, method, ...args) {
       const value = getReaction(method).call(this, e, method, ...args);
-      e.push(value);
+      if (e instanceof Array)
+        Number.isInteger(+prop) ?
+          e.splice(prop < 0 ? Math.max(e.length + 1 + prop, 0) : Math.min(prop, e.length), 0, value) :
+          e.push(value);
+      else
+        e[prop] = value;
       return e;
-    }
+    },
   });
   //m3_something_call3_window_get-computed-style_width
 

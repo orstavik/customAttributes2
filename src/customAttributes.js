@@ -10,6 +10,19 @@ class ReactionRegistry {
       this.define(type, Function);
   }
 
+  static toCamelCase(strWithDash) {
+    return strWithDash.replace(/-([a-z])/g, g => g[1].toUpperCase());
+  }
+
+  static call(e, prefix, ...args) {
+    const dots = prefix.split(".");
+    let obj = dots[0] === "e" ? e : dots[0] === "this" ? this : window;
+    let parent;
+    for (let i = obj === window ? 0 : 1; i < dots.length; i++)
+      parent = obj, obj = obj[ReactionRegistry.toCamelCase(dots[i])];
+    return obj instanceof Function ? obj.call(parent, ...args, e) : obj;
+  }
+
   #cache = {"": Object.freeze([])};
 
   getReactions(reaction) {
@@ -18,6 +31,8 @@ class ReactionRegistry {
     const res = [];
     for (let [prefix, ...suffix] of reaction.split(":").map(str => str.split("_"))) {
       if (!prefix) continue;        //ignore empty strings enables "one::two" to run as one sequence
+      if (prefix.indexOf(".") >= 0)
+        this[prefix] = ReactionRegistry.call;
       if (!this[prefix]) return []; //one undefined reaction disables the entire chain reaction
       res.push({Function: this[prefix], prefix, suffix});
     }
@@ -317,7 +332,7 @@ function deprecated() {
   };
 })(Element.prototype, document.createAttribute);
 
-document.addEventListener("element-created", ({detail:els})=> els.forEach(el => customAttributes.upgrade(...el.attributes)));
+document.addEventListener("element-created", ({detail: els}) => els.forEach(el => customAttributes.upgrade(...el.attributes)));
 // ElementObserver.end(el => customAttributes.upgrade(...el.attributes));
 
 //** CustomAttribute registry with builtin support for the native HTML events.
