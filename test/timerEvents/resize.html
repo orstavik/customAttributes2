@@ -2,7 +2,7 @@
 <script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver@1.1.0/startObserver.js"></script>
 <script src="../../src/core.js"></script>
 
-<div style="width:200px;" timeout_42:width_500px>
+<div style="width:200px;" timeout_42:m__width_500px>
   <div border-box:log style="width:100%">
     hello sunshine
   </div>
@@ -11,11 +11,9 @@
 <script>
   customReactions.define("width", function styler(e, prop, value) {
     this.ownerElement.style.setProperty(prop, value);
-    return e;
   });
 
   customReactions.define("log", function (e) {
     console.log(this.ownerElement.offsetWidth);
-    return e;
   });
 </script>
