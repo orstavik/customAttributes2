@@ -11,6 +11,14 @@
 <test-html test="resize.html">
   <script expected>[200, 500]</script>
 </test-html>
+<test-html test="mo_attributes.html">
+  <script expected>[
+    ["attributes","a","","one"],
+    ["attributes","b","","two"],
+    ["attributes","a","bob","one"],
+    ["attributes","b","bob","two"]
+  ]</script>
+</test-html>
 <test-html test="w.html">
   <script expected>["50px", "100px", "25px", "50px", "62.5px", "125px"]</script>
 </test-html>

@@ -1,0 +1,34 @@
+<script src="../../src/customAttributes.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver@1.1.0/startObserver.js"></script>
+<script src="../../src/core.js"></script>
+
+<h1 a b attributes:log timeout_42:attr_a_one:attr_b_two>hello</h1>
+<div a="bob" b="bob" attributes_a_b:log timeout_42:attr_a_one:attr_b_two>sunshine</div>
+
+<script>
+  customAttributes.define("attributes", class Attributes extends CustomAttr {
+    upgrade() {
+      this._mo = new MutationObserver((mrs) => {
+        const detail = {};
+        for (let {attributeName, oldValue} of mrs)
+          detail[attributeName] = oldValue;
+        eventLoop.dispatch(new CustomEvent(this.type, {detail}), this);
+      });
+      const attributeFilter = this.suffix.length ? this.suffix : undefined;
+      this._mo.observe(this.ownerElement, {attributes: true, attributeFilter, attributeOldValue: true});
+    }
+
+    destructor() {
+      this._mo.disconnect();
+    }
+  });
+  customReactions.define("attr", function (e, _, name, value) {
+    this.ownerElement.setAttribute(name, value);
+    return e;
+  });
+
+  customReactions.define("log", function (e) {
+    for (let [name, oldValue] of Object.entries(e.detail))
+      console.log(e.type, name, oldValue, this.ownerElement.getAttribute(name));
+  });
+</script>

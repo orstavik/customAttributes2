@@ -2,8 +2,8 @@
 <script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver@1.1.0/startObserver.js"></script>
 <script src="../../src/core.js"></script>
 
-<div style="width:200px;" timeout_42:m__width_500px>
-  <div border-box:log style="width:100%">
+<div style="width:200px;" timeout_42:width_500px>
+  <div style="width:100%" border-box:log>
     hello sunshine
   </div>
 </div>
@@ -13,7 +13,7 @@
     this.ownerElement.style.setProperty(prop, value);
   });
 
-  customReactions.define("log", function (e) {
+  customReactions.define("log", function () {
     console.log(this.ownerElement.offsetWidth);
   });
 </script>
