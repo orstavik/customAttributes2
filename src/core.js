@@ -166,11 +166,14 @@ function toPascalCase(strWithDash) {
     },
     m: function monadish(e, _, prop, method, ...args) {
       const value = customReactions.getReactions(method)[0].Function.call(this, e, method, ...args);
-      if (e instanceof Array)
-        Number.isInteger(+prop) ?
-          e.splice(prop < 0 ? Math.max(e.length + 1 + prop, 0) : Math.min(prop, e.length), 0, value) :
+      if (e instanceof Array) {
+        if (Number.isInteger(+prop)) {
+          e.splice(prop < 0 ? Math.max(e.length + 1 + prop, 0) : Math.min(prop, e.length), 0, value);
+        } else if(!prop) {
           e.push(value);
-      else
+        }
+      }
+      else if(prop)
         e[prop] = value;
       return e;
     },

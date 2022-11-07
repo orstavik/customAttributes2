@@ -1,6 +1,7 @@
 <script src="../../src/customAttributes.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver@1.1.0/startObserver.js"></script>
 
+<body _popstate:log>
 <h1 click:get_popstate="#hello">hello sunshine</h1>
 <h2 click:encodeuri:popstate="#sunshine">hello sunshine</h2>
 
@@ -10,9 +11,10 @@
   customReactions.define("get", FormData_GET);
   customReactions.define("encodeuri", formDataToUri);
   customReactions.define("popstate", popstate);
+  customReactions.define("log", _ => console.log(location.href.substring(location.href.length - 9)));
 
   console.log(location.href.substring(location.href.length - 9));
-  window.addEventListener("popstate", e => console.log(location.href.substring(location.href.length - 9)));
   document.querySelector("h1").click();
   document.querySelector("h2").click();
 </script>
+</body>

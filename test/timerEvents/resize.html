@@ -1,33 +1,16 @@
 <script src="../../src/customAttributes.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver@1.1.0/startObserver.js"></script>
+<script src="../../src/core.js"></script>
 
 <div style="width:200px;" timeout_42:width_500px>
-  <div resize2:log style="width:100%">
+  <div border-box:log style="width:100%">
     hello sunshine
   </div>
 </div>
 
 <script>
-  customAttributes.define("timeout", class TimeoutAttr extends CustomAttr {
-    upgrade() {
-      setTimeout(() => {
-        eventLoop.dispatch(new Event(this.type), this);
-      }, this.suffix[0]);
-    }
-  });
-
-  customAttributes.define("resize2", class ResizeAttr extends CustomAttr {
-    upgrade() {
-      eventLoop.dispatch(new Event(this.type), this);
-      const obs = new ResizeObserver(() => {
-        eventLoop.dispatch(new Event(this.type), this);
-      });
-      obs.observe(this.ownerElement, {box: "border-box"});
-    }
-  });
-
   customReactions.define("width", function styler(e, prop, value) {
-    this.ownerElement.style[prop] = value;
+    this.ownerElement.style.setProperty(prop, value);
     return e;
   });
 

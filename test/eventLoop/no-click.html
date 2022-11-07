@@ -1,12 +1,13 @@
 <script src="../../src/customAttributes.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver@1.1.0/startObserver.js"></script>
+<script src="../../src/core.js"></script>
 
-<h1 click:no:log="only sunshine">
+<h1 click:m__e.prevent-default:log="only sunshine">
   <span click::log="Hello bug">hello</span>
 </h1>
 
 <script>
-  customReactions.define("no", e => (e.preventDefault(), e));
+  // customReactions.define("no", e => (e.preventDefault(), e));
   customReactions.define("log", function (e) {
     return console.log(this.value), e;
   });

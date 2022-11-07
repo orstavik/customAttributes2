@@ -3,6 +3,6 @@
 
 <h1 _readystatechange:log>hello _readystatechange:log</h1>
 <script>
-  customReactions.define("log", function(e){ console.log(e.type, document.readyState)});
+  customReactions.define("log", e => console.log(e.type, document.readyState));
   // document.body.requestFullscreen();
 </script>

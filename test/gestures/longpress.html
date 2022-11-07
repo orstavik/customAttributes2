@@ -32,4 +32,6 @@
   const h1 = document.querySelector("h1");
   h1.dispatchEvent(new MouseEvent("mousedown"));
   setTimeout(_ => h1.dispatchEvent(new MouseEvent("mouseup")), 250);
+  //todo 1. check that the correct attributes are on the element at the right time.
+  //todo 2. replace once with a builtin this.remove ?? Does CustomAttr have a method called this.remove?
 </script>

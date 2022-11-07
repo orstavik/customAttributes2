@@ -22,9 +22,6 @@
 </web-comp>
 
 <script type="module">
-//todo must be module so that the tag on <body> has been read.
-//todo ElementObserver.end(...) should be replaced with ElementObserver.attributesRead(...)
-//todo This is what we need here.
   customReactions.define("log", function (e) {
     console.log(this.ownerElement.nodeName, this.ownerElement.getRootNode().nodeName, e.target.nodeName);
   });
