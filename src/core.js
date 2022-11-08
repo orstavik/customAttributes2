@@ -169,11 +169,10 @@ function toPascalCase(strWithDash) {
       if (e instanceof Array) {
         if (Number.isInteger(+prop)) {
           e.splice(prop < 0 ? Math.max(e.length + 1 + prop, 0) : Math.min(prop, e.length), 0, value);
-        } else if(!prop) {
+        } else if (!prop) {
           e.push(value);
         }
-      }
-      else if(prop)
+      } else if (prop)
         e[prop] = value;
       return e;
     },

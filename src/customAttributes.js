@@ -30,7 +30,7 @@ class ReactionRegistry {
 
   static apply(e, prefix, ...args) {
     const {obj, parent} = ReactionRegistry.#doDots(prefix.substring(3), this, e);
-    return obj.apply(parent, [...args, ...e]);
+    return obj.call(parent, ...args, ...e);
   }
 
   #cache = {"": Object.freeze([])};
