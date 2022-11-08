@@ -1,0 +1,45 @@
+<script src="../../src/customAttributes.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver@1.1.0/startObserver.js"></script>
+<script src="../../src/core.js"></script>
+
+<h1 child-list:e.detail:log timeout_42:remove-child-element_0:append_div_sunshine>
+  <span>world</span>
+</h1>
+
+<script>
+  customAttributes.define("child-list", class ChildList extends CustomAttr {
+    upgrade() {
+      this._mo = new MutationObserver((mrs) => {
+        const detail = {addedNodes: [], removedNodes: []};
+        for (let {addedNodes, removedNodes} of mrs) {
+          detail.addedNodes = [...detail.addedNodes, ...addedNodes];
+          detail.removedNodes = [...detail.removedNodes, ...removedNodes];
+        }
+        eventLoop.dispatch(new CustomEvent(this.type, {detail}), this);
+      });
+      this._mo.observe(this.ownerElement, {childList: true});
+      //todo How do we wish to handle the construction race?
+      // eventLoop.dispatch(new CustomEvent(this.type, {detail: {}}), this);
+    }
+
+    destructor() {
+      this._mo.disconnect();
+    }
+  });
+  customReactions.define("append", function append(e, _, tag, innerText) {
+    const el = document.createElement(tag);
+    el.innerText = innerText;
+    this.ownerElement.append(el);
+    return e;
+  });
+  customReactions.define("remove-child-element", function removeChildElement(e, _, ...pos) {
+    for (let p of pos)
+      this.ownerElement.removeChild(this.ownerElement.children[parseInt(p)]);
+    return e;
+  });
+
+  customReactions.define("log", function ({addedNodes, removedNodes}) {
+    console.log("added", ...addedNodes.map(el => el.tagName));
+    console.log("removed", ...removedNodes.map(el => el.nodeName));
+  });
+</script>
