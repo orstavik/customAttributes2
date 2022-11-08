@@ -50,7 +50,7 @@ class ReactionRegistry {
         this.#register[prefix] = ReactionRegistry.apply;
       else if (prefix.indexOf(".") >= 0)
         this.#register[prefix] = ReactionRegistry.call;
-      else if (!this.#register[prefix]) //todo this is undefined, same as the doubleDots is undefined.
+      else if (!this.#register[prefix])
         return undefined; //one undefined reaction disables the entire chain reaction
       res.push({Function: this.#register[prefix], prefix, suffix});
     }
