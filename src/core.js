@@ -160,7 +160,7 @@
         return throttleRegister.set(this, primitive), value;
     },
 
-    definetodo: function define(Def, _, tag) {
+    define: function define(Def, _, tag) {
       if (Def.prototype instanceof CustomAttr) {
         customAttributes.define(tag, Def);
       } else if (Def.prototype instanceof HTMLElement) {

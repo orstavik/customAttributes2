@@ -1,8 +1,11 @@
 class ReactionRegistry {
+
+  #register = {};
+
   define(type, Function) {
-    if (type in this)
+    if (type in this.#register)
       throw `The Reaction type: "${type}" is already defined.`;
-    this[type] = Function;
+    this.#register[type] = Function;
   }
 
   defineAll(defs) {
@@ -25,8 +28,8 @@ class ReactionRegistry {
 
   static call(e, prefix, ...args) {
     let explicitProp = false;
-    if(prefix.endsWith("."))
-      explicitProp = true, prefix = prefix.substring(0, prefix.length-1);
+    if (prefix.endsWith("."))
+      explicitProp = true, prefix = prefix.substring(0, prefix.length - 1);
     const {obj, parent} = ReactionRegistry.#doDots(prefix, this, e);
     return !(obj instanceof Function) || explicitProp ? obj : obj.call(parent, ...args, e);
   }
@@ -45,11 +48,11 @@ class ReactionRegistry {
     for (let [prefix, ...suffix] of reaction.split(":").map(str => str.split("_"))) {
       if (!prefix) continue;        //ignore empty strings enables "one::two" to run as one sequence
       if (prefix.startsWith("..."))
-        this[prefix] = ReactionRegistry.apply;
+        this.#register[prefix] = ReactionRegistry.apply;
       else if (prefix.indexOf(".") >= 0)
-        this[prefix] = ReactionRegistry.call;
-      else if (!this[prefix]) return []; //one undefined reaction disables the entire chain reaction
-      res.push({Function: this[prefix], prefix, suffix});
+        this.#register[prefix] = ReactionRegistry.call;
+      else if (!this.#register[prefix]) return []; //one undefined reaction disables the entire chain reaction
+      res.push({Function: this.#register[prefix], prefix, suffix});
     }
     return this.#cache[reaction] = res;
   }
