@@ -1,7 +1,7 @@
 //import:, ready:, timeout:, raf:
 (function () {
   function dispatchWhenReactionReady(attr, event, delay = 4, i = 0) {
-    customReactions.getReactions(attr.allFunctions).length ?
+    customReactions.getReactions(attr.allFunctions)?
       eventLoop.dispatch(event, attr) :
       attr._timer = setTimeout(_ => dispatchWhenReactionReady(attr, event, delay, ++i), delay ** i);
   }
@@ -44,7 +44,7 @@
       let countDown = parseInt(this.suffix[1]) || Infinity;
       eventLoop.dispatch(new Event(this.type), this);
       this._interval = setInterval(_ => {
-        if (!customReactions.getReactions(this.allFunctions).length)
+        if (!customReactions.getReactions(this.allFunctions))
           return;
         eventLoop.dispatch(new Event(this.type), this);
         //the countdown state is not reflected in the DOM. We could implement this by actually adding/removing the attribute with a new attribute. That would be ok.
@@ -65,7 +65,7 @@
     }
 
     _trigger(i, delay = 4) {
-      customReactions.getReactions(this.allFunctions).length ?
+      customReactions.getReactions(this.allFunctions) ?
         eventLoop.dispatch(new Event(this.type), this) :
         this._timer = setTimeout(_ => this._trigger(++i, delay), delay ** i);
     }
@@ -84,7 +84,7 @@
     trigger() {
       if (!this._count)
         this.destructor();
-      if (!customReactions.getReactions(this.allFunctions).length)
+      if (!customReactions.getReactions(this.allFunctions))
         return;
       this._count--;
       eventLoop.dispatch(new Event(this.type), this);

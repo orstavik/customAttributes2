@@ -41,20 +41,20 @@ class ReactionRegistry {
 
   #cache = {"": Object.freeze([])};
 
-  getReactions(reaction) {
-    if (this.#cache[reaction])
-      return this.#cache[reaction];
+  getReactions(reactions) {
+    if (this.#cache[reactions])
+      return this.#cache[reactions];
     const res = [];
-    for (let [prefix, ...suffix] of reaction.split(":").map(str => str.split("_"))) {
-      if (!prefix) continue;        //ignore empty strings enables "one::two" to run as one sequence
+    for (let [prefix, ...suffix] of reactions.split(":").map(str => str.split("_"))) {
       if (prefix.startsWith("..."))
         this.#register[prefix] = ReactionRegistry.apply;
       else if (prefix.indexOf(".") >= 0)
         this.#register[prefix] = ReactionRegistry.call;
-      else if (!this.#register[prefix]) return []; //one undefined reaction disables the entire chain reaction
+      else if (!this.#register[prefix]) //todo this is undefined, same as the doubleDots is undefined.
+        return undefined; //one undefined reaction disables the entire chain reaction
       res.push({Function: this.#register[prefix], prefix, suffix});
     }
-    return this.#cache[reaction] = res;
+    return this.#cache[reactions] = res;
   }
 }
 
@@ -78,7 +78,7 @@ class CustomAttr extends Attr {
   }
 
   get allFunctions() {
-    const value = this.name.split(":").slice(1)?.join(":");
+    const value = this.name.split(":").slice(1)?.filter(r => r).join(":");
     Object.defineProperty(this, "allFunctions", {value, writable: false, configurable: true});
     return value;
   }
@@ -278,7 +278,7 @@ class ReactionErrorEvent extends ErrorEvent {
     }
 
     static #callReactions(reactions, at, event, syncOnly = false) {
-      return this.#runReactions(customReactions.getReactions(reactions), event, at, syncOnly, 0);
+      return this.#runReactions(customReactions.getReactions(reactions) || [], event, at, syncOnly, 0);
     }
 
     static #runReactions(reactions, event, at, syncOnly, start) {
