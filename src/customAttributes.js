@@ -14,7 +14,7 @@ class ReactionRegistry {
     dots = dots.split(".");
     let obj = dots[0] === "e" ? e : dots[0] === "this" ? thiz : window;
     let parent;
-    for (let i = obj === window ? 0 : 1; i < dots.length; i++)
+    for (let i = (obj === window ? 0 : 1); i < dots.length; i++)
       parent = obj, obj = obj[this.toCamelCase(dots[i])];
     return {obj, parent};
   }
@@ -24,8 +24,11 @@ class ReactionRegistry {
   }
 
   static call(e, prefix, ...args) {
+    let explicitProp = false;
+    if(prefix.endsWith("."))
+      explicitProp = true, prefix = prefix.substring(0, prefix.length-1);
     const {obj, parent} = ReactionRegistry.#doDots(prefix, this, e);
-    return obj instanceof Function ? obj.call(parent, ...args, e) : obj;
+    return !(obj instanceof Function) || explicitProp ? obj : obj.call(parent, ...args, e);
   }
 
   static apply(e, prefix, ...args) {

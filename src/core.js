@@ -1,41 +1,9 @@
-function toPascalCase(strWithDash) {
-  return strWithDash[0].toUpperCase() + ReactionRegistry.toCamelCase(strWithDash.slice(1));
-}
-
-//:element, :attribute, :reaction
-(function () {
-  function getModule(module, ClassName) {
-    return module[ClassName] || module.detail?.[ClassName] || window[ClassName];
-  }
-
-  function element(module, _, tag) {
-    customElements.define(tag, getModule(module, toPascalCase(tag)));
-    return module;
-  }
-
-  function attribute(module, _, tag) {
-    customAttributes.define(tag, getModule(module, toPascalCase(tag)));
-    return module;
-  }
-
-  function reaction(module, _, tag) {
-    customReactions.define(tag, getModule(module, ReactionRegistry.toCamelCase(tag)));
-    return module;
-  }
-
-  customReactions.defineAll({
-    "element": element,
-    "reaction": reaction,
-    "attribute": attribute,
-  });
-})();
-
 //import:, ready:, timeout:, raf:
 (function () {
   function dispatchWhenReactionReady(attr, event, delay = 4, i = 0) {
     customReactions.getReactions(attr.allFunctions).length ?
       eventLoop.dispatch(event, attr) :
-      attr._timer = setTimeout(_ => dispatchWhenReactionReady(this, event, delay, ++i), delay ** i);
+      attr._timer = setTimeout(_ => dispatchWhenReactionReady(attr, event, delay, ++i), delay ** i);
   }
 
   class Import extends CustomAttr {
@@ -43,7 +11,7 @@ function toPascalCase(strWithDash) {
       if (!this.value)
         return;
       this._originalValue = this.value;
-      const detail = await import(new URL(this.value, location.href).href);
+      const detail = await import(new URL(this.value, this.baseURI).href);
       if (!this._stopped)
         dispatchWhenReactionReady(this, new CustomEvent(this.type, {detail}), this.suffix[0]);
     }
@@ -156,10 +124,10 @@ function toPascalCase(strWithDash) {
   const throttleRegister = new WeakMap();
 
   customReactions.defineAll({
-    this: function (e) {
+    this: function () {
       return this;
     },
-    window: e => window,
+    window: _ => window,
     e: e => e,
     new: function _new(e, _, constructor, ...args) {
       return new window[ReactionRegistry.toCamelCase(constructor)](...args, e);
@@ -190,6 +158,17 @@ function toPascalCase(strWithDash) {
       const primitive = value instanceof Object ? JSON.stringify(value) : value;
       if (throttleRegister.get(this) !== primitive)
         return throttleRegister.set(this, primitive), value;
+    },
+
+    definetodo: function define(Def, _, tag) {
+      if (Def.prototype instanceof CustomAttr) {
+        customAttributes.define(tag, Def);
+      } else if (Def.prototype instanceof HTMLElement) {
+        customElements.define(tag, Def);
+      } else if (Def instanceof Function) {
+        customReactions.define(tag, Def);
+      } else
+        throw "You cannot define a class that isn't either a CustomAttr, an HTMLElement, or a Function.";
     }
   });
 })();

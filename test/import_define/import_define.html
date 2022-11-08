@@ -1,0 +1,28 @@
+<script src="../../src/customAttributes.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver@1.1.0/startObserver.js"></script>
+<script src="../../src/core.js"></script>
+
+<body
+    import:e.detail.-comp-a.:definetodo_comp-a="./comp-a_attr-b_reaction-c.js"
+    import:e.detail.-attr-b.:definetodo_attr-b="./comp-a_attr-b_reaction-c.js"
+    import:e.detail.reaction-c.:definetodo_reaction-c="./comp-a_attr-b_reaction-c.js"
+>
+<comp-a
+    attr-b:e.type:console.log
+    ready:reaction-c:console.log
+    timeout_100:print-log
+>hello sunshine
+</comp-a>
+
+<script>
+  const res = [];
+  customReactions.defineAll({
+    log: function (e) {
+      res.push(e);
+    },
+    "print-log": function () {
+      console.log(...res.sort(), document.querySelector("comp-a").constructor.name);
+    }
+  })
+</script>
+</body>
