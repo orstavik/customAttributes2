@@ -1,6 +1,14 @@
-<test-html test="import_define.html">
-  <script expected>[["attr-b", "reaction-c", "CompA"]]</script>
+<test-html test="dotNotation.html">
+  <script expected>[
+    "click",
+    "bob",
+    ["yesyes", false],
+    false,
+    "bobsy",
+    ["click", 1, 2]
+  ]</script>
 </test-html>
+
 
 <!-- Note!! You must load the test-html component at the end -->
 <script src="https://cdn.jsdelivr.net/gh/orstavik/TestHTML@v1.0.3/TestHTML.js"></script>

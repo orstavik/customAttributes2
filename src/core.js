@@ -124,21 +124,17 @@
   const throttleRegister = new WeakMap();
 
   customReactions.defineAll({
-    this: function () {
-      return this;
-    },
-    window: _ => window,
-    e: e => e,
     new: function _new(e, _, constructor, ...args) {
       return new window[ReactionRegistry.toCamelCase(constructor)](...args, e);
     },
-    m: function monadish(e, _, prop, method, ...args) {
-      const value = customReactions.getReactions(method)[0].Function.call(this, e, method, ...args);
+    m: function monadish(e, _, prop, ...nestedReaction) {
+      const [{Function, prefix, suffix}] = customReactions.getReactions(nestedReaction.join(":"));
+      const value = Function.call(this, e, prefix, ...suffix);
       if (e instanceof Array) {
-        if (Number.isInteger(+prop)) {
-          e.splice(prop < 0 ? Math.max(e.length + 1 + prop, 0) : Math.min(prop, e.length), 0, value);
-        } else if (!prop) {
+        if (!prop) {
           e.push(value);
+        } else if (Number.isInteger(+prop)) {
+          e.splice(prop < 0 ? Math.max(e.length + 1 + prop, 0) : Math.min(prop, e.length), 0, value);
         }
       } else if (prop)
         e[prop] = value;

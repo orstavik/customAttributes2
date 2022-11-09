@@ -1,3 +1,79 @@
+class DotReaction {
+  static PRIMITIVES = Object.freeze({
+    true: true,
+    false: false,
+    null: null,
+    undefined: undefined
+  });
+
+  static interpretDotPath(dots, e, thiz) {
+    const res = [dots[0] === "e" ? e : dots[0] === "this" ? thiz : window];
+    for (let i = 1; i < dots.length; i++)
+      res[i] = res[i - 1][dots[i]];
+    return res;
+  }
+
+  static interpretDotArgument(dotPart, e, thiz) {
+    const objs = DotReaction.interpretDotPath(dotPart.dots, e, thiz);
+    const last = objs[objs.length - 1];
+    const lastParent = objs[objs.length - 2];
+    return dotPart.getter || !(last instanceof Function) ? last : last.call(lastParent);
+  }
+
+  static parseDotPath(part) {
+    const dots = part.split(".").map(ReactionRegistry.toCamelCase);
+    if (dots[0] !== "e" && dots[0] !== "this" && dots[0] !== "window")
+      dots.unshift("window");
+    return dots;
+  }
+
+  static parsePartDotMode(part) {
+    if (part in DotReaction.PRIMITIVES)
+      return DotReaction.PRIMITIVES[part];
+    if (!isNaN(part))
+      return Number(part);
+    if (part === "e" || part === "this" || part === "window")
+      return {dots: [part]};
+    if (part.indexOf(".") < 0)
+      return part;
+    const getter = part.endsWith(".") ? 1 : 0;
+    const spread = part.startsWith("...") ? 3 : 0;
+    const path = part.substring(spread, part.length - getter);
+    const dots = DotReaction.parseDotPath(path);
+    return {getter, spread, dots};
+  }
+
+  static runDotReaction(e, _, ...dotParts) {
+    const prefix = dotParts[0];
+    const objs = DotReaction.interpretDotPath(prefix.dots, e, this);
+    const last = objs[objs.length - 1];
+    if (prefix.getter || dotParts.length === 1 && !(last instanceof Function))
+      return last;
+    const args = [];
+    for (let i = 1; i < dotParts.length; i++) {
+      const dotPart = dotParts[i];
+      const arg = dotPart?.dots ? DotReaction.interpretDotArgument(dotPart, e, this) : dotPart;
+      dotPart.spread ? args.push(...arg) : args.push(arg);
+    }
+    const lastParent = objs[objs.length - 2]
+    if (last instanceof Function)
+      return last.call(lastParent, ...args);
+    lastParent[prefix.dots[prefix.dots.length - 1]] = args.length === 1 ? args[0] : args;
+    return e;
+  }
+
+  static parseDotReaction(parts) {
+    if (parts[0].indexOf(".") < 0)
+      return;
+    const dotParts = parts.map(DotReaction.parsePartDotMode);
+    if (dotParts[0].spread)
+      throw "spread on prefix does not make sense";
+    if (dotParts[0].length > 1 && dotParts[0].getter)
+      throw "this dot expression has arguments, then the prefix cannot be a getter (end with '.').";
+    return {Function: DotReaction.runDotReaction, prefix: parts, suffix: dotParts};
+  }
+}
+
 class ReactionRegistry {
 
   #register = {};
@@ -13,46 +89,26 @@ class ReactionRegistry {
       this.define(type, Function);
   }
 
-  static #doDots(dots, thiz, e) {
-    dots = dots.split(".");
-    let obj = dots[0] === "e" ? e : dots[0] === "this" ? thiz : window;
-    let parent;
-    for (let i = (obj === window ? 0 : 1); i < dots.length; i++)
-      parent = obj, obj = obj[this.toCamelCase(dots[i])];
-    return {obj, parent};
-  }
-
   static toCamelCase(strWithDash) {
     return strWithDash.replace(/-([a-z])/g, g => g[1].toUpperCase());
   }
 
-  static call(e, prefix, ...args) {
-    let explicitProp = false;
-    if (prefix.endsWith("."))
-      explicitProp = true, prefix = prefix.substring(0, prefix.length - 1);
-    const {obj, parent} = ReactionRegistry.#doDots(prefix, this, e);
-    return !(obj instanceof Function) || explicitProp ? obj : obj.call(parent, ...args, e);
-  }
-
-  static apply(e, prefix, ...args) {
-    const {obj, parent} = ReactionRegistry.#doDots(prefix.substring(3), this, e);
-    return obj.call(parent, ...args, ...e);
-  }
-
   #cache = {"": Object.freeze([])};
+
+  #getListenerReaction([prefix, ...suffix]) {
+    if (this.#register[prefix])
+      return {Function: this.#register[prefix], prefix, suffix};
+  }
 
   getReactions(reactions) {
     if (this.#cache[reactions])
       return this.#cache[reactions];
     const res = [];
-    for (let [prefix, ...suffix] of reactions.split(":").map(str => str.split("_"))) {
-      if (prefix.startsWith("..."))
-        this.#register[prefix] = ReactionRegistry.apply;
-      else if (prefix.indexOf(".") >= 0)
-        this.#register[prefix] = ReactionRegistry.call;
-      else if (!this.#register[prefix])
-        return undefined; //one undefined reaction disables the entire chain reaction
-      res.push({Function: this.#register[prefix], prefix, suffix});
+    for (let parts of reactions.split(":").map(r => r.split("_"))) {
+      const dotReaction = DotReaction.parseDotReaction(parts) || this.#getListenerReaction(parts);
+      if (!dotReaction)
+        return undefined;
+      res.push(dotReaction);
     }
     return this.#cache[reactions] = res;
   }

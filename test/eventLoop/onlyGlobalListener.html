@@ -1,0 +1,14 @@
+<script src="../../src/customAttributes.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver@1.1.0/startObserver.js"></script>
+<script src="../../src/core.js"></script>
+
+<div _click:log></div>
+<div _auxclick:log></div>
+
+<script>
+  customReactions.define("log", e => console.log(e.type));
+  document.body.click();
+  document.body.dispatchEvent(new Event("auxclick"));
+  //these are natively dispatched events from script, and they don't work.
+  //we need to override/monkeypatch the native event dispatch to make this work.
+</script>

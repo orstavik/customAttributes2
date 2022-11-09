@@ -14,7 +14,7 @@
   }
 </style>
 <web-comp timeout_100:style_width_500px>
-  <div slot="one" border-box:this.owner-element:window.get-computed-style:e.width:console.log>
+  <div slot="one" border-box:window.get-computed-style_this.owner-element:console.log_e.width>
     hello
   </div>
   <div slot="two" border-box:logwidth>
@@ -25,7 +25,7 @@
 <template id="webcomp">
   <style>slot { width: 50%; border: 2px solid grey;display: inline-block;}</style>
   <slot w name=one style="width: 25%;"></slot>
-  <slot content-box:e.detail.content-box-size.0.inline-size:throttle:plus_px:this.owner-element.style.set-property_--w
+  <slot content-box:e.detail.content-box-size.0.inline-size:throttle:plus_px:this.owner-element.style.set-property_--w_e
         name=two></slot>
 </template>
 

@@ -1,0 +1,28 @@
+<script src="../../src/customAttributes.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver@1.1.0/startObserver.js"></script>
+<script src="../../src/core.js"></script>
+
+<div _click:console.log_e.type></div>
+<div _click:e.test_bob:console.log_e.test></div>
+
+<div _click:e.prevent-default:console.log_never></div>
+<div _click:console.log_yesyes_e.default-prevented></div>
+
+<div _click:e.time-stamp:window.is-na-n_e:console.log_e></div>
+<div _click:window.test_bobsy:console.log_window.test></div>
+
+<div _click:e_bobsy:console.log_bugg></div>
+
+<div _click:e.type:new_-array:m__e.length:m__e.length:console.log_...e></div>
+
+<!--<div _error:console.log_e.error.message></div>-->
+
+
+<!--<h1 click:e.type:console.log_e="only sunshine">-->
+<!--  <span click:this.value:console.log_e="Hello bug">hello</span>-->
+<!--</h1>-->
+
+<script>
+  // customReactions.define("log", e=>console.log(e.type));
+  eventLoop.dispatch(new Event("click"), document.body);
+</script>
