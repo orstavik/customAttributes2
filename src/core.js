@@ -128,7 +128,7 @@
       return new window[ReactionRegistry.toCamelCase(constructor)](...args, e);
     },
     m: function monadish(e, _, prop, ...nestedReaction) {
-      const [{Function, prefix, suffix}] = customReactions.getReactions(nestedReaction.join(":"));
+      const [{Function, prefix, suffix}] = customReactions.getReactions(nestedReaction.join("_"));
       const value = Function.call(this, e, prefix, ...suffix);
       if (e instanceof Array) {
         if (!prop) {
