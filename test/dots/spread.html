@@ -1,0 +1,9 @@
+<script src="../../src/customAttributes.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver@1.1.0/startObserver.js"></script>
+<script src="../../src/core.js"></script>
+
+<div _click:console.log_...e.detail></div>
+
+<script>
+  eventLoop.dispatch(new CustomEvent("click", {detail: [1, 2]}), document.body);
+</script>

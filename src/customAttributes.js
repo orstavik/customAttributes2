@@ -38,7 +38,9 @@ class DotReaction {
       return part;
     const getter = part.endsWith(".") ? 1 : 0;
     const spread = part.startsWith("...") ? 3 : 0;
-    const path = part.substring(spread, part.length - getter);
+    let path = part.substring(spread, part.length - getter);
+    if(path[0] === ".")
+      path = path.substring(1);
     const dots = DotReaction.parseDotPath(path);
     return {getter, spread, dots};
   }

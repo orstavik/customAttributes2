@@ -1,0 +1,10 @@
+<script src="../../src/customAttributes.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver@1.1.0/startObserver.js"></script>
+<script src="../../src/core.js"></script>
+
+<div _click:window.test_bobsy:console.log_window.test></div>
+<div _click:e_bobsy:console.log_bug2></div>
+
+<script>
+  eventLoop.dispatch(new Event("click"), document.body);
+</script>

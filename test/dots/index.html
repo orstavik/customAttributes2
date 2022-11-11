@@ -1,12 +1,23 @@
+<test-html test="consoleLogEType.html">
+  <script expected>["click"]</script>
+</test-html>
+<test-html test="getterDoubleCall.html">
+  <script expected>[false]</script>
+</test-html>
+<test-html test="assignment.html">
+  <script expected>["bobsy"]</script>
+</test-html>
+<test-html test="dotGetComputedStyle.html">
+  <script expected>["110px"]</script>
+</test-html>
+<test-html test="endsWithDot.html">
+  <script expected>["aFunction", "bFunction", "getComputedStyle"]</script>
+</test-html>
+<test-html test="spread.html">
+  <script expected>[[1, 2]]</script>
+</test-html>
 <test-html test="dotNotation.html">
-  <script expected>[
-    "click",
-    "bob",
-    ["yesyes", false],
-    false,
-    "bobsy",
-    ["click", 1, 2]
-  ]</script>
+  <script expected>[false, "bob", ["expectfalse", false], ["click", 1, 2]]</script>
 </test-html>
 <test-html test="monadDots.html">
   <script expected>[["click", "click"]]</script>

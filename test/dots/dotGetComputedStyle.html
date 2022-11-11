@@ -1,0 +1,16 @@
+<script src="../../src/customAttributes.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver@1.1.0/startObserver.js"></script>
+<script src="../../src/core.js"></script>
+
+<style>
+  div{
+    font-size: 10px;
+    width: calc(100px + 1em);
+  }
+</style>
+
+<div _click:.get-computed-style_this.owner-element:console.log_e.width>hello sunshine</div>
+
+<script>
+  eventLoop.dispatch(new Event("click"), document.body);
+</script>

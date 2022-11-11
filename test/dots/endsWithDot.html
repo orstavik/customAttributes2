@@ -1,0 +1,20 @@
+<script src="../../src/customAttributes.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver@1.1.0/startObserver.js"></script>
+<script src="../../src/core.js"></script>
+
+<body
+    _click:this.owner-element.a.:console.log_e.name
+    _click:e.b.:console.log_e.name
+    _click:.get-computed-style.:console.log_e.name
+>
+hello sunshine
+
+<script>
+  document.body.a = function aFunction() {
+  };
+  const e = new Event("click");
+  e.b = function bFunction() {
+  };
+  eventLoop.dispatch(e, document.body);
+</script>
+</body>
