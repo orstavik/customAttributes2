@@ -1,7 +1,6 @@
 <script src="../../src/customAttributes.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver@1.1.0/startObserver.js"></script>
 <script src="../../src/lib.js"></script>
-<script src="../../src/testLib.js"></script>
 
 <style>
   [checked] {accent-color: yellow;}
@@ -11,7 +10,11 @@
 
 <script type="module">
   customReactions.define("checked", lib.toggleAttr);
-  customReactions.define("log", testLib.logComputedStyle);
+  customReactions.define("log", function logComputedStyle(e, _, suffix) {
+      console.log(getComputedStyle(this.ownerElement)[ReactionRegistry.toCamelCase(suffix)]);
+      return e;
+    }
+  );
 
   const input = document.querySelector("input");
   input.click();

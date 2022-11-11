@@ -1,18 +1,26 @@
 <script src="../../src/customAttributes.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver@1.1.0/startObserver.js"></script>
 <script src="../../src/lib.js"></script>
-<script src="../../src/testLib.js"></script>
+<script src="../../src/core.js"></script>
 
 <style>
   .bob { color: orange; }
 </style>
 
-<div mouseenter:log_color:bob_on:log_color mouseleave:log_color:bob_off:log_color>world</div>
+<div
+    ready:.get-computed-style_this.owner-element:console.log_e.color
+
+    mouseenter:bob_on
+    mouseenter:.get-computed-style_this.owner-element:console.log_e.color
+
+    mouseleave:bob_off
+    mouseleave:.get-computed-style_this.owner-element:console.log_e.color
+>world</div>
 
 <script type="module">
 
   customReactions.define("bob", lib.cssClass);
-  customReactions.define("log", testLib.logComputedStyle);
+  // customReactions.define("log", testLib.logComputedStyle);
 
   const div = document.querySelector("div");
   div.dispatchEvent(new MouseEvent("mouseenter"));

@@ -1,7 +1,6 @@
 <script src="../../src/customAttributes.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver@1.1.0/startObserver.js"></script>
 <script src="../../src/lib.js"></script>
-<script src="../../src/testLib.js"></script>
 
 <style>
   .hasnet { color: green; }
@@ -13,7 +12,10 @@
 
   customReactions.defineAll({
     "hasnet": lib.cssClass,
-    "log": testLib.logComputedStyle
+    "log": function logComputedStyle(e, _, suffix) {
+      console.log(getComputedStyle(this.ownerElement)[ReactionRegistry.toCamelCase(suffix)]);
+      return e;
+    }
   });
   window.dispatchEvent(new Event("online"));
   window.dispatchEvent(new Event("offline"));
