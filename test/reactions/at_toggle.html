@@ -8,8 +8,8 @@
   }
 </style>
 
-<div toggle:open:log_display>
-  <h1 click:log_display:toggle>hello</h1>
+<div toggle:log_display:open:log_display>
+  <h1 click:toggle>hello</h1>
   <p>sunshine</p>
   <p>world</p>
 </div>
@@ -18,7 +18,9 @@
   customReactions.defineAll({
     "open": lib.toggleAttr,
     "toggle": lib.newEvent,
-    "log": e => (console.log(getComputedStyle(document.querySelector("p")).display), e)
+    "log": function log(e) {
+      console.log(getComputedStyle(this.ownerElement.children[1]).display); return e;
+    }
   });
 
   document.querySelector("h1").click();
