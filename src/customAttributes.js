@@ -9,22 +9,39 @@ class CustomAttr extends Attr {
     return this.name.match(/_?([^:]+)/)[1].split("_").slice(1);
   }
 
-  get reaction() {             //todo rename to listeners??
-    const value = this.name.split("::")[0].split(":").slice(1)?.join(":");
-    Object.defineProperty(this, "reaction", {value, writable: false, configurable: true});
+  get chain() {
+    const value = this.name.split(":").slice(1);
+    Object.defineProperty(this, "chain", {value, writable: false, configurable: true});
     return value;
   }
 
   get defaultAction() {
-    const value = this.name.split("::")[1];
-    Object.defineProperty(this, "defaultAction", {value, writable: false, configurable: true});
+    const value = this.chain?.indexOf("") + 1 || 0;
+    Object.defineProperty(this, "da", {value, writable: false, configurable: true});
     return value;
   }
 
-  get allFunctions() {
-    const value = this.name.split(":").slice(1)?.filter(r => r).join(":");
-    Object.defineProperty(this, "allFunctions", {value, writable: false, configurable: true});
+  get reactions() {
+    const value = [];
+    for (let reaction of this.chain) {
+      if (reaction === "") {
+        value.push("");
+        continue;
+      }
+      if(reaction === ""){
+
+      }
+      const dotReaction = customReactions.getReaction(reaction);
+      if (dotReaction === undefined)
+        return undefined;
+      value.push(dotReaction);
+    }
+    Object.defineProperty(this, "reactions", {value, writable: false, configurable: true});
     return value;
+  }
+
+  get ready() {
+    return this.reactions !== undefined;
   }
 }
 
@@ -144,19 +161,12 @@ class ReactionRegistry {
     return strWithDash.replace(/-([a-z])/g, g => g[1].toUpperCase());
   }
 
-  #cache = {"": Object.freeze([])};
+  #cache = {/*"": ""*/}; //todo here we need a blank object
 
-  getReactions(reactions) {
-    if (this.#cache[reactions])
-      return this.#cache[reactions];
-    const res = [];
-    for (let reaction of reactions.split(":")) {
-      const dotReaction = Reaction.create(reaction, this.#register);
-      if (!dotReaction)
-        return undefined;
-      res.push(dotReaction);
-    }
-    return this.#cache[reactions] = res;
+  getReaction(reaction) {
+    if (this.#cache[reaction])
+      return this.#cache[reaction];
+    return this.#cache[reaction] = Reaction.create(reaction, this.#register);
   }
 }
 
@@ -326,7 +336,7 @@ document.documentElement.setAttributeNode(document.createAttribute("error::conso
           EventLoop.bubble(target, event);
         //todo if (target?.isConnected === false) then bubble without default action?? I think that we need the global listeners to run for disconnected targets, as this will make them able to trigger _error for example. I also think that attributes on disconnected ownerElements should still catch the _global events. Don't see why not.
         else if (target instanceof Attr)
-          EventLoop.#runReactions(customReactions.getReactions(target.allFunctions) || [], event, target, undefined);
+          EventLoop.#runReactions(target.reactions?.filter(r => r) || [], event, target, undefined);
         this.#eventLoop.shift();
       }
     }
@@ -338,7 +348,7 @@ document.documentElement.setAttributeNode(document.createAttribute("error::conso
           if (attr.type === event.type && attr.name[0] !== "_") {
             if (attr.defaultAction && (event.defaultAction || event.defaultPrevented))
               continue;
-            const res = EventLoop.#runReactions(customReactions.getReactions(attr.reaction) || [], event, attr, !!attr.defaultAction);
+            const res = EventLoop.#runReactions((attr.defaultAction ? attr.reactions.slice(0, attr.defaultAction - 1) : attr.reactions) || [], event, attr, !!attr.defaultAction);
             if (res !== undefined && attr.defaultAction)
               event.defaultAction = {attr, res, target};
           }
@@ -347,11 +357,11 @@ document.documentElement.setAttributeNode(document.createAttribute("error::conso
       const prevented = event.defaultPrevented;     //global listeners can't call .preventDefault()
       //eventToTarget.set(event, theTopMostTarget); //not necessary, bubble already set it
       for (let attr of customAttributes.globalListeners(event.type))
-        EventLoop.#runReactions(customReactions.getReactions(attr.allFunctions) || [], event, attr, undefined);
+        EventLoop.#runReactions(attr.reactions?.filter(r => r) || [], event, attr, undefined);
       if (event.defaultAction && !prevented) {
         const {attr, res, target} = event.defaultAction;
         eventToTarget.set(event, target);
-        EventLoop.#runReactions(customReactions.getReactions(attr.defaultAction) || [], res, attr, undefined);
+        EventLoop.#runReactions(attr.reactions, res, attr, undefined, attr.defaultAction);
       }
     }
 
