@@ -1,0 +1,16 @@
+<script src="../../src/customAttributes.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver@1.1.0/startObserver.js"></script>
+<script src="../../src/core.js"></script>
+<script>
+  window.console.error = (...args) => console.log(args.join("|"));
+</script>
+
+<h1 click:asyncthrow_asyncoops>sunshine</h1>
+
+<script>
+  customReactions.define("asyncthrow", async function (e, _, msg) {
+    await new Promise(r => setTimeout(r, 50));
+    throw msg;
+  });
+  document.querySelector("h1").click();
+</script>

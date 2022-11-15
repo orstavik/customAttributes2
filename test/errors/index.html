@@ -1,3 +1,14 @@
+<test-html test="click_error.html">
+  <script expected>["throw_oops\n|oops"]</script>
+</test-html>
+<test-html test="click_ok_error.html">
+  <script expected>["ok", "throw_oops\n|oops"]</script>
+</test-html>
+<test-html test="click_asyncerror.html">
+  <script expected>["asyncthrow_asyncoops\n|asyncoops"]</script>
+</test-html>
+
+
 <test-html test="customReactions_define.html">
   <script expected>[
     "The Reaction type: \"co\" is already defined."

@@ -1,0 +1,19 @@
+<script src="../../src/customAttributes.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver@1.1.0/startObserver.js"></script>
+<script src="../../src/core.js"></script>
+
+<script>
+  window.console.error = (...args) => console.log(args.join("|"));
+</script>
+
+<h1 click:ok:throw_oops>hello</h1>
+<script>
+  customReactions.define("ok", function (e) {
+    console.log("ok");
+    return e;
+  });
+  customReactions.define("throw", function (e, _, msg) {
+    throw msg;
+  });
+  document.querySelector("h1").click();
+</script>

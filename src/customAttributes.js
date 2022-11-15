@@ -1,3 +1,21 @@
+class Reaction {
+  constructor(Function, prefix, suffix) {
+    this.Function = Function;
+    this.prefix = prefix;
+    this.suffix = suffix;
+  }
+
+  run(at, e) {
+    return this.Function.call(at, e, this.prefix, ...this.suffix);
+  }
+
+  static create(reaction, register) {
+    const parts = reaction.split("_");
+    const [prefix, ...suffix] = parts;
+    return DotReaction.parseDotReaction(parts) || register[prefix] && new Reaction(register[prefix], prefix, suffix);
+  }
+}
+
 class DotReaction {
   static PRIMITIVES = Object.freeze({
     true: true,
@@ -39,7 +57,7 @@ class DotReaction {
     const getter = part.endsWith(".") ? 1 : 0;
     const spread = part.startsWith("...") ? 3 : 0;
     let path = part.substring(spread, part.length - getter);
-    if(path[0] === ".")
+    if (path[0] === ".")
       path = path.substring(1);
     const dots = DotReaction.parseDotPath(path);
     return {getter, spread, dots};
@@ -72,7 +90,7 @@ class DotReaction {
       throw "spread on prefix does not make sense";
     if (dotParts[0].length > 1 && dotParts[0].getter)
       throw "this dot expression has arguments, then the prefix cannot be a getter (end with '.').";
-    return {Function: DotReaction.runDotReaction, prefix: parts, suffix: dotParts};
+    return new Reaction(DotReaction.runDotReaction, parts, dotParts);
   }
 }
 
@@ -81,6 +99,7 @@ class ReactionRegistry {
   #register = {};
 
   define(type, Function) {
+    //todo add restriction that it cannot contain `.`
     if (type in this.#register)
       throw `The Reaction type: "${type}" is already defined.`;
     this.#register[type] = Function;
@@ -97,17 +116,12 @@ class ReactionRegistry {
 
   #cache = {"": Object.freeze([])};
 
-  #getListenerReaction([prefix, ...suffix]) {
-    if (this.#register[prefix])
-      return {Function: this.#register[prefix], prefix, suffix};
-  }
-
   getReactions(reactions) {
     if (this.#cache[reactions])
       return this.#cache[reactions];
     const res = [];
-    for (let parts of reactions.split(":").map(r => r.split("_"))) {
-      const dotReaction = DotReaction.parseDotReaction(parts) || this.#getListenerReaction(parts);
+    for (let reaction of reactions.split(":")) {
+      const dotReaction = Reaction.create(reaction, this.#register);
       if (!dotReaction)
         return undefined;
       res.push(dotReaction);
@@ -123,7 +137,7 @@ class CustomAttr extends Attr {
     return this.name.match(/_?([^:]+)/)[1].split("_").slice(1);
   }
 
-  get reaction() {
+  get reaction() {             //todo rename to listeners??
     const value = this.name.split("::")[0].split(":").slice(1)?.join(":");
     Object.defineProperty(this, "reaction", {value, writable: false, configurable: true});
     return value;
@@ -241,7 +255,7 @@ class ReactionErrorEvent extends ErrorEvent {
   #at;
 
   constructor(error, at, reactions, i, async) {
-    super("error", {error});
+    super("error", {error, cancelable: true});
     this.#reactions = reactions;
     this.#i = i;
     this.#at = at;
@@ -255,7 +269,13 @@ class ReactionErrorEvent extends ErrorEvent {
   get reaction() {
     return this.#reactions[this.#i].prefix + this.#reactions[this.#i].suffix.map(s => "_" + s);
   }
+
+  get message() {
+    return this.reaction + "\n";
+  }
 }
+
+document.documentElement.setAttributeNode(document.createAttribute("error::console.error_e.message_e.error"));
 
 (function () {
 
@@ -306,7 +326,7 @@ class ReactionErrorEvent extends ErrorEvent {
           EventLoop.bubble(target, event);
         //todo if (target?.isConnected === false) then bubble without default action?? I think that we need the global listeners to run for disconnected targets, as this will make them able to trigger _error for example. I also think that attributes on disconnected ownerElements should still catch the _global events. Don't see why not.
         else if (target instanceof Attr)
-          EventLoop.#callReactions(target.allFunctions, target, event);
+          EventLoop.#runReactions(customReactions.getReactions(target.allFunctions) || [], event, target, undefined);
         this.#eventLoop.shift();
       }
     }
@@ -318,7 +338,7 @@ class ReactionErrorEvent extends ErrorEvent {
           if (attr.type === event.type && attr.name[0] !== "_") {
             if (attr.defaultAction && (event.defaultAction || event.defaultPrevented))
               continue;
-            const res = EventLoop.#callReactions(attr.reaction, attr, event, !!attr.defaultAction);
+            const res = EventLoop.#runReactions(customReactions.getReactions(attr.reaction) || [], event, attr, !!attr.defaultAction);
             if (res !== undefined && attr.defaultAction)
               event.defaultAction = {attr, res, target};
           }
@@ -327,23 +347,19 @@ class ReactionErrorEvent extends ErrorEvent {
       const prevented = event.defaultPrevented;     //global listeners can't call .preventDefault()
       //eventToTarget.set(event, theTopMostTarget); //not necessary, bubble already set it
       for (let attr of customAttributes.globalListeners(event.type))
-        EventLoop.#callReactions(attr.allFunctions, attr, event);
+        EventLoop.#runReactions(customReactions.getReactions(attr.allFunctions) || [], event, attr, undefined);
       if (event.defaultAction && !prevented) {
         const {attr, res, target} = event.defaultAction;
         eventToTarget.set(event, target);
-        EventLoop.#callReactions(attr.defaultAction, attr, res);
+        EventLoop.#runReactions(customReactions.getReactions(attr.defaultAction) || [], res, attr, undefined);
       }
     }
 
-    static #callReactions(reactions, at, event, syncOnly = false) {
-      return this.#runReactions(customReactions.getReactions(reactions) || [], event, at, syncOnly, 0);
-    }
-
-    static #runReactions(reactions, event, at, syncOnly, start) {
+    static #runReactions(reactions, event, at, syncOnly = false, start = 0) {
       for (let i = start; i < reactions.length; i++) {
-        let {Function, prefix, suffix} = reactions[i];
+        const reaction = reactions[i];
         try {
-          event = Function.call(at, event, prefix, ...suffix);
+          event = reaction.run(at, event);
           if (event === undefined)
             return;
           if (event instanceof Promise) {
@@ -351,11 +367,13 @@ class ReactionErrorEvent extends ErrorEvent {
               throw new SyntaxError("You cannot use reactions that return Promises before default actions.");
             event
               .then(event => this.#runReactions(reactions, event, at, syncOnly, i + 1))
+              //todo we can pass in the input to the reaction to the error event here too
               .catch(error => eventLoop.dispatch(new ReactionErrorEvent(error, at, reactions, i, true), at.ownerElement));
             return;
           }
-        } catch (error) {
-          return eventLoop.dispatch(new ReactionErrorEvent(error, at, reactions, i, start === 0), at.ownerElement);
+        } catch (error) {    //todo we can pass in the input to the error event here.
+          if (start !== 0) console.info("omg wtf")
+          return eventLoop.dispatch(new ReactionErrorEvent(error, at, reactions, i, start !== 0), at.ownerElement);
         }
       }
       return event;
