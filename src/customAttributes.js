@@ -17,7 +17,7 @@ class CustomAttr extends Attr {
 
   get defaultAction() {
     const value = this.chain?.indexOf("") + 1 || 0;
-    Object.defineProperty(this, "da", {value, writable: false, configurable: true});
+    Object.defineProperty(this, "defaultAction", {value, writable: false, configurable: true});
     return value;
   }
 
