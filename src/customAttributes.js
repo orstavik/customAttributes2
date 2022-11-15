@@ -45,25 +45,24 @@ class Reaction {
     return this.Function.call(at, e, ...this.parts);
   }
 
-  get prefix(){
+  get prefix() {
     return this.parts[0];
   }
 
-  get suffix(){
+  get suffix() {
     return this.parts.slice(1);
-  }
-
-  static create(reaction, register) {
-    const parts = reaction.split("_");
-    return DotReaction.parseDotReaction(parts) || register[parts[0]] && new Reaction(register[parts[0]], parts);
   }
 }
 
 class DotReaction extends Reaction {
 
-  constructor(dotParts, parts) {
+  constructor(parts) {
     super(undefined, parts);
-    this.dotParts = dotParts;
+    this.dotParts = parts.map(DotReaction.parsePartDotMode);
+    if (this.dotParts[0].spread)
+      throw "spread on prefix does not make sense";
+    if (this.dotParts[0].length > 1 && this.dotParts[0].getter)
+      throw "this dot expression has arguments, then the prefix cannot be a getter (end with '.').";
   }
 
   run(at, e) {
@@ -86,25 +85,13 @@ class DotReaction extends Reaction {
     return e;
   }
 
-  static PRIMITIVES = Object.freeze({
-    true: true,
-    false: false,
-    null: null,
-    undefined: undefined
-  });
 
+  //class DotPath
   static interpretDotPath(dots, e, thiz) {
     const res = [dots[0] === "e" ? e : dots[0] === "this" ? thiz : window];
     for (let i = 1; i < dots.length; i++)
       res[i] = res[i - 1][dots[i]];
     return res;
-  }
-
-  static interpretDotArgument(dotPart, e, thiz) {
-    const objs = DotReaction.interpretDotPath(dotPart.dots, e, thiz);
-    const last = objs[objs.length - 1];
-    const lastParent = objs[objs.length - 2];
-    return dotPart.getter || !(last instanceof Function) ? last : last.call(lastParent);
   }
 
   static parseDotPath(part) {
@@ -114,6 +101,19 @@ class DotReaction extends Reaction {
     return dots;
   }
 
+  static interpretDotArgument(dotPart, e, thiz) {
+    const objs = DotReaction.interpretDotPath(dotPart.dots, e, thiz);
+    const last = objs[objs.length - 1];
+    const lastParent = objs[objs.length - 2];
+    return dotPart.getter || !(last instanceof Function) ? last : last.call(lastParent);
+  }
+
+  static PRIMITIVES = Object.freeze({
+    true: true,
+    false: false,
+    null: null,
+    undefined: undefined
+  });
   static parsePartDotMode(part) {
     if (part in DotReaction.PRIMITIVES)
       return DotReaction.PRIMITIVES[part];
@@ -123,6 +123,10 @@ class DotReaction extends Reaction {
       return {dots: [part]};
     if (part.indexOf(".") < 0)
       return part;
+    return DotReaction.makeDots(part);
+  }
+
+  static makeDots(part) {
     const getter = part.endsWith(".") ? 1 : 0;
     const spread = part.startsWith("...") ? 3 : 0;
     let path = part.substring(spread, part.length - getter);
@@ -130,17 +134,6 @@ class DotReaction extends Reaction {
       path = path.substring(1);
     const dots = DotReaction.parseDotPath(path);
     return {getter, spread, dots};
-  }
-
-  static parseDotReaction(parts) {
-    if (parts[0].indexOf(".") < 0)
-      return;
-    const dotParts = parts.map(DotReaction.parsePartDotMode);  //todo move this into the constructor??
-    if (dotParts[0].spread)
-      throw "spread on prefix does not make sense";
-    if (dotParts[0].length > 1 && dotParts[0].getter)
-      throw "this dot expression has arguments, then the prefix cannot be a getter (end with '.').";
-    return new DotReaction(dotParts, parts);
   }
 }
 
@@ -167,7 +160,13 @@ class ReactionRegistry {
   #cache = {"": ""};
 
   getReaction(reaction) {
-    return this.#cache[reaction] ??= Reaction.create(reaction, this.#register);
+    return this.#cache[reaction] ??= this.#create(reaction);
+  }
+
+  #create(reaction) {
+    const parts = reaction.split("_");
+    return parts[0].indexOf(".") >= 0 ? new DotReaction(parts) :
+      this.#register[parts[0]] && new Reaction(this.#register[parts[0]], parts);
   }
 }
 
