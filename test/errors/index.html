@@ -1,11 +1,11 @@
 <test-html test="click_error.html">
-  <script expected>["throw_oops\n|oops"]</script>
+  <script expected>[["<h1 click:==>throw_oops<==>", "oops"]]</script>
 </test-html>
 <test-html test="click_ok_error.html">
-  <script expected>["ok", "throw_oops\n|oops"]</script>
+  <script expected>["ok", ["<h1 click:ok:==>throw_oops<==>", "oops"]]</script>
 </test-html>
 <test-html test="click_asyncerror.html">
-  <script expected>["asyncthrow_asyncoops\n|asyncoops"]</script>
+  <script expected>[["ASYNC<h1 click:==>asyncthrow_asyncoops<==>", "asyncoops"]]</script>
 </test-html>
 
 

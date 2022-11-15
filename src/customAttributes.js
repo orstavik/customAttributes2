@@ -32,6 +32,12 @@ class CustomAttr extends Attr {
   get ready() {
     return this.reactions !== undefined;
   }
+
+  errorString(i) {  //todo this.ownerElement can void when the error is printed..
+    const chain = this.chain.slice(0);
+    chain[i] = `==>${chain[i]}<==`;
+    return `<${this.ownerElement?.tagName.toLowerCase()} ${this.name.split(":")[0]}:${chain.join(":")}>`;
+  }
 }
 
 class Reaction {
@@ -116,12 +122,12 @@ class DotReaction extends Reaction {
   }
 
   static parsePartDotMode(part) {
-    const PRIMITIVES = Object.freeze({
+    const PRIMITIVES = {
       true: true,
       false: false,
       null: null,
       undefined: undefined
-    });
+    };
     if (part in PRIMITIVES)
       return PRIMITIVES[part];
     if (!isNaN(part))
@@ -255,28 +261,20 @@ class AttributeRegistry {
 window.customAttributes = new AttributeRegistry();
 
 class ReactionErrorEvent extends ErrorEvent {
-  #reactions;
-  #i;
-  #at;
 
-  constructor(error, at, reactions, i, async) {
+  constructor(error, at, i, async) {
     super("error", {error, cancelable: true});
-    this.#reactions = reactions;
-    this.#i = i;
-    this.#at = at;
+    this.pos = i;
+    this.at = at;
     this.async = async;
   }
 
   get attribute() {
-    return this.#at;
-  }
-
-  get reaction() {
-    return this.#reactions[this.#i].prefix + this.#reactions[this.#i].suffix.map(s => "_" + s);
+    return this.at;
   }
 
   get message() {
-    return this.reaction + "\n";
+    return (this.async ? "ASYNC" : "") + this.at.errorString(this.pos);
   }
 }
 
@@ -377,12 +375,12 @@ document.documentElement.setAttributeNode(document.createAttribute("error::conso
             event
               .then(event => this.#runReactions(reactions, event, at, false, i + 1))
               //todo we can pass in the input to the reaction to the error event here too
-              .catch(error => eventLoop.dispatch(new ReactionErrorEvent(error, at, reactions, i, true), at.ownerElement));
+              .catch(error => eventLoop.dispatch(new ReactionErrorEvent(error, at, i, true), at.ownerElement));
             return;
           }
         } catch (error) {    //todo we can pass in the input to the error event here.
           if (start !== 0) console.info("omg wtf")
-          return eventLoop.dispatch(new ReactionErrorEvent(error, at, reactions, i, start !== 0), at.ownerElement);
+          return eventLoop.dispatch(new ReactionErrorEvent(error, at, i, start !== 0), at.ownerElement);
         }
       }
       return event;
