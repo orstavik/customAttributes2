@@ -40,10 +40,6 @@ class CustomAttr extends Attr {
 
 class Reaction {
 
-  static #emptyReaction = new (class EmptyReaction{
-    run(at, e){return e;}
-  })();
-
   constructor(Function, prefix, suffix) {
     this.Function = Function;
     this.prefix = prefix;
@@ -55,7 +51,7 @@ class Reaction {
   }
 
   static create(reaction, register) {
-    if(reaction === "")
+    if (reaction === "")
       return reaction;
     const parts = reaction.split("_");
     const [prefix, ...suffix] = parts;
@@ -346,7 +342,7 @@ document.documentElement.setAttributeNode(document.createAttribute("error::conso
           if (attr.type === event.type && attr.name[0] !== "_") {
             if (attr.defaultAction && (event.defaultAction || event.defaultPrevented))
               continue;
-            const res = EventLoop.#runReactions((attr.defaultAction ? attr.reactions.slice(0, attr.defaultAction - 1) : attr.reactions), event, attr, !!attr.defaultAction);
+            const res = EventLoop.#runReactions(attr.reactions, event, attr, !!attr.defaultAction);
             if (res !== undefined && attr.defaultAction)
               event.defaultAction = {attr, res, target};
           }
@@ -355,18 +351,20 @@ document.documentElement.setAttributeNode(document.createAttribute("error::conso
       const prevented = event.defaultPrevented;     //global listeners can't call .preventDefault()
       //eventToTarget.set(event, theTopMostTarget); //not necessary, bubble already set it
       for (let attr of customAttributes.globalListeners(event.type))
-        EventLoop.#runReactions(attr.reactions , event, attr, undefined);
+        EventLoop.#runReactions(attr.reactions, event, attr, false);
       if (event.defaultAction && !prevented) {
         const {attr, res, target} = event.defaultAction;
         eventToTarget.set(event, target);
-        EventLoop.#runReactions(attr.reactions, res, attr, undefined, attr.defaultAction);
+        EventLoop.#runReactions(attr.reactions, res, attr, false, attr.defaultAction);
       }
     }
 
     static #runReactions(reactions = [], event, at, syncOnly = false, start = 0) {
       for (let i = start; i < reactions.length; i++) {
         const reaction = reactions[i];
-        if(!reaction)
+        if (!reaction && syncOnly)
+          return event;
+        else if (!reaction)
           continue;
         try {
           event = reaction.run(at, event);
@@ -376,7 +374,7 @@ document.documentElement.setAttributeNode(document.createAttribute("error::conso
             if (syncOnly)
               throw new SyntaxError("You cannot use reactions that return Promises before default actions.");
             event
-              .then(event => this.#runReactions(reactions, event, at, syncOnly, i + 1))
+              .then(event => this.#runReactions(reactions, event, at, false, i + 1))
               //todo we can pass in the input to the reaction to the error event here too
               .catch(error => eventLoop.dispatch(new ReactionErrorEvent(error, at, reactions, i, true), at.ownerElement));
             return;
