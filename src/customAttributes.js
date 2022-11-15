@@ -55,20 +55,6 @@ class Reaction {
 }
 
 class DotPath {
-  //class DotPath
-  interpret(e, attr) {
-    const res = [this.dots[0] === "e" ? e : this.dots[0] === "this" ? attr : window];
-    for (let i = 1; i < this.dots.length; i++)
-      res[i] = res[i - 1][this.dots[i]];
-    return res;
-  }
-
-  interpretAsArgument(e, attr) {
-    const objs = this.dots.interpret(e, attr);
-    const last = objs[objs.length - 1];
-    const lastParent = objs[objs.length - 2];
-    return this.getter || !(last instanceof Function) ? last : last.call(lastParent);
-  }
 
   constructor(part) {
     const getter = part.endsWith(".") ? 1 : 0;
@@ -81,6 +67,20 @@ class DotPath {
     this.dots = path.split(".").map(ReactionRegistry.toCamelCase);
     if (this.dots[0] !== "e" && this.dots[0] !== "this" && this.dots[0] !== "window")
       this.dots.unshift("window");
+  }
+
+  interpret(e, attr) {
+    const res = [this.dots[0] === "e" ? e : this.dots[0] === "this" ? attr : window];
+    for (let i = 1; i < this.dots.length; i++)
+      res[i] = res[i - 1][this.dots[i]];
+    return res;
+  }
+
+  interpretDotArgument( e, attr) {
+    const objs = this.interpret(e, attr);
+    const last = objs[objs.length - 1];
+    const lastParent = objs[objs.length - 2];
+    return this.getter || !(last instanceof Function) ? last : last.call(lastParent);
   }
 }
 
@@ -105,7 +105,7 @@ class DotReaction extends Reaction {
     const args = [];
     for (let i = 1; i < dotParts.length; i++) {
       const dotPart = dotParts[i];
-      const arg = dotPart?.dots ? DotReaction.interpretDotArgument(dotPart, e, at) : dotPart;
+      const arg = dotPart?.dots ? dotPart.interpretDotArgument(e, at) : dotPart;
       dotPart.spread ? args.push(...arg) : args.push(arg);
     }
     const lastParent = objs[objs.length - 2]
@@ -113,14 +113,6 @@ class DotReaction extends Reaction {
       return last.call(lastParent, ...args);
     lastParent[prefix.dots[prefix.dots.length - 1]] = args.length === 1 ? args[0] : args;
     return e;
-  }
-
-
-  static interpretDotArgument(dotPart, e, attr) {
-    const objs = dotPart.interpret(e, attr);
-    const last = objs[objs.length - 1];
-    const lastParent = objs[objs.length - 2];
-    return dotPart.getter || !(last instanceof Function) ? last : last.call(lastParent);
   }
 
   static PRIMITIVES = Object.freeze({
