@@ -24,13 +24,6 @@ class CustomAttr extends Attr {
   get reactions() {
     const value = [];
     for (let reaction of this.chain) {
-      if (reaction === "") {
-        value.push("");
-        continue;
-      }
-      if(reaction === ""){
-
-      }
       const dotReaction = customReactions.getReaction(reaction);
       if (dotReaction === undefined)
         return undefined;
@@ -46,6 +39,11 @@ class CustomAttr extends Attr {
 }
 
 class Reaction {
+
+  static #emptyReaction = new (class EmptyReaction{
+    run(at, e){return e;}
+  })();
+
   constructor(Function, prefix, suffix) {
     this.Function = Function;
     this.prefix = prefix;
@@ -57,6 +55,8 @@ class Reaction {
   }
 
   static create(reaction, register) {
+    if(reaction === "")
+      return reaction;
     const parts = reaction.split("_");
     const [prefix, ...suffix] = parts;
     return DotReaction.parseDotReaction(parts) || register[prefix] && new Reaction(register[prefix], prefix, suffix);
@@ -161,12 +161,10 @@ class ReactionRegistry {
     return strWithDash.replace(/-([a-z])/g, g => g[1].toUpperCase());
   }
 
-  #cache = {/*"": ""*/}; //todo here we need a blank object
+  #cache = {"": ""}; //todo here we need a blank object
 
   getReaction(reaction) {
-    if (this.#cache[reaction])
-      return this.#cache[reaction];
-    return this.#cache[reaction] = Reaction.create(reaction, this.#register);
+    return this.#cache[reaction] ??= Reaction.create(reaction, this.#register);
   }
 }
 
