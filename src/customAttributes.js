@@ -36,7 +36,7 @@ class CustomAttr extends Attr {
 
 class Reaction {
 
-  constructor(Function, parts) {
+  constructor(parts, Function) {
     this.Function = Function;
     this.parts = parts;
   }
@@ -76,7 +76,7 @@ class DotPath {
     return res;
   }
 
-  interpretDotArgument( e, attr) {
+  interpretDotArgument(e, attr) {
     const objs = this.interpret(e, attr);
     const last = objs[objs.length - 1];
     const lastParent = objs[objs.length - 2];
@@ -87,7 +87,7 @@ class DotPath {
 class DotReaction extends Reaction {
 
   constructor(parts) {
-    super(undefined, parts);
+    super(parts);
     this.dotParts = parts.map(DotReaction.parsePartDotMode);
     if (this.dotParts[0].spread)
       throw "spread on prefix does not make sense";
@@ -115,16 +115,15 @@ class DotReaction extends Reaction {
     return e;
   }
 
-  static PRIMITIVES = Object.freeze({
-    true: true,
-    false: false,
-    null: null,
-    undefined: undefined
-  });
-
   static parsePartDotMode(part) {
-    if (part in DotReaction.PRIMITIVES)
-      return DotReaction.PRIMITIVES[part];
+    const PRIMITIVES = Object.freeze({
+      true: true,
+      false: false,
+      null: null,
+      undefined: undefined
+    });
+    if (part in PRIMITIVES)
+      return PRIMITIVES[part];
     if (!isNaN(part))
       return Number(part);
     if (part === "e" || part === "this" || part === "window" || part.indexOf(".") >= 0)
@@ -162,7 +161,7 @@ class ReactionRegistry {
   #create(reaction) {
     const parts = reaction.split("_");
     return parts[0].indexOf(".") >= 0 ? new DotReaction(parts) :
-      this.#register[parts[0]] && new Reaction(this.#register[parts[0]], parts);
+      this.#register[parts[0]] && new Reaction(parts, this.#register[parts[0]]);
   }
 }
 
