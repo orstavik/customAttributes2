@@ -54,6 +54,36 @@ class Reaction {
   }
 }
 
+class DotPath {
+  //class DotPath
+  interpret(e, attr) {
+    const res = [this.dots[0] === "e" ? e : this.dots[0] === "this" ? attr : window];
+    for (let i = 1; i < this.dots.length; i++)
+      res[i] = res[i - 1][this.dots[i]];
+    return res;
+  }
+
+  interpretAsArgument(e, attr) {
+    const objs = this.dots.interpret(e, attr);
+    const last = objs[objs.length - 1];
+    const lastParent = objs[objs.length - 2];
+    return this.getter || !(last instanceof Function) ? last : last.call(lastParent);
+  }
+
+  constructor(part) {
+    const getter = part.endsWith(".") ? 1 : 0;
+    const spread = part.startsWith("...") ? 3 : 0;
+    let path = part.substring(spread, part.length - getter);
+    if (path[0] === ".")
+      path = path.substring(1);
+    this.getter = getter;
+    this.spread = spread;
+    this.dots = path.split(".").map(ReactionRegistry.toCamelCase);
+    if (this.dots[0] !== "e" && this.dots[0] !== "this" && this.dots[0] !== "window")
+      this.dots.unshift("window");
+  }
+}
+
 class DotReaction extends Reaction {
 
   constructor(parts) {
@@ -68,7 +98,7 @@ class DotReaction extends Reaction {
   run(at, e) {
     const dotParts = this.dotParts;
     const prefix = dotParts[0];
-    const objs = DotReaction.interpretDotPath(prefix.dots, e, at);
+    const objs = prefix.interpret(e, at);
     const last = objs[objs.length - 1];
     if (prefix.getter || dotParts.length === 1 && !(last instanceof Function))
       return last;
@@ -86,23 +116,8 @@ class DotReaction extends Reaction {
   }
 
 
-  //class DotPath
-  static interpretDotPath(dots, e, thiz) {
-    const res = [dots[0] === "e" ? e : dots[0] === "this" ? thiz : window];
-    for (let i = 1; i < dots.length; i++)
-      res[i] = res[i - 1][dots[i]];
-    return res;
-  }
-
-  static parseDotPath(part) {
-    const dots = part.split(".").map(ReactionRegistry.toCamelCase);
-    if (dots[0] !== "e" && dots[0] !== "this" && dots[0] !== "window")
-      dots.unshift("window");
-    return dots;
-  }
-
-  static interpretDotArgument(dotPart, e, thiz) {
-    const objs = DotReaction.interpretDotPath(dotPart.dots, e, thiz);
+  static interpretDotArgument(dotPart, e, attr) {
+    const objs = dotPart.interpret(e, attr);
     const last = objs[objs.length - 1];
     const lastParent = objs[objs.length - 2];
     return dotPart.getter || !(last instanceof Function) ? last : last.call(lastParent);
@@ -114,26 +129,15 @@ class DotReaction extends Reaction {
     null: null,
     undefined: undefined
   });
+
   static parsePartDotMode(part) {
     if (part in DotReaction.PRIMITIVES)
       return DotReaction.PRIMITIVES[part];
     if (!isNaN(part))
       return Number(part);
-    if (part === "e" || part === "this" || part === "window")
-      return {dots: [part]};
-    if (part.indexOf(".") < 0)
-      return part;
-    return DotReaction.makeDots(part);
-  }
-
-  static makeDots(part) {
-    const getter = part.endsWith(".") ? 1 : 0;
-    const spread = part.startsWith("...") ? 3 : 0;
-    let path = part.substring(spread, part.length - getter);
-    if (path[0] === ".")
-      path = path.substring(1);
-    const dots = DotReaction.parseDotPath(path);
-    return {getter, spread, dots};
+    if (part === "e" || part === "this" || part === "window" || part.indexOf(".") >= 0)
+      return new DotPath(part);
+    return part;
   }
 }
 
