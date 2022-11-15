@@ -36,24 +36,56 @@ class CustomAttr extends Attr {
 
 class Reaction {
 
-  constructor(Function, prefix, suffix) {
+  constructor(Function, parts) {
     this.Function = Function;
-    this.prefix = prefix;
-    this.suffix = suffix;
+    this.parts = parts;
   }
 
   run(at, e) {
-    return this.Function.call(at, e, this.prefix, ...this.suffix);
+    return this.Function.call(at, e, ...this.parts);
+  }
+
+  get prefix(){
+    return this.parts[0];
+  }
+
+  get suffix(){
+    return this.parts.slice(1);
   }
 
   static create(reaction, register) {
     const parts = reaction.split("_");
-    const [prefix, ...suffix] = parts;
-    return DotReaction.parseDotReaction(parts) || register[prefix] && new Reaction(register[prefix], prefix, suffix);
+    return DotReaction.parseDotReaction(parts) || register[parts[0]] && new Reaction(register[parts[0]], parts);
   }
 }
 
-class DotReaction {
+class DotReaction extends Reaction {
+
+  constructor(dotParts, parts) {
+    super(undefined, parts);
+    this.dotParts = dotParts;
+  }
+
+  run(at, e) {
+    const dotParts = this.dotParts;
+    const prefix = dotParts[0];
+    const objs = DotReaction.interpretDotPath(prefix.dots, e, at);
+    const last = objs[objs.length - 1];
+    if (prefix.getter || dotParts.length === 1 && !(last instanceof Function))
+      return last;
+    const args = [];
+    for (let i = 1; i < dotParts.length; i++) {
+      const dotPart = dotParts[i];
+      const arg = dotPart?.dots ? DotReaction.interpretDotArgument(dotPart, e, at) : dotPart;
+      dotPart.spread ? args.push(...arg) : args.push(arg);
+    }
+    const lastParent = objs[objs.length - 2]
+    if (last instanceof Function)
+      return last.call(lastParent, ...args);
+    lastParent[prefix.dots[prefix.dots.length - 1]] = args.length === 1 ? args[0] : args;
+    return e;
+  }
+
   static PRIMITIVES = Object.freeze({
     true: true,
     false: false,
@@ -100,34 +132,15 @@ class DotReaction {
     return {getter, spread, dots};
   }
 
-  static runDotReaction(e, _, ...dotParts) {
-    const prefix = dotParts[0];
-    const objs = DotReaction.interpretDotPath(prefix.dots, e, this);
-    const last = objs[objs.length - 1];
-    if (prefix.getter || dotParts.length === 1 && !(last instanceof Function))
-      return last;
-    const args = [];
-    for (let i = 1; i < dotParts.length; i++) {
-      const dotPart = dotParts[i];
-      const arg = dotPart?.dots ? DotReaction.interpretDotArgument(dotPart, e, this) : dotPart;
-      dotPart.spread ? args.push(...arg) : args.push(arg);
-    }
-    const lastParent = objs[objs.length - 2]
-    if (last instanceof Function)
-      return last.call(lastParent, ...args);
-    lastParent[prefix.dots[prefix.dots.length - 1]] = args.length === 1 ? args[0] : args;
-    return e;
-  }
-
   static parseDotReaction(parts) {
     if (parts[0].indexOf(".") < 0)
       return;
-    const dotParts = parts.map(DotReaction.parsePartDotMode);
+    const dotParts = parts.map(DotReaction.parsePartDotMode);  //todo move this into the constructor??
     if (dotParts[0].spread)
       throw "spread on prefix does not make sense";
     if (dotParts[0].length > 1 && dotParts[0].getter)
       throw "this dot expression has arguments, then the prefix cannot be a getter (end with '.').";
-    return new Reaction(DotReaction.runDotReaction, parts, dotParts);
+    return new DotReaction(dotParts, parts);
   }
 }
 
