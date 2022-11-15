@@ -1,3 +1,33 @@
+class CustomAttr extends Attr {
+  get type() {
+    const value = this.name.match(/_?([^_:]+)/)[1];
+    Object.defineProperty(this, "type", {value, writable: false, configurable: true});
+    return value;
+  }
+
+  get suffix() {
+    return this.name.match(/_?([^:]+)/)[1].split("_").slice(1);
+  }
+
+  get reaction() {             //todo rename to listeners??
+    const value = this.name.split("::")[0].split(":").slice(1)?.join(":");
+    Object.defineProperty(this, "reaction", {value, writable: false, configurable: true});
+    return value;
+  }
+
+  get defaultAction() {
+    const value = this.name.split("::")[1];
+    Object.defineProperty(this, "defaultAction", {value, writable: false, configurable: true});
+    return value;
+  }
+
+  get allFunctions() {
+    const value = this.name.split(":").slice(1)?.filter(r => r).join(":");
+    Object.defineProperty(this, "allFunctions", {value, writable: false, configurable: true});
+    return value;
+  }
+}
+
 class Reaction {
   constructor(Function, prefix, suffix) {
     this.Function = Function;
@@ -131,36 +161,6 @@ class ReactionRegistry {
 }
 
 window.customReactions = new ReactionRegistry();
-
-class CustomAttr extends Attr {
-  get suffix() {
-    return this.name.match(/_?([^:]+)/)[1].split("_").slice(1);
-  }
-
-  get reaction() {             //todo rename to listeners??
-    const value = this.name.split("::")[0].split(":").slice(1)?.join(":");
-    Object.defineProperty(this, "reaction", {value, writable: false, configurable: true});
-    return value;
-  }
-
-  get defaultAction() {
-    const value = this.name.split("::")[1];
-    Object.defineProperty(this, "defaultAction", {value, writable: false, configurable: true});
-    return value;
-  }
-
-  get allFunctions() {
-    const value = this.name.split(":").slice(1)?.filter(r => r).join(":");
-    Object.defineProperty(this, "allFunctions", {value, writable: false, configurable: true});
-    return value;
-  }
-
-  get type() {
-    const value = this.name.match(/_?([^_:]+)/)[1];
-    Object.defineProperty(this, "type", {value, writable: false, configurable: true});
-    return value;
-  }
-}
 
 class WeakArrayDict {
   push(key, value) {
