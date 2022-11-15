@@ -334,7 +334,7 @@ document.documentElement.setAttributeNode(document.createAttribute("error::conso
           EventLoop.bubble(target, event);
         //todo if (target?.isConnected === false) then bubble without default action?? I think that we need the global listeners to run for disconnected targets, as this will make them able to trigger _error for example. I also think that attributes on disconnected ownerElements should still catch the _global events. Don't see why not.
         else if (target instanceof Attr)
-          EventLoop.#runReactions(target.reactions?.filter(r => r) || [], event, target, undefined);
+          EventLoop.#runReactions(target.reactions, event, target, undefined);
         this.#eventLoop.shift();
       }
     }
@@ -346,7 +346,7 @@ document.documentElement.setAttributeNode(document.createAttribute("error::conso
           if (attr.type === event.type && attr.name[0] !== "_") {
             if (attr.defaultAction && (event.defaultAction || event.defaultPrevented))
               continue;
-            const res = EventLoop.#runReactions((attr.defaultAction ? attr.reactions.slice(0, attr.defaultAction - 1) : attr.reactions) || [], event, attr, !!attr.defaultAction);
+            const res = EventLoop.#runReactions((attr.defaultAction ? attr.reactions.slice(0, attr.defaultAction - 1) : attr.reactions), event, attr, !!attr.defaultAction);
             if (res !== undefined && attr.defaultAction)
               event.defaultAction = {attr, res, target};
           }
@@ -355,7 +355,7 @@ document.documentElement.setAttributeNode(document.createAttribute("error::conso
       const prevented = event.defaultPrevented;     //global listeners can't call .preventDefault()
       //eventToTarget.set(event, theTopMostTarget); //not necessary, bubble already set it
       for (let attr of customAttributes.globalListeners(event.type))
-        EventLoop.#runReactions(attr.reactions?.filter(r => r) || [], event, attr, undefined);
+        EventLoop.#runReactions(attr.reactions , event, attr, undefined);
       if (event.defaultAction && !prevented) {
         const {attr, res, target} = event.defaultAction;
         eventToTarget.set(event, target);
@@ -363,9 +363,11 @@ document.documentElement.setAttributeNode(document.createAttribute("error::conso
       }
     }
 
-    static #runReactions(reactions, event, at, syncOnly = false, start = 0) {
+    static #runReactions(reactions = [], event, at, syncOnly = false, start = 0) {
       for (let i = start; i < reactions.length; i++) {
         const reaction = reactions[i];
+        if(!reaction)
+          continue;
         try {
           event = reaction.run(at, event);
           if (event === undefined)
