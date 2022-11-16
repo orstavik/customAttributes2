@@ -1,7 +1,7 @@
 //import:, ready:, timeout:, raf:
 (function () {
   function dispatchWhenReactionReady(attr, event, delay = 4, i = 0) {
-    attr.ready?
+    attr.ready ?
       eventLoop.dispatch(event, attr) :
       attr._timer = setTimeout(_ => dispatchWhenReactionReady(attr, event, delay, ++i), delay ** i);
   }
@@ -140,11 +140,19 @@
         e[prop] = value;
       return e;
     },
-    plus: function plus(value, plus, ...addends) {
-      for (let addend of addends)
-        value += addend;
-      return value;
-    },
+    //todo untested.
+    plus: (s, _, ...as) => as.reduce((s, a) => s + a, s),
+    minus: (s, _, ...as) => as.reduce((s, a) => s - a, s),
+    times: (s, _, ...as) => as.reduce((s, a) => s * a, s),
+    divide: (s, _, ...as) => as.reduce((s, a) => s / a, s),
+    percent: (s, _, ...as) => as.reduce((s, a) => s % a, s),
+    factor: (s, _, ...as) => as.reduce((s, a) => s ** a, s),
+    and: (s, _, ...as) => as.reduce((s, a) => s && a, s),
+    or: (s, _, ...as) => as.reduce((s, a) => s || a, s),
+    //todo double or triple equals
+    equals: (s, _, ...as) => as.reduce((s, a) => s == a, s),
+    number: n => Number(n),  //this is the same as .-number_e. Do we want it?
+
     debugger: function (e) {
       debugger;
       return e;
