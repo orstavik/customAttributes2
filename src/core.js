@@ -130,13 +130,11 @@
     m: function monadish(e, _, prop, ...nestedReaction) {
       const reaction = customReactions.getReaction(nestedReaction.join("_"));
       const value = reaction.run(this, e);
-      if (e instanceof Array) {
-        if (!prop) {
-          e.push(value);
-        } else if (Number.isInteger(+prop)) {
-          e.splice(prop < 0 ? Math.max(e.length + 1 + prop, 0) : Math.min(prop, e.length), 0, value);
-        }
-      } else if (prop)
+      if (e instanceof Array && !prop)
+        e.push(value);
+      else if (e instanceof Array && Number.isInteger(+prop))
+        e.splice(prop < 0 ? Math.max(e.length + 1 + prop, 0) : Math.min(prop, e.length), 0, value);
+      else if (prop)
         e[prop] = value;
       return e;
     },
@@ -149,7 +147,7 @@
     factor: (s, _, ...as) => as.reduce((s, a) => s ** a, s),
     and: (s, _, ...as) => as.reduce((s, a) => s && a, s),
     or: (s, _, ...as) => as.reduce((s, a) => s || a, s),
-    //todo double or triple equals
+    //todo double or triple equals??
     equals: (s, _, ...as) => as.reduce((s, a) => s == a, s),
     number: n => Number(n),  //this is the same as .-number_e. Do we want it?
 
@@ -165,13 +163,13 @@
     },
 
     define: function define(Def, _, tag) {
-      if (Def.prototype instanceof CustomAttr) {
+      if (Def.prototype instanceof CustomAttr)
         customAttributes.define(tag, Def);
-      } else if (Def.prototype instanceof HTMLElement) {
+      else if (Def.prototype instanceof HTMLElement)
         customElements.define(tag, Def);
-      } else if (Def instanceof Function) {
+      else if (Def instanceof Function)
         customReactions.define(tag, Def);
-      } else
+      else
         throw "You cannot define a class that isn't either a CustomAttr, an HTMLElement, or a Function.";
     }
   });
