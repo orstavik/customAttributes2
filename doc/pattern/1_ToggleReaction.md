@@ -67,10 +67,9 @@ In the above example, we only change the appearance of the element based on the 
 
 ## Demo 3: ClassBlueShort
 
-`class_blue` is not a bad read. But, it can be even simpler. Most often in an app, there will only be one meaning of "blue" when talking about reactions. So, we can make a custom reaction that uses the `prefix`, ie. the name of the reaction itself as an attribute. This means that `class_` can be made implicit, and that we can change `click:class_blue` to `click:blue`.
+The reaction `class_blue` is not a bad read. But, it can be even simpler. Most often in an app, there will only be one meaning of "blue" when talking about reactions. So, we can make a custom reaction that uses the `prefix`, ie. the name of the reaction itself as an attribute. This means that `class_` can be made implicit, and that we can change `click:class_blue` to `click:blue`.
 
 ```html
-
 <script src="../../src/customAttributes.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver@1.1.0/startObserver.js"></script>
 
@@ -97,6 +96,7 @@ In this demo, we will illustrate the use of the ToggleReaction pattern with:
 3. several parameters.
 
 ```html
+
 <script src="https://cdn.jsdelivr.net/gh/orstavik/customAttributes2/src/customAttributes.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/orstavik/ElementObserver@1.1.0/startObserver.js"></script>
 
